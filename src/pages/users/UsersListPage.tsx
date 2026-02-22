@@ -200,7 +200,7 @@ export default function UsersListPage() {
       </Descriptions.Item>
       <Descriptions.Item label={t('users.contacts')} span={isMobile ? 1 : 3}>
         {record.contacts?.length
-          ? record.contacts.map((c) => `${c.type}: ${c.countryCode}${c.phone}`).join(', ')
+          ? record.contacts.map((c) => `${t(`contactTypes.${c.type}`)}: ${c.countryCode}${c.phone}`).join(', ')
           : '—'}
       </Descriptions.Item>
       <Descriptions.Item label={t('users.citizenships')} span={isMobile ? 1 : 3}>
@@ -370,7 +370,7 @@ export default function UsersListPage() {
           },
           showTotal: isMobile ? undefined : (total) => `${total}`,
           size: isMobile ? 'small' : undefined,
-          locale: { items_per_page: '/ стр.' },
+          locale: { items_per_page: t('common.itemsPerPage') },
         }}
       />
 
@@ -415,7 +415,7 @@ export default function UsersListPage() {
                 )
               }
             >
-              {exportFields.length === EXPORT_FIELD_OPTIONS.length ? 'Снять все' : 'Выбрать все'}
+              {exportFields.length === EXPORT_FIELD_OPTIONS.length ? t('common.deselectAll') : t('common.selectAll')}
             </a>
           </div>
           <Checkbox.Group

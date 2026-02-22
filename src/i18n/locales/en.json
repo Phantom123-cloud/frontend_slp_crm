@@ -81,7 +81,10 @@
     "online": "Online",
     "maxSessions": "Max concurrent sessions",
     "fullInfo": "Full information",
-    "isCoordinatorShort": "Coordinator?"
+    "isCoordinatorShort": "Coordinator?",
+    "passwordPlaceholder": "Leave empty if not changing",
+    "statusOnline": "Online",
+    "statusOffline": "Offline"
   },
   "roles": {
     "title": "Roles & Permissions",
@@ -217,6 +220,24 @@
     "sessionManageDetail": "Change the maximum number of concurrent sessions for your account (1 to 10). Limits how many devices can be logged in simultaneously.",
     "sessionManageLocation": "Your profile page — \"Sessions\" section"
   },
+  "countries": {
+    "uzbekistan": "Uzbekistan",
+    "russia": "Russia",
+    "kazakhstan": "Kazakhstan",
+    "kyrgyzstan": "Kyrgyzstan",
+    "tajikistan": "Tajikistan",
+    "turkmenistan": "Turkmenistan",
+    "belarus": "Belarus",
+    "ukraine": "Ukraine",
+    "azerbaijan": "Azerbaijan",
+    "georgia": "Georgia",
+    "armenia": "Armenia"
+  },
+  "contactTypes": {
+    "MOBILE": "Mobile",
+    "WHATSAPP": "WhatsApp",
+    "TELEGRAM": "Telegram"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -227,6 +248,9 @@
     "loading": "Loading...",
     "noData": "No data",
     "success": "Success",
-    "error": "Error"
+    "error": "Error",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "itemsPerPage": "/ page"
   }
 }

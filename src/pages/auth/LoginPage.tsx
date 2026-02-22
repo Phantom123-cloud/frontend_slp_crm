@@ -27,7 +27,7 @@ export default function LoginPage() {
       const { data } = await authApi.login(values);
       setAuth(data.accessToken, data.refreshToken, data.user, data.permissions);
       message.success(t('common.success'));
-      navigate('/users');
+      navigate('/');
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 403) {
         setSessionError(err.response.data?.message || t('auth.sessionLimitError'));

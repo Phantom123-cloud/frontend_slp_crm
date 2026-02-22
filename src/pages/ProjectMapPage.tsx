@@ -132,7 +132,7 @@ const MODULES: ModuleConfig[] = [
     descKey: 'projectMap.auditDesc',
     icon: <AuditOutlined style={{ fontSize: 28 }} />,
     color: '#13c2c2',
-    permissions: ['audit.view', 'audit.export'],
+    permissions: ['audit.view'],
     actions: [
       {
         permission: 'audit.view',
@@ -142,7 +142,7 @@ const MODULES: ModuleConfig[] = [
         icon: <SearchOutlined />,
       },
       {
-        permission: 'audit.export',
+        permission: 'audit.view',
         labelKey: 'projectMap.auditExport',
         detailKey: 'projectMap.auditExportDetail',
         locationKey: 'projectMap.auditExportLocation',

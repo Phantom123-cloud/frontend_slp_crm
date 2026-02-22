@@ -44,11 +44,20 @@ const COUNTRY_CODES = [
   { value: '+374', label: '+374' },
 ];
 
-const CIS_COUNTRIES = [
-  'Узбекистан', 'Россия', 'Казахстан', 'Кыргызстан',
-  'Таджикистан', 'Туркменистан', 'Беларусь', 'Украина',
-  'Азербайджан', 'Грузия', 'Армения',
+const CIS_COUNTRY_KEYS = [
+  'uzbekistan', 'russia', 'kazakhstan', 'kyrgyzstan',
+  'tajikistan', 'turkmenistan', 'belarus', 'ukraine',
+  'azerbaijan', 'georgia', 'armenia',
 ];
+
+// Backward compat: map old Russian names to i18n keys
+const LEGACY_COUNTRY_MAP: Record<string, string> = {
+  'Узбекистан': 'uzbekistan', 'Россия': 'russia', 'Казахстан': 'kazakhstan',
+  'Кыргызстан': 'kyrgyzstan', 'Таджикистан': 'tajikistan', 'Туркменистан': 'turkmenistan',
+  'Беларусь': 'belarus', 'Украина': 'ukraine', 'Азербайджан': 'azerbaijan',
+  'Грузия': 'georgia', 'Армения': 'armenia',
+};
+const normalizeCountryKey = (v: string) => LEGACY_COUNTRY_MAP[v] || v;
 
 const CONTACT_TYPE_KEYS = ['MOBILE', 'WHATSAPP', 'TELEGRAM'];
 
@@ -308,9 +317,9 @@ export default function UserProfilePage() {
         mode="multiple"
         disabled={!canEditProfile}
         style={{ width: '100%', marginBottom: 16 }}
-        value={user.citizenships?.map((c: any) => c.country)}
+        value={user.citizenships?.map((c: any) => normalizeCountryKey(c.country))}
         onChange={(values) => setCitizenshipsMut.mutate(values)}
-        options={CIS_COUNTRIES.map((c) => ({ value: c, label: c }))}
+        options={CIS_COUNTRY_KEYS.map((k) => ({ value: k, label: t(`countries.${k}`) }))}
       />
 
       {/* Контакты */}
@@ -324,7 +333,7 @@ export default function UserProfilePage() {
               <Button size="small" danger icon={<DeleteOutlined />} onClick={() => removeContactMut.mutate(contact.id)} />,
             ] : []}
           >
-            <Tag color="blue">{contact.type}</Tag> {contact.countryCode} {contact.phone}
+            <Tag color="blue">{t(`contactTypes.${contact.type}`)}</Tag> {contact.countryCode} {contact.phone}
           </List.Item>
         )}
       />
@@ -444,7 +453,7 @@ export default function UserProfilePage() {
         <Input />
       </Form.Item>
       <Form.Item name="password" label={t('auth.password')}>
-        <Input.Password placeholder="Оставьте пустым если не меняете" />
+        <Input.Password placeholder={t('users.passwordPlaceholder')} />
       </Form.Item>
       <Form.Item name="roleId" label={t('users.role')}>
         <Select
@@ -481,8 +490,8 @@ export default function UserProfilePage() {
           style={{ flex: 1 }}
         >
           <Descriptions.Item label={t('users.email')}>{user.email}</Descriptions.Item>
-          <Descriptions.Item label="Status">
-            <Badge status={user.isOnline ? 'success' : 'default'} text={user.isOnline ? 'Online' : 'Offline'} />
+          <Descriptions.Item label={t('users.status')}>
+            <Badge status={user.isOnline ? 'success' : 'default'} text={user.isOnline ? t('users.statusOnline') : t('users.statusOffline')} />
           </Descriptions.Item>
           <Descriptions.Item label={t('users.role')}>{user.role?.name || '—'}</Descriptions.Item>
         </Descriptions>
@@ -590,7 +599,7 @@ export default function UserProfilePage() {
       >
         <Form onFinish={(v) => addContactMut.mutate(v)} layout="vertical">
           <Form.Item name="type" label={t('users.contactType')} rules={[{ required: true }]}>
-            <Select options={CONTACT_TYPE_KEYS.map((k) => ({ value: k, label: k }))} />
+            <Select options={CONTACT_TYPE_KEYS.map((k) => ({ value: k, label: t(`contactTypes.${k}`) }))} />
           </Form.Item>
           <Form.Item name="countryCode" label={t('users.countryCode')} rules={[{ required: true }]}>
             <Select options={COUNTRY_CODES} />

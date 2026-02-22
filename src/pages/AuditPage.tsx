@@ -233,7 +233,7 @@ export default function AuditPage() {
           },
           size: isMobile ? 'small' : undefined,
           showTotal: isMobile ? undefined : (total) => `${total}`,
-          locale: { items_per_page: '/ стр.' },
+          locale: { items_per_page: t('common.itemsPerPage') },
         }}
         columns={columns}
         expandable={isMobile ? {

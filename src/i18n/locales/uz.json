@@ -81,7 +81,10 @@
     "online": "Onlayn",
     "maxSessions": "Maks. bir vaqtdagi sessiyalar",
     "fullInfo": "To'liq ma'lumot",
-    "isCoordinatorShort": "Koordinator?"
+    "isCoordinatorShort": "Koordinator?",
+    "passwordPlaceholder": "O'zgartirmasangiz bo'sh qoldiring",
+    "statusOnline": "Onlayn",
+    "statusOffline": "Oflayn"
   },
   "roles": {
     "title": "Rollar va huquqlar",
@@ -217,6 +220,24 @@
     "sessionManageDetail": "Hisobingiz uchun bir vaqtdagi sessiyalarning maksimal sonini o'zgartiring (1 dan 10 gacha). Bir vaqtda nechta qurilmadan kirish mumkinligini cheklaydi.",
     "sessionManageLocation": "Sizning profil sahifangiz — \"Sessiyalar\" bo'limi"
   },
+  "countries": {
+    "uzbekistan": "O'zbekiston",
+    "russia": "Rossiya",
+    "kazakhstan": "Qozog'iston",
+    "kyrgyzstan": "Qirg'iziston",
+    "tajikistan": "Tojikiston",
+    "turkmenistan": "Turkmaniston",
+    "belarus": "Belarus",
+    "ukraine": "Ukraina",
+    "azerbaijan": "Ozarbayjon",
+    "georgia": "Gruziya",
+    "armenia": "Armaniston"
+  },
+  "contactTypes": {
+    "MOBILE": "Mobil",
+    "WHATSAPP": "WhatsApp",
+    "TELEGRAM": "Telegram"
+  },
   "common": {
     "save": "Saqlash",
     "cancel": "Bekor qilish",
@@ -227,6 +248,9 @@
     "loading": "Yuklanmoqda...",
     "noData": "Ma'lumot yo'q",
     "success": "Muvaffaqiyatli",
-    "error": "Xatolik"
+    "error": "Xatolik",
+    "selectAll": "Hammasini tanlash",
+    "deselectAll": "Hammasini olib tashlash",
+    "itemsPerPage": "/ sah."
   }
 }
