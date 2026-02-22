@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Table, Button, Input, Select, Space, Tag, message, Modal, Badge, Tooltip,
-  Checkbox, Radio, Divider, Grid,
+  Checkbox, Radio, Divider, Grid, Descriptions,
 } from 'antd';
 import {
   PlusOutlined, LogoutOutlined, StopOutlined, CheckCircleOutlined,
@@ -11,7 +11,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import { usersApi, type User } from '../../api/users';
+import { usersApi, type UserDetailed } from '../../api/users';
 import { usePermission } from '../../hooks/usePermission';
 
 const { useBreakpoint } = Grid;
@@ -99,7 +99,13 @@ export default function UsersListPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['users', filter, search, page],
-    queryFn: () => usersApi.getAll({ filter, search: search || undefined, page, limit: 20 }).then((r) => r.data),
+    queryFn: () => usersApi.getAll({
+      filter,
+      search: search || undefined,
+      page,
+      limit: 20,
+      detailed: true,
+    }).then((r) => r.data),
   });
 
   const forceLogoutMutation = useMutation({
@@ -121,13 +127,99 @@ export default function UsersListPage() {
     Modal.confirm({ title, onOk, okText: t('common.save'), cancelText: t('common.cancel') });
   };
 
+  const boolLabel = (val?: boolean | null) =>
+    val === true ? t('users.yes') : val === false ? t('users.no') : '—';
+
+  // --- Аккордеон: раскрытие строки с полной анкетой ---
+  const expandedRowRender = (record: UserDetailed) => (
+    <Descriptions
+      size="small"
+      column={isMobile ? 1 : 3}
+      bordered
+      style={{ background: 'transparent' }}
+    >
+      <Descriptions.Item label={t('users.role')}>
+        {record.role?.name || '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.tradeCode')}>
+        {record.tradeCode || '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.status')}>
+        <Tag color={record.isActive ? 'green' : 'red'}>
+          {record.isActive ? t('users.filterActive') : t('users.filterBlocked')}
+        </Tag>
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.isCoordinatorShort')}>
+        <Tag color={record.isCoordinator ? 'blue' : 'default'}>
+          {record.isCoordinator ? t('users.yes') : t('users.no')}
+        </Tag>
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.coordinator')}>
+        {record.coordinator
+          ? `${record.coordinator.lastName} ${record.coordinator.firstName}`
+          : '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.middleName')}>
+        {record.middleName || '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.birthDate')}>
+        {record.birthDate ? dayjs(record.birthDate).format('DD.MM.YYYY') : '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.firstTripDate')}>
+        {record.firstTripDate ? dayjs(record.firstTripDate).format('DD.MM.YYYY') : '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.isMarried')}>
+        {boolLabel(record.isMarried)}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.hasChildren')}>
+        {boolLabel(record.hasChildren)}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.hasPassport')}>
+        {boolLabel(record.hasPassport)}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.hasDriverLicense')}>
+        {boolLabel(record.hasDriverLicense)}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.drivingExperience')}>
+        {record.drivingExperience != null ? `${record.drivingExperience}` : '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.passportNumber')}>
+        {record.passportNumber || '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.registrationAddress')} span={isMobile ? 1 : 3}>
+        {record.registrationAddress || '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.livingAddress')} span={isMobile ? 1 : 3}>
+        {record.livingAddress || '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.languages')} span={isMobile ? 1 : 3}>
+        {record.languages?.length
+          ? record.languages.map((l) => `${l.language} — ${l.level}`).join(', ')
+          : '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.contacts')} span={isMobile ? 1 : 3}>
+        {record.contacts?.length
+          ? record.contacts.map((c) => `${c.type}: ${c.countryCode}${c.phone}`).join(', ')
+          : '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.citizenships')} span={isMobile ? 1 : 3}>
+        {record.citizenships?.length
+          ? record.citizenships.map((c) => c.country).join(', ')
+          : '—'}
+      </Descriptions.Item>
+      <Descriptions.Item label={t('users.comment')} span={isMobile ? 1 : 3}>
+        {record.comment || '—'}
+      </Descriptions.Item>
+    </Descriptions>
+  );
+
   const columns = [
     {
       title: t('users.email'),
       dataIndex: 'email',
       key: 'email',
       ellipsis: true,
-      render: (email: string, record: User) => (
+      render: (email: string, record: UserDetailed) => (
         <a onClick={() => navigate(`/users/${record.id}`)}>{email}</a>
       ),
     },
@@ -135,12 +227,32 @@ export default function UsersListPage() {
       title: t('users.fullName'),
       key: 'fullName',
       ellipsis: true,
-      render: (_: any, record: User) => (
+      render: (_: any, record: UserDetailed) => (
         <Space>
           <Badge status={record.isOnline ? 'success' : 'default'} />
           {`${record.lastName} ${record.firstName}`}
         </Space>
       ),
+    },
+    {
+      title: t('users.isCoordinatorShort'),
+      key: 'isCoordinator',
+      width: 130,
+      render: (_: any, record: UserDetailed) => (
+        <Tag color={record.isCoordinator ? 'blue' : 'default'}>
+          {record.isCoordinator ? t('users.yes') : t('users.no')}
+        </Tag>
+      ),
+    },
+    {
+      title: t('users.coordinator'),
+      key: 'coordinator',
+      width: 180,
+      ellipsis: true,
+      render: (_: any, record: UserDetailed) =>
+        record.coordinator
+          ? `${record.coordinator.lastName} ${record.coordinator.firstName}`
+          : '—',
     },
     ...(!isMobile ? [{
       title: t('users.dateAdded'),
@@ -153,7 +265,7 @@ export default function UsersListPage() {
       title: t('users.actions'),
       key: 'actions',
       width: isMobile ? 80 : 120,
-      render: (_: any, record: User) => (
+      render: (_: any, record: UserDetailed) => (
         <Space size={4}>
           {canForceLogout && (
             <Tooltip title={t('users.forceLogout')}>
@@ -235,15 +347,19 @@ export default function UsersListPage() {
         dataSource={data?.data}
         rowKey="id"
         loading={isLoading}
-        scroll={{ x: isMobile ? 500 : undefined }}
+        scroll={{ x: isMobile ? 500 : 900 }}
         size={isMobile ? 'small' : 'middle'}
+        expandable={{
+          expandedRowRender,
+          rowExpandable: () => true,
+        }}
         pagination={{
           current: page,
           total: data?.total,
           pageSize: 20,
           onChange: setPage,
           showTotal: isMobile ? undefined : (total) => `${total}`,
-          size: isMobile ? 'small' : 'default',
+          size: isMobile ? 'small' : undefined,
         }}
       />
 

@@ -86,7 +86,7 @@ export default function RolesPage() {
       <Collapse
         defaultActiveKey={Object.keys(permissionsByGroup)}
         size="small"
-        items={Object.entries(permissionsByGroup).map(([groupName, perms]: [string, any[]]) => {
+        items={(Object.entries(permissionsByGroup) as [string, any[]][]).map(([groupName, perms]) => {
           const allChecked = perms.every((p) => value.includes(p.id));
           const someChecked = perms.some((p) => value.includes(p.id));
           return {
@@ -190,7 +190,7 @@ export default function RolesPage() {
           {t('roles.addPermission')}
         </Button>
       )}
-      {Object.entries(permissionsByGroup).map(([groupName, perms]: [string, any[]]) => (
+      {(Object.entries(permissionsByGroup) as [string, any[]][]).map(([groupName, perms]) => (
         <Card
           key={groupName}
           size="small"

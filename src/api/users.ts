@@ -11,6 +11,28 @@ export interface User {
   createdAt: string;
 }
 
+export interface UserDetailed extends User {
+  tradeCode?: string;
+  birthDate?: string;
+  firstTripDate?: string;
+  isCoordinator?: boolean;
+  coordinatorId?: string;
+  coordinator?: { id: string; firstName: string; lastName: string };
+  isMarried?: boolean;
+  hasChildren?: boolean;
+  hasPassport?: boolean;
+  hasDriverLicense?: boolean;
+  drivingExperience?: number;
+  comment?: string;
+  passportNumber?: string;
+  registrationAddress?: string;
+  livingAddress?: string;
+  role?: { name: string };
+  languages?: { language: string; level: string }[];
+  contacts?: { type: string; countryCode: string; phone: string }[];
+  citizenships?: { country: string }[];
+}
+
 export interface UserProfile extends User {
   tradeCode?: string;
   firstTripDate?: string;
@@ -28,12 +50,12 @@ export interface UserProfile extends User {
   passportNumber?: string;
   registrationAddress?: string;
   livingAddress?: string;
-  roleTemplate?: any;
-  permissionOverrides?: any[];
   contacts?: any[];
   languages?: any[];
   citizenships?: any[];
   documents?: any[];
+  maxSessions?: number;
+  role?: { id: string; name: string; permissions?: any[] };
 }
 
 export interface PaginatedResponse<T> {
@@ -45,8 +67,8 @@ export interface PaginatedResponse<T> {
 }
 
 export const usersApi = {
-  getAll: (params?: { filter?: string; search?: string; page?: number; limit?: number }) =>
-    api.get<PaginatedResponse<User>>('/users', { params }),
+  getAll: (params?: { filter?: string; search?: string; page?: number; limit?: number; detailed?: boolean }) =>
+    api.get<PaginatedResponse<UserDetailed>>('/users', { params }),
 
   getById: (id: string) =>
     api.get<UserProfile>(`/users/${id}`),

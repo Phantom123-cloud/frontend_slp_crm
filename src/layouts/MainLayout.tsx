@@ -6,6 +6,7 @@ import {
   AuditOutlined, LogoutOutlined, MenuFoldOutlined,
   MenuUnfoldOutlined, GlobalOutlined,
   SunOutlined, MoonOutlined, MenuOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/auth';
@@ -60,6 +61,7 @@ export default function MainLayout() {
   const canViewAudit = usePermission('audit.view');
 
   const menuItems = [
+    { key: '/map', icon: <AppstoreOutlined />, label: t('menu.projectMap') },
     canViewUsers && { key: '/users', icon: <TeamOutlined />, label: t('menu.users') },
     canViewRoles && { key: '/roles', icon: <SafetyOutlined />, label: t('menu.roles') },
     canViewAudit && { key: '/audit', icon: <AuditOutlined />, label: t('menu.audit') },

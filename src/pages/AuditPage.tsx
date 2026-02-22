@@ -221,7 +221,7 @@ export default function AuditPage() {
           total: (data as any)?.total,
           pageSize: 20,
           onChange: setPage,
-          size: isMobile ? 'small' : 'default',
+          size: isMobile ? 'small' : undefined,
           showTotal: isMobile ? undefined : (total) => `${total}`,
         }}
         columns={columns}

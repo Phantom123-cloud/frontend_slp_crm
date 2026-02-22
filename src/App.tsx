@@ -16,6 +16,7 @@ import UserCreatePage from './pages/users/UserCreatePage';
 import UserProfilePage from './pages/users/UserProfilePage';
 import RolesPage from './pages/roles/RolesPage';
 import AuditPage from './pages/AuditPage';
+import ProjectMapPage from './pages/ProjectMapPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,7 +83,7 @@ function DefaultRedirect() {
     { perm: 'audit.view', path: '/audit' },
   ];
   const first = routes.find((r) => permissions.includes(r.perm));
-  return <Navigate to={first?.path ?? '/login'} replace />;
+  return <Navigate to={first?.path ?? '/map'} replace />;
 }
 
 export default function App() {
@@ -138,6 +139,7 @@ export default function App() {
               }
             >
               <Route index element={<DefaultRedirect />} />
+              <Route path="map" element={<ProjectMapPage />} />
               <Route path="users" element={<PermissionRoute permission="users.view"><UsersListPage /></PermissionRoute>} />
               <Route path="users/create" element={<PermissionRoute permission="users.create"><UserCreatePage /></PermissionRoute>} />
               <Route path="users/:id" element={<PermissionRoute permission="users.view"><UserProfilePage /></PermissionRoute>} />
