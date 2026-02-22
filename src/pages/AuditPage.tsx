@@ -94,6 +94,7 @@ export default function AuditPage() {
   const isMobile = !screens.md;
 
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [dates, setDates] = useState<[string?, string?]>([]);
   const [entityFilter, setEntityFilter] = useState('');
 
@@ -104,12 +105,12 @@ export default function AuditPage() {
   const [exporting, setExporting] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['audit', page, dates, entityFilter],
+    queryKey: ['audit', page, pageSize, dates, entityFilter],
     queryFn: () =>
       auditApi
         .getAll({
           page,
-          limit: 20,
+          limit: pageSize,
           dateFrom: dates[0],
           dateTo: dates[1],
           entity: entityFilter || undefined,
@@ -127,7 +128,7 @@ export default function AuditPage() {
         format: exportFormat,
         scope: exportScope,
         page,
-        limit: 20,
+        limit: pageSize,
       });
       const ext = exportFormat === 'csv' ? 'csv' : 'xlsx';
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -143,7 +144,7 @@ export default function AuditPage() {
     } finally {
       setExporting(false);
     }
-  }, [entityFilter, dates, exportFormat, exportScope, page, t]);
+  }, [entityFilter, dates, exportFormat, exportScope, page, pageSize, t]);
 
   const columns = [
     {
@@ -219,10 +220,20 @@ export default function AuditPage() {
         pagination={{
           current: page,
           total: (data as any)?.total,
-          pageSize: 20,
-          onChange: setPage,
+          pageSize,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          onChange: (p, size) => {
+            if (size !== pageSize) {
+              setPageSize(size);
+              setPage(1);
+            } else {
+              setPage(p);
+            }
+          },
           size: isMobile ? 'small' : undefined,
           showTotal: isMobile ? undefined : (total) => `${total}`,
+          locale: { items_per_page: '/ стр.' },
         }}
         columns={columns}
         expandable={isMobile ? {

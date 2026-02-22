@@ -31,6 +31,7 @@ export default function UsersListPage() {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<'xlsx' | 'csv'>('xlsx');
@@ -79,7 +80,7 @@ export default function UsersListPage() {
         filter: filter || undefined,
         search: search || undefined,
         page,
-        limit: 20,
+        limit: pageSize,
       });
       const ext = exportFormat === 'csv' ? 'csv' : 'xlsx';
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -98,12 +99,12 @@ export default function UsersListPage() {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ['users', filter, search, page],
+    queryKey: ['users', filter, search, page, pageSize],
     queryFn: () => usersApi.getAll({
       filter,
       search: search || undefined,
       page,
-      limit: 20,
+      limit: pageSize,
       detailed: true,
     }).then((r) => r.data),
   });
@@ -356,10 +357,20 @@ export default function UsersListPage() {
         pagination={{
           current: page,
           total: data?.total,
-          pageSize: 20,
-          onChange: setPage,
+          pageSize,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          onChange: (p, size) => {
+            if (size !== pageSize) {
+              setPageSize(size);
+              setPage(1);
+            } else {
+              setPage(p);
+            }
+          },
           showTotal: isMobile ? undefined : (total) => `${total}`,
           size: isMobile ? 'small' : undefined,
+          locale: { items_per_page: '/ стр.' },
         }}
       />
 
