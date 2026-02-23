@@ -30,7 +30,9 @@ export default function LoginPage() {
       navigate('/');
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 403) {
-        setSessionError(err.response.data?.message || t('auth.sessionLimitError'));
+        setSessionError(t(err.response.data?.message || 'auth.sessionLimitError'));
+      } else if (axios.isAxiosError(err) && err.response?.data?.message) {
+        message.error(t(err.response.data.message));
       } else {
         message.error(t('auth.loginError'));
       }

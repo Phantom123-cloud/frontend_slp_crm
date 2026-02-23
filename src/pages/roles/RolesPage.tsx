@@ -36,22 +36,22 @@ export default function RolesPage() {
   const createRoleMut = useMutation({
     mutationFn: rolesApi.createRole,
     onSuccess: () => { invalidateAll(); setRoleModal(false); message.success(t('common.success')); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
   const updateRoleMut = useMutation({
     mutationFn: ({ id, ...body }: any) => rolesApi.updateRole(id, body),
     onSuccess: () => { invalidateAll(); setEditRole(null); message.success(t('common.success')); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
   const deleteRoleMut = useMutation({
     mutationFn: rolesApi.deleteRole,
     onSuccess: () => { invalidateAll(); message.success(t('common.success')); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
   const createPermMut = useMutation({
     mutationFn: rolesApi.createPermission,
     onSuccess: () => { invalidateAll(); setPermModal(false); message.success(t('common.success')); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   // Группировка прав по group

@@ -26,7 +26,7 @@ export default function UserCreatePage() {
       navigate('/users');
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || t('common.error'));
+      message.error(t(err.response?.data?.message || 'common.error'));
     },
   });
 

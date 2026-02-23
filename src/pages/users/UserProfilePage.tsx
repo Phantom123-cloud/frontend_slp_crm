@@ -126,13 +126,13 @@ export default function UserProfilePage() {
   const updateProfileMut = useMutation({
     mutationFn: (data: any) => usersApi.updateProfile(id!, data),
     onSuccess: () => { message.success(t('common.success')); invalidateUser(); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   const updateCredMut = useMutation({
     mutationFn: (data: any) => usersApi.updateCredentials(id!, data),
     onSuccess: () => { message.success(t('common.success')); invalidateUser(); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   const addLangMut = useMutation({
@@ -148,7 +148,7 @@ export default function UserProfilePage() {
   const addContactMut = useMutation({
     mutationFn: (data: any) => usersApi.addContact(id!, data),
     onSuccess: () => { message.success(t('common.success')); invalidateUser(); setContactModalOpen(false); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   const removeContactMut = useMutation({
@@ -165,7 +165,7 @@ export default function UserProfilePage() {
     mutationFn: (data: { file: File; title: string; description?: string }) =>
       filesApi.upload(id!, data.file, data.title, data.description),
     onSuccess: () => { message.success(t('common.success')); invalidateUser(); setDocModalOpen(false); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   const deleteFileMut = useMutation({
@@ -181,19 +181,19 @@ export default function UserProfilePage() {
   const forceLogoutMut = useMutation({
     mutationFn: () => usersApi.forceLogout(id!),
     onSuccess: () => { message.success(t('common.success')); invalidateUser(); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   const blockMut = useMutation({
     mutationFn: () => usersApi.block(id!),
     onSuccess: () => { message.success(t('common.success')); invalidateUser(); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   const unblockMut = useMutation({
     mutationFn: () => usersApi.unblock(id!),
     onSuccess: () => { message.success(t('common.success')); invalidateUser(); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   const updateSessionsMut = useMutation({
@@ -202,7 +202,7 @@ export default function UserProfilePage() {
         ? authApi.updateMyMaxSessions(maxSessions)
         : usersApi.updateMaxSessions(id!, maxSessions),
     onSuccess: () => { message.success(t('common.success')); invalidateUser(); },
-    onError: (e: any) => message.error(e.response?.data?.message || t('common.error')),
+    onError: (e: any) => message.error(t(e.response?.data?.message || 'common.error')),
   });
 
   const handleDownload = async (docId: string, fileName: string) => {
