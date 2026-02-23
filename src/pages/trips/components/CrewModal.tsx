@@ -52,8 +52,9 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
     if (leaderCount > 1) return t('errors.crewOneLeader');
     if (traderCount > 20) return t('errors.crewMaxTraders');
 
-    // MV/GA exclusion: can't mix MV_GA with separate MV or GA
-    if (hasMV_GA && (hasMV || hasGA)) return t('errors.crewMvGaConflict');
+    // Valid combos: MV+GA, GA+MV_GA, MV+MV_GA, MV_GA alone
+    // Forbidden: all three (MV + GA + MV_GA)
+    if (hasMV && hasGA && hasMV_GA) return t('errors.crewMvGaConflict');
     // Can't have MV alone (needs GA or MV_GA)
     if (hasMV && !hasGA && !hasMV_GA) return t('errors.crewMvNeedsGa');
     // Can't have GA alone (needs MV or MV_GA)
@@ -62,23 +63,23 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
     return null;
   };
 
-  // Determine which roles are available for a given row
-  const getAvailableRoles = (currentRole: string) => {
-    const otherRoles = crew.filter((m) => m.role !== currentRole || m.role === currentRole);
+  // Determine which roles are disabled for a given row
+  const getDisabledRoles = (currentRole: string): Set<string> => {
     const { leaderCount, hasMV, hasGA, hasMV_GA } = getCrewRoles(crew);
+    const disabled = new Set<string>();
 
-    return ALL_TRIP_ROLES.filter((role) => {
-      // Always allow the current role (so user can keep it)
-      // LEADER: max 1
-      if (role === 'LEADER' && leaderCount >= 1 && currentRole !== 'LEADER') return false;
-      // MV_GA conflicts with separate MV or GA
-      if (role === 'MV_GA' && (hasMV || hasGA)) return false;
-      // MV conflicts with MV_GA
-      if (role === 'MV' && hasMV_GA) return false;
-      // GA conflicts with MV_GA
-      if (role === 'GA' && hasMV_GA) return false;
-      return true;
-    });
+    // LEADER: max 1
+    if (leaderCount >= 1 && currentRole !== 'LEADER') disabled.add('LEADER');
+
+    // Prevent all three: MV + GA + MV_GA
+    // If MV and GA both exist → block MV_GA
+    if (hasMV && hasGA) disabled.add('MV_GA');
+    // If GA and MV_GA both exist → block MV
+    if (hasGA && hasMV_GA) disabled.add('MV');
+    // If MV and MV_GA both exist → block GA
+    if (hasMV && hasMV_GA) disabled.add('GA');
+
+    return disabled;
   };
 
   const addMember = () => {
@@ -146,7 +147,7 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
       )}
 
       {crew.map((member, index) => {
-        const availableRoles = getAvailableRoles(member.role);
+        const disabledRoles = getDisabledRoles(member.role);
         return (
           <Space key={index} style={{ display: 'flex', marginBottom: 8 }} align="start">
             <Select
@@ -156,7 +157,7 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
               options={ALL_TRIP_ROLES.map((r) => ({
                 value: r,
                 label: t(`trips.role_${r}`),
-                disabled: !availableRoles.includes(r) && r !== member.role,
+                disabled: disabledRoles.has(r) && r !== member.role,
               }))}
             />
             <Select
