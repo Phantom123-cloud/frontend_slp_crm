@@ -275,7 +275,12 @@
     "presentationTypeInUse": "Prezentatsiya turi ishlatilmoqda va o'chirib bo'lmaydi",
     "venueExists": "O'tkazish joyi allaqachon mavjud",
     "venueNotFound": "O'tkazish joyi topilmadi",
-    "venueInUse": "O'tkazish joyi ishlatilmoqda va o'chirib bo'lmaydi"
+    "venueInUse": "O'tkazish joyi ishlatilmoqda va o'chirib bo'lmaydi",
+    "crewOneLeader": "Faqat bitta Boshlovchi bo'lishi mumkin",
+    "crewMaxTraders": "Maksimum 20 ta Savdogar",
+    "crewMvGaConflict": "MV/GA ni alohida MV+GA bilan birlashtirib bo'lmaydi",
+    "crewMvNeedsGa": "MV GA siz bo'lmaydi. MV/GA ishlating yoki GA qo'shing",
+    "crewGaNeedsMv": "GA MV siz bo'lmaydi. MV/GA ishlating yoki MV qo'shing"
   },
   "trips": {
     "title": "Sayohatlar",

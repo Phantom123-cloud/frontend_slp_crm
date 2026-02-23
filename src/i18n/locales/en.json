@@ -275,7 +275,12 @@
     "presentationTypeInUse": "Presentation type is in use and cannot be deleted",
     "venueExists": "Venue already exists",
     "venueNotFound": "Venue not found",
-    "venueInUse": "Venue is in use and cannot be deleted"
+    "venueInUse": "Venue is in use and cannot be deleted",
+    "crewOneLeader": "There can be only one Leader",
+    "crewMaxTraders": "Maximum 20 Traders",
+    "crewMvGaConflict": "Cannot combine MV/GA with separate MV+GA",
+    "crewMvNeedsGa": "MV cannot be without GA. Use MV/GA or add GA",
+    "crewGaNeedsMv": "GA cannot be without MV. Use MV/GA or add MV"
   },
   "trips": {
     "title": "Trips",
