@@ -17,6 +17,9 @@ import UserProfilePage from './pages/users/UserProfilePage';
 import RolesPage from './pages/roles/RolesPage';
 import AuditPage from './pages/AuditPage';
 import ProjectMapPage from './pages/ProjectMapPage';
+import TripsListPage from './pages/trips/TripsListPage';
+import TripDetailPage from './pages/trips/TripDetailPage';
+import DirectoriesPage from './pages/directories/DirectoriesPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -145,6 +148,9 @@ export default function App() {
               <Route path="users/:id" element={<PermissionRoute permission="users.view"><UserProfilePage /></PermissionRoute>} />
               <Route path="roles" element={<PermissionRoute permission="roles.view"><RolesPage /></PermissionRoute>} />
               <Route path="audit" element={<PermissionRoute permission="audit.view"><AuditPage /></PermissionRoute>} />
+              <Route path="trips" element={<TripsListPage />} />
+              <Route path="trips/:id" element={<TripDetailPage />} />
+              <Route path="directories" element={<DirectoriesPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

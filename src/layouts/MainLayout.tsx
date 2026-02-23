@@ -6,7 +6,7 @@ import {
   AuditOutlined, LogoutOutlined, MenuFoldOutlined,
   MenuUnfoldOutlined, GlobalOutlined,
   SunOutlined, MoonOutlined, MenuOutlined,
-  AppstoreOutlined,
+  AppstoreOutlined, CarOutlined, BookOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/auth';
@@ -59,12 +59,15 @@ export default function MainLayout() {
   const canViewUsers = usePermission('users.view');
   const canViewRoles = usePermission('roles.view');
   const canViewAudit = usePermission('audit.view');
+  const canManageDirectories = usePermission('directories.manage');
 
   const menuItems = [
     { key: '/map', icon: <AppstoreOutlined />, label: t('menu.projectMap') },
     canViewUsers && { key: '/users', icon: <TeamOutlined />, label: t('menu.users') },
+    { key: '/trips', icon: <CarOutlined />, label: t('menu.trips') },
     canViewRoles && { key: '/roles', icon: <SafetyOutlined />, label: t('menu.roles') },
     canViewAudit && { key: '/audit', icon: <AuditOutlined />, label: t('menu.audit') },
+    canManageDirectories && { key: '/directories', icon: <BookOutlined />, label: t('menu.directories') },
   ].filter(Boolean) as { key: string; icon: React.ReactNode; label: string }[];
 
   const handleMenuClick = (key: string) => {
