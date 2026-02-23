@@ -36,6 +36,9 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
     const roles = crewList.map((m) => m.role);
     return {
       leaderCount: roles.filter((r) => r === 'LEADER').length,
+      mvCount: roles.filter((r) => r === 'MV').length,
+      gaCount: roles.filter((r) => r === 'GA').length,
+      mvGaCount: roles.filter((r) => r === 'MV_GA').length,
       traderCount: roles.filter((r) => r === 'TRADER').length,
       hasMV: roles.includes('MV'),
       hasGA: roles.includes('GA'),
@@ -65,11 +68,17 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
 
   // Determine which roles are disabled for a given row
   const getDisabledRoles = (currentRole: string): Set<string> => {
-    const { leaderCount, hasMV, hasGA, hasMV_GA } = getCrewRoles(crew);
+    const { leaderCount, mvCount, gaCount, mvGaCount, hasMV, hasGA, hasMV_GA } = getCrewRoles(crew);
     const disabled = new Set<string>();
 
     // LEADER: max 1
     if (leaderCount >= 1 && currentRole !== 'LEADER') disabled.add('LEADER');
+    // MV: max 1
+    if (mvCount >= 1 && currentRole !== 'MV') disabled.add('MV');
+    // GA: max 1
+    if (gaCount >= 1 && currentRole !== 'GA') disabled.add('GA');
+    // MV/GA: max 1
+    if (mvGaCount >= 1 && currentRole !== 'MV_GA') disabled.add('MV_GA');
 
     // Prevent all three: MV + GA + MV_GA
     // If MV and GA both exist → block MV_GA
