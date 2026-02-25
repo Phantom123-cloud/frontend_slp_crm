@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { usersApi, type UserDetailed } from '../../api/users';
 import { usePermission } from '../../hooks/usePermission';
+import { useTableFilters } from '../../utils/tableFilters';
 
 const { useBreakpoint } = Grid;
 
@@ -27,6 +28,8 @@ export default function UsersListPage() {
   const canForceLogout = usePermission('users.force_logout');
   const canBlock = usePermission('users.block');
   const hasAnyAction = canForceLogout || canBlock;
+
+  const { colSearch, colEnum } = useTableFilters();
 
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -128,6 +131,18 @@ export default function UsersListPage() {
     Modal.confirm({ title, onOk, okText: t('common.save'), cancelText: t('common.cancel') });
   };
 
+  // Когда колонковый фильтр меняется — передаём значение в серверный search и сбрасываем страницу
+  const handleTableChange = (_: any, filters: Record<string, any>) => {
+    const combined = Object.values(filters)
+      .flat()
+      .filter(Boolean)
+      .map(String)
+      .join(' ')
+      .trim();
+    setSearch(combined);
+    setPage(1);
+  };
+
   const boolLabel = (val?: boolean | null) =>
     val === true ? t('users.yes') : val === false ? t('users.no') : '—';
 
@@ -220,6 +235,7 @@ export default function UsersListPage() {
       dataIndex: 'email',
       key: 'email',
       ellipsis: true,
+      ...colSearch((r: UserDetailed) => r.email || ''),
       render: (email: string, record: UserDetailed) => (
         <a onClick={() => navigate(`/users/${record.id}`)}>{email}</a>
       ),
@@ -228,6 +244,7 @@ export default function UsersListPage() {
       title: t('users.fullName'),
       key: 'fullName',
       ellipsis: true,
+      ...colSearch((r: UserDetailed) => `${r.lastName} ${r.firstName}`),
       render: (_: any, record: UserDetailed) => (
         <Space>
           <Badge status={record.isOnline ? 'success' : 'default'} />
@@ -239,6 +256,13 @@ export default function UsersListPage() {
       title: t('users.isCoordinatorShort'),
       key: 'isCoordinator',
       width: 130,
+      ...colEnum(
+        [
+          { text: t('users.yes'), value: true },
+          { text: t('users.no'), value: false },
+        ],
+        (v, r: UserDetailed) => r.isCoordinator === v,
+      ),
       render: (_: any, record: UserDetailed) => (
         <Tag color={record.isCoordinator ? 'blue' : 'default'}>
           {record.isCoordinator ? t('users.yes') : t('users.no')}
@@ -250,6 +274,9 @@ export default function UsersListPage() {
       key: 'coordinator',
       width: 180,
       ellipsis: true,
+      ...colSearch((r: UserDetailed) =>
+        r.coordinator ? `${r.coordinator.lastName} ${r.coordinator.firstName}` : '',
+      ),
       render: (_: any, record: UserDetailed) =>
         record.coordinator
           ? `${record.coordinator.lastName} ${record.coordinator.firstName}`
@@ -350,6 +377,7 @@ export default function UsersListPage() {
         loading={isLoading}
         scroll={{ x: isMobile ? 500 : 900 }}
         size={isMobile ? 'small' : 'middle'}
+        onChange={handleTableChange}
         expandable={{
           expandedRowRender,
           rowExpandable: () => true,

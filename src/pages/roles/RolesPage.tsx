@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { rolesApi } from '../../api/roles';
 import { usePermission } from '../../hooks/usePermission';
+import { useTableFilters } from '../../utils/tableFilters';
 
 const { useBreakpoint } = Grid;
 
@@ -20,6 +21,8 @@ export default function RolesPage() {
   const canCreate = usePermission('roles.create');
   const canEdit = usePermission('roles.edit');
   const canDelete = usePermission('roles.delete');
+
+  const { colSearch } = useTableFilters();
 
   const [roleModal, setRoleModal] = useState(false);
   const [permModal, setPermModal] = useState(false);
@@ -137,8 +140,8 @@ export default function RolesPage() {
         scroll={{ x: isMobile ? 500 : undefined }}
         size={isMobile ? 'small' : 'middle'}
         columns={[
-          { title: t('roles.name'), dataIndex: 'name', width: isMobile ? 100 : 180 },
-          ...(!isMobile ? [{ title: t('roles.description'), dataIndex: 'description', width: 200 }] : []),
+          { title: t('roles.name'), dataIndex: 'name', width: isMobile ? 100 : 180, ...colSearch((r: any) => r.name || '') },
+          ...(!isMobile ? [{ title: t('roles.description'), dataIndex: 'description', width: 200, ...colSearch((r: any) => r.description || '') }] : []),
           {
             title: t('roles.permissions'),
             render: (_: any, r: any) => {

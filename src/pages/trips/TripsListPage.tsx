@@ -37,6 +37,7 @@ export default function TripsListPage() {
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('active');
+  const [tablePage, setTablePage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const loadTrips = async () => {
@@ -53,6 +54,7 @@ export default function TripsListPage() {
 
   useEffect(() => {
     loadTrips();
+    setTablePage(1);
   }, [filter]);
 
   const handleDelete = async (id: string) => {
@@ -216,7 +218,11 @@ export default function TripsListPage() {
         columns={columns}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 20 }}
+        pagination={{ pageSize: 20, current: tablePage }}
+        onChange={(pg, filters) => {
+          const hasFilter = Object.values(filters).some((f) => f && f.length > 0);
+          setTablePage(hasFilter ? 1 : (pg.current ?? 1));
+        }}
         size="small"
         expandable={{
           expandedRowRender: tripExpandedRowRender,

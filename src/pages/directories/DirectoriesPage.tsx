@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Tabs, Table, Button, Modal, Form, Input, Space, Popconfirm, message, Typography } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { directoriesApi } from '../../api/directories';
 import { usePermission } from '../../hooks/usePermission';
+import { useTableFilters } from '../../utils/tableFilters';
 
 const { Title } = Typography;
 
 export default function DirectoriesPage() {
   const { t } = useTranslation();
   const canManage = usePermission('directories.manage');
+  const { colSearch } = useTableFilters();
 
   // === Presentation Types ===
   const [types, setTypes] = useState<any[]>([]);
   const [typesLoading, setTypesLoading] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [editType, setEditType] = useState<any>(null);
   const [typeForm] = Form.useForm();
+  const [editTypeForm] = Form.useForm();
 
   const loadTypes = async () => {
     setTypesLoading(true);
@@ -41,6 +45,17 @@ export default function DirectoriesPage() {
     }
   };
 
+  const handleUpdateType = async (values: any) => {
+    try {
+      await directoriesApi.updatePresentationType(editType.id, values);
+      message.success(t('common.success'));
+      setEditType(null);
+      loadTypes();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || 'common.error'));
+    }
+  };
+
   const handleDeleteType = async (id: string) => {
     try {
       await directoriesApi.deletePresentationType(id);
@@ -55,7 +70,9 @@ export default function DirectoriesPage() {
   const [venues, setVenues] = useState<any[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(false);
   const [venueModalOpen, setVenueModalOpen] = useState(false);
+  const [editVenue, setEditVenue] = useState<any>(null);
   const [venueForm] = Form.useForm();
+  const [editVenueForm] = Form.useForm();
 
   const loadVenues = async () => {
     setVenuesLoading(true);
@@ -81,6 +98,17 @@ export default function DirectoriesPage() {
     }
   };
 
+  const handleUpdateVenue = async (values: any) => {
+    try {
+      await directoriesApi.updateVenue(editVenue.id, values);
+      message.success(t('common.success'));
+      setEditVenue(null);
+      loadVenues();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || 'common.error'));
+    }
+  };
+
   const handleDeleteVenue = async (id: string) => {
     try {
       await directoriesApi.deleteVenue(id);
@@ -96,33 +124,97 @@ export default function DirectoriesPage() {
     loadVenues();
   }, []);
 
+  // === Columns ===
+
   const typeColumns = [
-    { title: t('directories.name'), dataIndex: 'name', key: 'name' },
-    { title: t('directories.description'), dataIndex: 'description', key: 'description' },
+    {
+      title: t('directories.name'),
+      dataIndex: 'name',
+      key: 'name',
+      ...colSearch((r: any) => r.name || ''),
+    },
+    {
+      title: t('directories.description'),
+      dataIndex: 'description',
+      key: 'description',
+      ...colSearch((r: any) => r.description || ''),
+      render: (v: any) => v || '—',
+    },
     ...(canManage ? [{
       title: t('users.actions'),
       key: 'actions',
-      width: 80,
+      width: 100,
       render: (_: any, record: any) => (
-        <Popconfirm title={t('directories.deleteConfirm')} onConfirm={() => handleDeleteType(record.id)} okText={t('users.yes')} cancelText={t('users.no')}>
-          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
+        <Space size={4}>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => {
+              setEditType(record);
+              editTypeForm.setFieldsValue({ name: record.name, description: record.description });
+            }}
+          />
+          <Popconfirm
+            title={t('directories.deleteConfirm')}
+            onConfirm={() => handleDeleteType(record.id)}
+            okText={t('users.yes')}
+            cancelText={t('users.no')}
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+          </Popconfirm>
+        </Space>
       ),
     }] : []),
   ];
 
   const venueColumns = [
-    { title: t('directories.city'), dataIndex: 'city', key: 'city' },
-    { title: t('directories.venueName'), dataIndex: 'venueName', key: 'venueName' },
-    { title: t('directories.address'), dataIndex: 'address', key: 'address' },
+    {
+      title: t('directories.city'),
+      dataIndex: 'city',
+      key: 'city',
+      ...colSearch((r: any) => r.city || ''),
+    },
+    {
+      title: t('directories.venueName'),
+      dataIndex: 'venueName',
+      key: 'venueName',
+      ...colSearch((r: any) => r.venueName || ''),
+    },
+    {
+      title: t('directories.address'),
+      dataIndex: 'address',
+      key: 'address',
+      ...colSearch((r: any) => r.address || ''),
+    },
     ...(canManage ? [{
       title: t('users.actions'),
       key: 'actions',
-      width: 80,
+      width: 100,
       render: (_: any, record: any) => (
-        <Popconfirm title={t('directories.deleteConfirm')} onConfirm={() => handleDeleteVenue(record.id)} okText={t('users.yes')} cancelText={t('users.no')}>
-          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
+        <Space size={4}>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => {
+              setEditVenue(record);
+              editVenueForm.setFieldsValue({
+                city: record.city,
+                venueName: record.venueName,
+                address: record.address,
+              });
+            }}
+          />
+          <Popconfirm
+            title={t('directories.deleteConfirm')}
+            onConfirm={() => handleDeleteVenue(record.id)}
+            okText={t('users.yes')}
+            cancelText={t('users.no')}
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+          </Popconfirm>
+        </Space>
       ),
     }] : []),
   ];
@@ -150,7 +242,7 @@ export default function DirectoriesPage() {
                   columns={typeColumns}
                   rowKey="id"
                   loading={typesLoading}
-                  pagination={false}
+                  pagination={{ pageSize: 10, showSizeChanger: false, hideOnSinglePage: true }}
                   size="small"
                 />
               </>
@@ -173,7 +265,7 @@ export default function DirectoriesPage() {
                   columns={venueColumns}
                   rowKey="id"
                   loading={venuesLoading}
-                  pagination={false}
+                  pagination={{ pageSize: 10, showSizeChanger: false, hideOnSinglePage: true }}
                   size="small"
                 />
               </>
@@ -201,6 +293,26 @@ export default function DirectoriesPage() {
         </Form>
       </Modal>
 
+      {/* Edit Presentation Type */}
+      <Modal
+        title={t('common.edit')}
+        open={!!editType}
+        onCancel={() => setEditType(null)}
+        onOk={() => editTypeForm.submit()}
+        okText={t('common.save')}
+        cancelText={t('common.cancel')}
+        destroyOnClose
+      >
+        <Form form={editTypeForm} onFinish={handleUpdateType} layout="vertical">
+          <Form.Item name="name" label={t('directories.name')} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="description" label={t('directories.description')}>
+            <Input.TextArea rows={2} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
       {/* Create Venue */}
       <Modal
         title={t('directories.addVenue')}
@@ -211,6 +323,29 @@ export default function DirectoriesPage() {
         cancelText={t('common.cancel')}
       >
         <Form form={venueForm} onFinish={handleCreateVenue} layout="vertical">
+          <Form.Item name="city" label={t('directories.city')} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="venueName" label={t('directories.venueName')} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="address" label={t('directories.address')} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Edit Venue */}
+      <Modal
+        title={t('common.edit')}
+        open={!!editVenue}
+        onCancel={() => setEditVenue(null)}
+        onOk={() => editVenueForm.submit()}
+        okText={t('common.save')}
+        cancelText={t('common.cancel')}
+        destroyOnClose
+      >
+        <Form form={editVenueForm} onFinish={handleUpdateVenue} layout="vertical">
           <Form.Item name="city" label={t('directories.city')} rules={[{ required: true }]}>
             <Input />
           </Form.Item>

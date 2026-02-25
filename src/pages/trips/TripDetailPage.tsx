@@ -66,6 +66,7 @@ export default function TripDetailPage() {
   const [datesLoading, setDatesLoading] = useState(false);
   const [summaryPresId, setSummaryPresId] = useState<string | null>(null);
   const [crewPresId, setCrewPresId] = useState<string | null>(null);
+  const [presTablePage, setPresTablePage] = useState(1);
 
   const loadTrip = async () => {
     if (!id) return;
@@ -211,6 +212,7 @@ export default function TripDetailPage() {
     {
       title: t('trips.presentationName'),
       key: 'name',
+      ...colSearch((r: any) => r.name || ''),
       render: (_: any, r: any) => (
         <a onClick={() => navigate(`/presentations/${r.id}`)}>{r.name}</a>
       ),
@@ -218,22 +220,33 @@ export default function TripDetailPage() {
     {
       title: t('trips.presentationDate'),
       key: 'date',
+      ...colSearch((r: any) => dayjs(r.date).format('DD.MM.YYYY')),
       render: (_: any, r: any) => dayjs(r.date).format('DD.MM.YYYY'),
     },
     { title: t('trips.presentationTime'), dataIndex: 'time', key: 'time' },
     {
       title: t('trips.presentationType'),
       key: 'type',
+      ...colSearch((r: any) => r.type?.name || ''),
       render: (_: any, r: any) => r.type?.name || '—',
     },
     {
       title: t('trips.venue'),
       key: 'venue',
+      ...colSearch((r: any) => r.venue ? `${r.venue.city} / ${r.venue.venueName}` : ''),
       render: (_: any, r: any) => r.venue ? `${r.venue.city} / ${r.venue.venueName}` : '—',
     },
     {
       title: t('trips.status'),
       key: 'status',
+      ...colEnum(
+        [
+          { text: t('trips.presStatus_PLANNED'), value: 'PLANNED' },
+          { text: t('trips.presStatus_COMPLETED'), value: 'COMPLETED' },
+          { text: t('trips.presStatus_CANCELLED'), value: 'CANCELLED' },
+        ],
+        (v, r: any) => r.status === v,
+      ),
       render: (_: any, r: any) => (
         <Tag color={PRES_STATUS_COLORS[r.status]}>{t(`trips.presStatus_${r.status}`)}</Tag>
       ),
@@ -246,6 +259,7 @@ export default function TripDetailPage() {
     {
       title: t('trips.createdBy'),
       key: 'createdBy',
+      ...colSearch((r: any) => r.createdBy ? `${r.createdBy.lastName} ${r.createdBy.firstName}` : ''),
       render: (_: any, r: any) =>
         r.createdBy ? `${r.createdBy.lastName} ${r.createdBy.firstName}` : '—',
     },
@@ -292,16 +306,28 @@ export default function TripDetailPage() {
     {
       title: t('users.fullName'),
       key: 'name',
+      ...colSearch((r: any) => `${r.user.lastName} ${r.user.firstName}`),
       render: (_: any, r: any) => `${r.user.lastName} ${r.user.firstName}`,
     },
     {
       title: t('users.tradeCode'),
       key: 'tradeCode',
+      ...colSearch((r: any) => r.user.tradeCode || ''),
       render: (_: any, r: any) => r.user.tradeCode || '—',
     },
     {
       title: t('trips.crewRole'),
       key: 'role',
+      ...colEnum(
+        [
+          { text: t('trips.role_LEADER'), value: 'LEADER' },
+          { text: t('trips.role_MV'), value: 'MV' },
+          { text: t('trips.role_GA'), value: 'GA' },
+          { text: t('trips.role_MV_GA'), value: 'MV_GA' },
+          { text: t('trips.role_TRADER'), value: 'TRADER' },
+        ],
+        (v, r: any) => r.role === v,
+      ),
       render: (_: any, r: any) => t(`trips.role_${r.role}`),
     },
   ];
@@ -419,7 +445,11 @@ export default function TripDetailPage() {
                   dataSource={trip.presentations}
                   columns={presColumns}
                   rowKey="id"
-                  pagination={{ pageSize: 10, showSizeChanger: false }}
+                  pagination={{ pageSize: 10, showSizeChanger: false, current: presTablePage }}
+                  onChange={(pg, filters) => {
+                    const hasFilter = Object.values(filters).some((f) => f && f.length > 0);
+                    setPresTablePage(hasFilter ? 1 : (pg.current ?? 1));
+                  }}
                   size="small"
                   expandable={{
                     expandedRowRender: presExpandedRowRender,
