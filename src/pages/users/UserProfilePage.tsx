@@ -245,6 +245,16 @@ export default function UserProfilePage() {
       }}
       style={{ maxWidth: isMobile ? '100%' : 700 }}
     >
+      <Form.Item name="lastName" label={t('users.lastName')} rules={[{ required: true, whitespace: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="firstName" label={t('users.firstName')} rules={[{ required: true, whitespace: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name="middleName" label={t('users.middleName')}>
+        <Input />
+      </Form.Item>
+
       <Form.Item name="tradeCode" label={t('users.tradeCode')}>
         <Input />
       </Form.Item>

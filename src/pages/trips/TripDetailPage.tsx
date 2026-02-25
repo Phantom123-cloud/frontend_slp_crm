@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography, Tag, Button, Space, Table, Card, Descriptions, Popconfirm,
-  message, Spin, Select, Modal, Divider, Tooltip,
+  message, Spin, Select, Modal, Divider, Tooltip, DatePicker, Tabs,
 } from 'antd';
 import {
   EditOutlined, DeleteOutlined, LockOutlined, UnlockOutlined,
-  PlusOutlined, ArrowLeftOutlined, TeamOutlined,
+  PlusOutlined, ArrowLeftOutlined, TeamOutlined, BarChartOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { tripsApi, presentationsApi } from '../../api/trips';
 import { usePermission } from '../../hooks/usePermission';
+import { useTableFilters } from '../../utils/tableFilters';
 import CrewModal from './components/CrewModal';
 import PresentationCreateModal from './components/PresentationCreateModal';
+import PresentationSummaryModal from './components/PresentationSummaryModal';
+import PresentationCrewModal from './components/PresentationCrewModal';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -29,6 +32,14 @@ const PRES_STATUS_COLORS: Record<string, string> = {
   CANCELLED: 'red',
 };
 
+const CREW_ROLE_COLORS: Record<string, string> = {
+  LEADER: 'purple',
+  MV:     'blue',
+  GA:     'cyan',
+  MV_GA:  'geekblue',
+  TRADER: 'orange',
+};
+
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -38,7 +49,10 @@ export default function TripDetailPage() {
   const canDelete = usePermission('trips.delete');
   const canAdmin = usePermission('trips.admin');
   const canCreatePresentation = usePermission('presentations.create');
+  const canEditPresentation = usePermission('presentations.edit');
   const canDeletePresentation = usePermission('presentations.delete');
+
+  const { colSearch, colEnum } = useTableFilters();
 
   const [trip, setTrip] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -47,6 +61,11 @@ export default function TripDetailPage() {
   const [coordinatorModalOpen, setCoordinatorModalOpen] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [selectedCoordinator, setSelectedCoordinator] = useState<string>('');
+  const [datesModalOpen, setDatesModalOpen] = useState(false);
+  const [newDates, setNewDates] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+  const [datesLoading, setDatesLoading] = useState(false);
+  const [summaryPresId, setSummaryPresId] = useState<string | null>(null);
+  const [crewPresId, setCrewPresId] = useState<string | null>(null);
 
   const loadTrip = async () => {
     if (!id) return;
@@ -106,6 +125,29 @@ export default function TripDetailPage() {
     }
   };
 
+  const openDatesModal = () => {
+    setNewDates([dayjs(trip.startDate), dayjs(trip.endDate)]);
+    setDatesModalOpen(true);
+  };
+
+  const handleDatesUpdate = async () => {
+    if (!newDates || !newDates[0] || !newDates[1]) return;
+    setDatesLoading(true);
+    try {
+      await tripsApi.update(id!, {
+        startDate: newDates[0].format('YYYY-MM-DD'),
+        endDate: newDates[1].format('YYYY-MM-DD'),
+      });
+      message.success(t('common.success'));
+      setDatesModalOpen(false);
+      loadTrip();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || 'common.error'));
+    } finally {
+      setDatesLoading(false);
+    }
+  };
+
   const handleCoordinatorSave = async () => {
     if (!selectedCoordinator) return;
     try {
@@ -129,9 +171,50 @@ export default function TripDetailPage() {
   const isClosed = trip.status === 'CLOSED';
   const canModify = canEdit && (!isClosed || canAdmin);
 
+  const presExpandedRowRender = (record: any) => {
+    if (!record.crew?.length) {
+      return <Text type="secondary" style={{ paddingLeft: 8 }}>{t('trips.noCrew')}</Text>;
+    }
+    return (
+      <Table
+        dataSource={record.crew}
+        rowKey="id"
+        size="small"
+        pagination={false}
+        style={{ margin: '4px 0' }}
+        columns={[
+          {
+            title: t('users.fullName'),
+            key: 'name',
+            render: (_: any, r: any) =>
+              `${r.user.lastName} ${r.user.firstName}${r.user.middleName ? ' ' + r.user.middleName : ''}`,
+          },
+          {
+            title: t('users.tradeCode'),
+            key: 'tradeCode',
+            render: (_: any, r: any) => r.user.tradeCode || '—',
+          },
+          {
+            title: t('trips.crewRole'),
+            key: 'role',
+            render: (_: any, r: any) => (
+              <Tag color={CREW_ROLE_COLORS[r.role]}>{t(`trips.role_${r.role}`)}</Tag>
+            ),
+          },
+        ]}
+      />
+    );
+  };
+
   const presColumns = [
     { title: '#', dataIndex: 'number', key: 'number', width: 50 },
-    { title: t('trips.presentationName'), dataIndex: 'name', key: 'name' },
+    {
+      title: t('trips.presentationName'),
+      key: 'name',
+      render: (_: any, r: any) => (
+        <a onClick={() => navigate(`/presentations/${r.id}`)}>{r.name}</a>
+      ),
+    },
     {
       title: t('trips.presentationDate'),
       key: 'date',
@@ -160,39 +243,66 @@ export default function TripDetailPage() {
       key: 'crew',
       render: (_: any, r: any) => r.crew?.length ?? 0,
     },
-    ...(canDeletePresentation && canModify ? [{
+    {
+      title: t('trips.createdBy'),
+      key: 'createdBy',
+      render: (_: any, r: any) =>
+        r.createdBy ? `${r.createdBy.lastName} ${r.createdBy.firstName}` : '—',
+    },
+    {
       title: t('users.actions'),
       key: 'actions',
-      width: 80,
+      width: 120,
       render: (_: any, r: any) => (
-        <Popconfirm
-          title={dayjs(r.date).isBefore(dayjs()) ? t('trips.cancelPresentationConfirm') : t('trips.deletePresentationConfirm')}
-          onConfirm={() => handleDeletePresentation(r.id)}
-          okText={t('users.yes')}
-          cancelText={t('users.no')}
-        >
-          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
+        <Space>
+          {canEditPresentation && canModify && (
+            <Tooltip title={t('trips.enterCrew')}>
+              <Button
+                type="text"
+                icon={<TeamOutlined />}
+                size="small"
+                onClick={() => setCrewPresId(r.id)}
+              />
+            </Tooltip>
+          )}
+          <Tooltip title={t('trips.summaryTitle')}>
+            <Button
+              type="text"
+              icon={<BarChartOutlined />}
+              size="small"
+              onClick={() => setSummaryPresId(r.id)}
+            />
+          </Tooltip>
+          {canDeletePresentation && canModify && (
+            <Popconfirm
+              title={dayjs(r.date).isBefore(dayjs()) ? t('trips.cancelPresentationConfirm') : t('trips.deletePresentationConfirm')}
+              onConfirm={() => handleDeletePresentation(r.id)}
+              okText={t('users.yes')}
+              cancelText={t('users.no')}
+            >
+              <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+            </Popconfirm>
+          )}
+        </Space>
       ),
-    }] : []),
+    },
   ];
 
   const crewColumns = [
     {
-      title: t('trips.crewRole'),
-      dataIndex: 'role',
-      key: 'role',
-      render: (role: string) => <Tag>{t(`trips.role_${role}`)}</Tag>,
-    },
-    {
       title: t('users.fullName'),
       key: 'name',
-      render: (_: any, r: any) => `${r.user.lastName} ${r.user.firstName}${r.user.middleName ? ' ' + r.user.middleName : ''}`,
+      render: (_: any, r: any) => `${r.user.lastName} ${r.user.firstName}`,
     },
     {
       title: t('users.tradeCode'),
       key: 'tradeCode',
       render: (_: any, r: any) => r.user.tradeCode || '—',
+    },
+    {
+      title: t('trips.crewRole'),
+      key: 'role',
+      render: (_: any, r: any) => t(`trips.role_${r.role}`),
     },
   ];
 
@@ -214,7 +324,7 @@ export default function TripDetailPage() {
             </Popconfirm>
           )}
           {canAdmin && isClosed && (
-            <Popconfirm title={t('trips.openConfirm')} onConfirm={() => handleStatusChange('ACTIVE')}>
+            <Popconfirm title={t('trips.openConfirm')} onConfirm={() => handleStatusChange('PLANNED')}>
               <Button icon={<UnlockOutlined />}>{t('trips.openTrip')}</Button>
             </Popconfirm>
           )}
@@ -229,7 +339,14 @@ export default function TripDetailPage() {
       <Descriptions bordered size="small" column={{ xs: 1, sm: 2 }} style={{ marginBottom: 24 }}>
         <Descriptions.Item label={t('trips.teamName')}>{trip.teamName}</Descriptions.Item>
         <Descriptions.Item label={t('trips.dates')}>
-          {dayjs(trip.startDate).format('DD.MM.YYYY')} — {dayjs(trip.endDate).format('DD.MM.YYYY')}
+          <Space>
+            {dayjs(trip.startDate).format('DD.MM.YYYY')} — {dayjs(trip.endDate).format('DD.MM.YYYY')}
+            {canModify && (
+              <Tooltip title={t('trips.editDates')}>
+                <Button type="text" icon={<EditOutlined />} size="small" onClick={openDatesModal} />
+              </Tooltip>
+            )}
+          </Space>
         </Descriptions.Item>
         <Descriptions.Item label={t('trips.coordinator')}>
           <Space>
@@ -271,19 +388,75 @@ export default function TripDetailPage() {
         )}
       </Card>
 
-      {/* Presentations */}
-      <Card
-        title={t('trips.presentations')}
-        extra={
-          canCreatePresentation && canModify && (
-            <Button type="primary" icon={<PlusOutlined />} size="small" onClick={() => setPresCreateOpen(true)}>
-              {t('trips.createPresentation')}
-            </Button>
-          )
-        }
-        size="small"
-      >
-        <Table dataSource={trip.presentations} columns={presColumns} rowKey="id" pagination={false} size="small" />
+      {/* Tabs: Presentations / Warehouse / Wallet / Contracts */}
+      <Card size="small" bodyStyle={{ padding: 0 }}>
+        <Tabs
+          defaultActiveKey="presentations"
+          style={{ padding: '0 16px' }}
+          tabBarExtraContent={
+            canCreatePresentation && canModify ? (
+              <Tooltip
+                title={!trip.crew?.length ? t('errors.tripNoCrewForPresentation') : undefined}
+              >
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  size="small"
+                  disabled={!trip.crew?.length}
+                  onClick={() => setPresCreateOpen(true)}
+                >
+                  {t('trips.createPresentation')}
+                </Button>
+              </Tooltip>
+            ) : null
+          }
+          items={[
+            {
+              key: 'presentations',
+              label: t('trips.presentations'),
+              children: (
+                <Table
+                  dataSource={trip.presentations}
+                  columns={presColumns}
+                  rowKey="id"
+                  pagination={{ pageSize: 10, showSizeChanger: false }}
+                  size="small"
+                  expandable={{
+                    expandedRowRender: presExpandedRowRender,
+                    rowExpandable: () => true,
+                  }}
+                />
+              ),
+            },
+            {
+              key: 'warehouse',
+              label: t('trips.warehouse'),
+              children: (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+                  {t('trips.tabPlaceholder')}
+                </div>
+              ),
+            },
+            {
+              key: 'wallet',
+              label: t('trips.wallet'),
+              children: (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+                  {t('trips.tabPlaceholder')}
+                </div>
+              ),
+            },
+            {
+              key: 'contracts',
+              label: t('trips.contracts'),
+              children: (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
+                  {t('trips.tabPlaceholder')}
+                </div>
+              ),
+            },
+          ]}
+        />
       </Card>
 
       {/* Crew modal */}
@@ -303,6 +476,46 @@ export default function TripDetailPage() {
         onClose={() => setPresCreateOpen(false)}
         onCreated={() => { setPresCreateOpen(false); loadTrip(); }}
       />
+
+      {/* Presentation crew modal */}
+      {crewPresId && (
+        <PresentationCrewModal
+          open={!!crewPresId}
+          presentationId={crewPresId}
+          currentCrew={trip.presentations?.find((p: any) => p.id === crewPresId)?.crew || []}
+          coordinator={trip.coordinator}
+          onClose={() => setCrewPresId(null)}
+          onSaved={() => { setCrewPresId(null); loadTrip(); }}
+        />
+      )}
+
+      {/* Presentation summary modal */}
+      {summaryPresId && (
+        <PresentationSummaryModal
+          open={!!summaryPresId}
+          presentationId={summaryPresId}
+          canSave={canEditPresentation && canModify}
+          onClose={() => setSummaryPresId(null)}
+        />
+      )}
+
+      {/* Dates edit modal */}
+      <Modal
+        title={t('trips.editDates')}
+        open={datesModalOpen}
+        onCancel={() => setDatesModalOpen(false)}
+        onOk={handleDatesUpdate}
+        okText={t('common.save')}
+        cancelText={t('common.cancel')}
+        confirmLoading={datesLoading}
+      >
+        <DatePicker.RangePicker
+          value={newDates}
+          onChange={(dates) => setNewDates(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
+          format="DD.MM.YYYY"
+          style={{ width: '100%' }}
+        />
+      </Modal>
 
       {/* Coordinator change modal */}
       <Modal

@@ -19,6 +19,7 @@ import AuditPage from './pages/AuditPage';
 import ProjectMapPage from './pages/ProjectMapPage';
 import TripsListPage from './pages/trips/TripsListPage';
 import TripDetailPage from './pages/trips/TripDetailPage';
+import PresentationDetailPage from './pages/trips/PresentationDetailPage';
 import DirectoriesPage from './pages/directories/DirectoriesPage';
 
 const queryClient = new QueryClient({
@@ -150,6 +151,7 @@ export default function App() {
               <Route path="audit" element={<PermissionRoute permission="audit.view"><AuditPage /></PermissionRoute>} />
               <Route path="trips" element={<TripsListPage />} />
               <Route path="trips/:id" element={<TripDetailPage />} />
+              <Route path="presentations/:id" element={<PresentationDetailPage />} />
               <Route path="directories" element={<DirectoriesPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" />} />

@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Modal, Select, Button, Space, message, Typography, Alert } from 'antd';
+import { Modal, Select, Button, Space, message, Alert, Descriptions } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { tripsApi } from '../../../api/trips';
+import { tripsApi, presentationsApi } from '../../../api/trips';
 
-const { Text } = Typography;
-
-const TRIP_CREW_ROLES = ['LEADER', 'MV', 'GA', 'MV_GA', 'TRADER'] as const;
+const PRES_CREW_ROLES = ['LEADER', 'MV', 'GA', 'MV_GA', 'TRADER'] as const;
 
 interface Props {
   open: boolean;
-  tripId: string;
+  presentationId: string;
   currentCrew: any[];
+  coordinator: any | null;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved }: Props) {
+export default function PresentationCrewModal({
+  open,
+  presentationId,
+  currentCrew,
+  coordinator,
+  onClose,
+  onSaved,
+}: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
@@ -31,7 +37,6 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
     }
   }, [open, currentCrew]);
 
-  // === Validation logic ===
   const getCrewRoles = (crewList: { role: string }[]) => {
     const roles = crewList.map((m) => m.role);
     return {
@@ -47,53 +52,30 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
   };
 
   const validate = (crewList: { userId: string; role: string }[]): string | null => {
-    const validMembers = crewList.filter((m) => m.userId && m.role);
-    if (validMembers.length === 0) return null;
-
-    const { leaderCount, traderCount, hasMV, hasGA, hasMV_GA } = getCrewRoles(validMembers);
-
+    const valid = crewList.filter((m) => m.userId && m.role);
+    if (valid.length === 0) return null;
+    const { leaderCount, hasMV, hasGA, hasMV_GA } = getCrewRoles(valid);
     if (leaderCount > 1) return t('errors.crewOneLeader');
-    if (traderCount > 20) return t('errors.crewMaxTraders');
-
-    // Valid combos: MV+GA, GA+MV_GA, MV+MV_GA, MV_GA alone
-    // Forbidden: all three (MV + GA + MV_GA)
     if (hasMV && hasGA && hasMV_GA) return t('errors.crewMvGaConflict');
-    // Can't have MV alone (needs GA or MV_GA)
     if (hasMV && !hasGA && !hasMV_GA) return t('errors.crewMvNeedsGa');
-    // Can't have GA alone (needs MV or MV_GA)
     if (hasGA && !hasMV && !hasMV_GA) return t('errors.crewGaNeedsMv');
-
     return null;
   };
 
-  // Determine which roles are disabled for a given row
   const getDisabledRoles = (currentRole: string): Set<string> => {
     const { leaderCount, mvCount, gaCount, mvGaCount, hasMV, hasGA, hasMV_GA } = getCrewRoles(crew);
     const disabled = new Set<string>();
-
-    // LEADER: max 1
     if (leaderCount >= 1 && currentRole !== 'LEADER') disabled.add('LEADER');
-    // MV: max 1
     if (mvCount >= 1 && currentRole !== 'MV') disabled.add('MV');
-    // GA: max 1
     if (gaCount >= 1 && currentRole !== 'GA') disabled.add('GA');
-    // MV/GA: max 1
     if (mvGaCount >= 1 && currentRole !== 'MV_GA') disabled.add('MV_GA');
-
-    // Prevent all three: MV + GA + MV_GA
-    // If MV and GA both exist → block MV_GA
     if (hasMV && hasGA) disabled.add('MV_GA');
-    // If GA and MV_GA both exist → block MV
     if (hasGA && hasMV_GA) disabled.add('MV');
-    // If MV and MV_GA both exist → block GA
     if (hasMV && hasMV_GA) disabled.add('GA');
-
     return disabled;
   };
 
-  const addMember = () => {
-    setCrew([...crew, { userId: '', role: 'TRADER' }]);
-  };
+  const addMember = () => setCrew([...crew, { userId: '', role: 'TRADER' }]);
 
   const removeMember = (index: number) => {
     const updated = crew.filter((_, i) => i !== index);
@@ -111,14 +93,10 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
   const handleSave = async () => {
     const validCrew = crew.filter((m) => m.userId && m.role);
     const error = validate(validCrew);
-    if (error) {
-      setValidationError(error);
-      return;
-    }
-
+    if (error) { setValidationError(error); return; }
     setLoading(true);
     try {
-      await tripsApi.setCrew(tripId, validCrew);
+      await presentationsApi.setCrew(presentationId, validCrew);
       message.success(t('common.success'));
       onSaved();
     } catch (e: any) {
@@ -135,13 +113,9 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
 
   const selectedUserIds = crew.map((m) => m.userId).filter(Boolean);
 
-  // Check limits for add button
-  const { leaderCount, traderCount } = getCrewRoles(crew);
-  const totalCount = crew.length;
-
   return (
     <Modal
-      title={t('trips.editCrew')}
+      title={t('trips.enterCrew')}
       open={open}
       onCancel={onClose}
       onOk={handleSave}
@@ -149,8 +123,17 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
       okText={t('common.save')}
       cancelText={t('common.cancel')}
       okButtonProps={{ disabled: !!validationError }}
-      width={600}
+      width={640}
     >
+      {/* Координатор — только для информации, задаётся с выезда */}
+      {coordinator && (
+        <Descriptions size="small" bordered style={{ marginBottom: 12 }}>
+          <Descriptions.Item label={t('trips.coordinator')}>
+            {coordinator.lastName} {coordinator.firstName}
+          </Descriptions.Item>
+        </Descriptions>
+      )}
+
       {validationError && (
         <Alert message={validationError} type="error" showIcon style={{ marginBottom: 12 }} />
       )}
@@ -163,7 +146,7 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
               value={member.role}
               onChange={(v) => updateMember(index, 'role', v)}
               style={{ width: 120 }}
-              options={TRIP_CREW_ROLES.map((r) => ({
+              options={PRES_CREW_ROLES.map((r) => ({
                 value: r,
                 label: t(`trips.role_${r}`),
                 disabled: disabledRoles.has(r) && r !== member.role,
@@ -172,7 +155,7 @@ export default function CrewModal({ open, tripId, currentCrew, onClose, onSaved 
             <Select
               value={member.userId || undefined}
               onChange={(v) => updateMember(index, 'userId', v)}
-              style={{ width: 320 }}
+              style={{ width: 360 }}
               showSearch
               optionFilterProp="label"
               placeholder={t('trips.selectUser')}

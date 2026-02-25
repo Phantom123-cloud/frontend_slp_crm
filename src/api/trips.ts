@@ -34,4 +34,10 @@ export const presentationsApi = {
   delete: (id: string) => api.delete(`/presentations/${id}`),
   setCrew: (id: string, crew: { userId: string; role: string }[]) =>
     api.patch(`/presentations/${id}/crew`, { crew }),
+  updateCoordinator: (id: string, coordinatorId: string) =>
+    api.patch(`/presentations/${id}`, { coordinatorId }),
+  getSummary: (id: string) =>
+    api.get(`/presentations/${id}/summary`),
+  saveSummary: (id: string, rows: any[]) =>
+    api.post(`/presentations/${id}/summary`, { rows }),
 };
