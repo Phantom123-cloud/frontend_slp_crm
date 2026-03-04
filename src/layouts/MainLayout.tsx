@@ -83,6 +83,16 @@ export default function MainLayout() {
   const canViewPresentations =
     usePermission("presentations.view-all") ||
     usePermission("presentations.view-person");
+  const canViewTrips =
+    usePermission("trips.view-all") || usePermission("trips.view-person");
+
+  const tripsChildren = [
+    canViewTrips && { key: "/trips", label: t("menu.tripsList") },
+    canViewPresentations && {
+      key: "/presentations",
+      label: t("menu.presentations"),
+    },
+  ].filter(Boolean);
 
   const menuItems = [
     { key: "/map", icon: <AppstoreOutlined />, label: t("menu.projectMap") },
@@ -91,17 +101,11 @@ export default function MainLayout() {
       icon: <TeamOutlined />,
       label: t("menu.users"),
     },
-    {
+    tripsChildren.length > 0 && {
       key: "trips-group",
       icon: <CarOutlined />,
       label: t("menu.trips"),
-      children: [
-        { key: "/trips", label: t("menu.tripsList") },
-        canViewPresentations && {
-          key: "/presentations",
-          label: t("menu.presentations"),
-        },
-      ].filter(Boolean),
+      children: tripsChildren,
     },
     canViewRoles && {
       key: "/roles",

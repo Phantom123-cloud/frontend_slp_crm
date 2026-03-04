@@ -210,8 +210,26 @@ export default function App() {
                   </PermissionRoute>
                 }
               />
-              <Route path="trips" element={<TripsListPage />} />
-              <Route path="trips/:id" element={<TripDetailPage />} />
+              <Route
+                path="trips"
+                element={
+                  <PermissionRoute
+                    permission={["trips.view-all", "trips.view-person"]}
+                  >
+                    <TripsListPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="trips/:id"
+                element={
+                  <PermissionRoute
+                    permission={["trips.view-all", "trips.view-person"]}
+                  >
+                    <TripDetailPage />
+                  </PermissionRoute>
+                }
+              />
               <Route
                 path="presentations"
                 element={
