@@ -1,4 +1,4 @@
-import api from './client';
+import api from "./client";
 
 export interface User {
   id: string;
@@ -38,8 +38,18 @@ export interface UserProfile extends User {
   firstTripDate?: string;
   isCoordinator: boolean;
   coordinatorId?: string;
-  coordinator?: { id: string; firstName: string; lastName: string; email: string };
-  subordinates?: { id: string; firstName: string; lastName: string; email: string }[];
+  coordinator?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  subordinates?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  }[];
   birthDate?: string;
   isMarried?: boolean;
   hasChildren?: boolean;
@@ -67,14 +77,17 @@ export interface PaginatedResponse<T> {
 }
 
 export const usersApi = {
-  getAll: (params?: { filter?: string; search?: string; page?: number; limit?: number; detailed?: boolean }) =>
-    api.get<PaginatedResponse<UserDetailed>>('/users', { params }),
+  getAll: (params?: {
+    filter?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    detailed?: boolean;
+  }) => api.get<PaginatedResponse<UserDetailed>>("/users", { params }),
 
-  getById: (id: string) =>
-    api.get<UserProfile>(`/users/${id}`),
+  getById: (id: string) => api.get<UserProfile>(`/users/${id}`),
 
-  create: (data: any) =>
-    api.post('/users', data),
+  create: (data: any) => api.post("/users", data),
 
   updateProfile: (id: string, data: any) =>
     api.patch(`/users/${id}/profile`, data),
@@ -82,17 +95,13 @@ export const usersApi = {
   updateCredentials: (id: string, data: any) =>
     api.patch(`/users/${id}/credentials`, data),
 
-  getCoordinators: () =>
-    api.get('/users/coordinators'),
+  getCoordinators: () => api.get("/users/coordinators"),
 
-  forceLogout: (id: string) =>
-    api.post(`/users/${id}/force-logout`),
+  forceLogout: (id: string) => api.post(`/users/${id}/force-logout`),
 
-  block: (id: string) =>
-    api.post(`/users/${id}/block`),
+  block: (id: string) => api.post(`/users/${id}/block`),
 
-  unblock: (id: string) =>
-    api.post(`/users/${id}/unblock`),
+  unblock: (id: string) => api.post(`/users/${id}/unblock`),
 
   // Контакты
   addContact: (userId: string, data: any) =>
@@ -115,13 +124,13 @@ export const usersApi = {
   // Экспорт
   exportUsers: (data: {
     fields: string[];
-    format?: 'xlsx' | 'csv';
-    scope?: 'page' | 'all';
+    format?: "xlsx" | "csv";
+    scope?: "page" | "all";
     filter?: string;
     search?: string;
     page?: number;
     limit?: number;
-  }) => api.post('/users/export', data, { responseType: 'blob' }),
+  }) => api.post("/users/export", data, { responseType: "blob" }),
 
   // Лимит сессий
   updateMaxSessions: (userId: string, maxSessions: number) =>

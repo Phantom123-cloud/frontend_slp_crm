@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface ThemeState {
   isDark: boolean;
@@ -6,11 +6,11 @@ interface ThemeState {
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  isDark: localStorage.getItem('theme') !== 'light',
+  isDark: localStorage.getItem("theme") !== "light",
 
   toggle: () => {
     const next = !get().isDark;
-    localStorage.setItem('theme', next ? 'dark' : 'light');
+    localStorage.setItem("theme", next ? "dark" : "light");
     set({ isDark: next });
   },
 }));

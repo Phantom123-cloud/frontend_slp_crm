@@ -1,16 +1,27 @@
-import { useState, useEffect } from 'react';
-import { Tabs, Table, Button, Modal, Form, Input, Space, Popconfirm, message, Typography } from 'antd';
-import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import { directoriesApi } from '../../api/directories';
-import { usePermission } from '../../hooks/usePermission';
-import { useTableFilters } from '../../utils/tableFilters';
+import { useState, useEffect } from "react";
+import {
+  Tabs,
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Space,
+  Popconfirm,
+  message,
+  Typography,
+} from "antd";
+import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
+import { directoriesApi } from "../../api/directories";
+import { usePermission } from "../../hooks/usePermission";
+import { useTableFilters } from "../../utils/tableFilters";
 
 const { Title } = Typography;
 
 export default function DirectoriesPage() {
   const { t } = useTranslation();
-  const canManage = usePermission('directories.manage');
+  const canManage = usePermission("directories.manage");
   const { colSearch } = useTableFilters();
 
   // === Presentation Types ===
@@ -27,7 +38,7 @@ export default function DirectoriesPage() {
       const { data } = await directoriesApi.getPresentationTypes();
       setTypes(data);
     } catch (e: any) {
-      message.error(t(e.response?.data?.message || 'common.error'));
+      message.error(t(e.response?.data?.message || "common.error"));
     } finally {
       setTypesLoading(false);
     }
@@ -36,33 +47,33 @@ export default function DirectoriesPage() {
   const handleCreateType = async (values: any) => {
     try {
       await directoriesApi.createPresentationType(values);
-      message.success(t('common.success'));
+      message.success(t("common.success"));
       setTypeModalOpen(false);
       typeForm.resetFields();
       loadTypes();
     } catch (e: any) {
-      message.error(t(e.response?.data?.message || 'common.error'));
+      message.error(t(e.response?.data?.message || "common.error"));
     }
   };
 
   const handleUpdateType = async (values: any) => {
     try {
       await directoriesApi.updatePresentationType(editType.id, values);
-      message.success(t('common.success'));
+      message.success(t("common.success"));
       setEditType(null);
       loadTypes();
     } catch (e: any) {
-      message.error(t(e.response?.data?.message || 'common.error'));
+      message.error(t(e.response?.data?.message || "common.error"));
     }
   };
 
   const handleDeleteType = async (id: string) => {
     try {
       await directoriesApi.deletePresentationType(id);
-      message.success(t('common.success'));
+      message.success(t("common.success"));
       loadTypes();
     } catch (e: any) {
-      message.error(t(e.response?.data?.message || 'common.error'));
+      message.error(t(e.response?.data?.message || "common.error"));
     }
   };
 
@@ -80,7 +91,7 @@ export default function DirectoriesPage() {
       const { data } = await directoriesApi.getVenues();
       setVenues(data);
     } catch (e: any) {
-      message.error(t(e.response?.data?.message || 'common.error'));
+      message.error(t(e.response?.data?.message || "common.error"));
     } finally {
       setVenuesLoading(false);
     }
@@ -89,33 +100,33 @@ export default function DirectoriesPage() {
   const handleCreateVenue = async (values: any) => {
     try {
       await directoriesApi.createVenue(values);
-      message.success(t('common.success'));
+      message.success(t("common.success"));
       setVenueModalOpen(false);
       venueForm.resetFields();
       loadVenues();
     } catch (e: any) {
-      message.error(t(e.response?.data?.message || 'common.error'));
+      message.error(t(e.response?.data?.message || "common.error"));
     }
   };
 
   const handleUpdateVenue = async (values: any) => {
     try {
       await directoriesApi.updateVenue(editVenue.id, values);
-      message.success(t('common.success'));
+      message.success(t("common.success"));
       setEditVenue(null);
       loadVenues();
     } catch (e: any) {
-      message.error(t(e.response?.data?.message || 'common.error'));
+      message.error(t(e.response?.data?.message || "common.error"));
     }
   };
 
   const handleDeleteVenue = async (id: string) => {
     try {
       await directoriesApi.deleteVenue(id);
-      message.success(t('common.success'));
+      message.success(t("common.success"));
       loadVenues();
     } catch (e: any) {
-      message.error(t(e.response?.data?.message || 'common.error'));
+      message.error(t(e.response?.data?.message || "common.error"));
     }
   };
 
@@ -128,112 +139,137 @@ export default function DirectoriesPage() {
 
   const typeColumns = [
     {
-      title: t('directories.name'),
-      dataIndex: 'name',
-      key: 'name',
-      ...colSearch((r: any) => r.name || ''),
+      title: t("directories.name"),
+      dataIndex: "name",
+      key: "name",
+      ...colSearch((r: any) => r.name || ""),
     },
     {
-      title: t('directories.description'),
-      dataIndex: 'description',
-      key: 'description',
-      ...colSearch((r: any) => r.description || ''),
-      render: (v: any) => v || '—',
+      title: t("directories.description"),
+      dataIndex: "description",
+      key: "description",
+      ...colSearch((r: any) => r.description || ""),
+      render: (v: any) => v || "—",
     },
-    ...(canManage ? [{
-      title: t('users.actions'),
-      key: 'actions',
-      width: 100,
-      render: (_: any, record: any) => (
-        <Space size={4}>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => {
-              setEditType(record);
-              editTypeForm.setFieldsValue({ name: record.name, description: record.description });
-            }}
-          />
-          <Popconfirm
-            title={t('directories.deleteConfirm')}
-            onConfirm={() => handleDeleteType(record.id)}
-            okText={t('users.yes')}
-            cancelText={t('users.no')}
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-          </Popconfirm>
-        </Space>
-      ),
-    }] : []),
+    ...(canManage
+      ? [
+          {
+            title: t("users.actions"),
+            key: "actions",
+            width: 100,
+            render: (_: any, record: any) => (
+              <Space size={4}>
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  size="small"
+                  onClick={() => {
+                    setEditType(record);
+                    editTypeForm.setFieldsValue({
+                      name: record.name,
+                      description: record.description,
+                    });
+                  }}
+                />
+                <Popconfirm
+                  title={t("directories.deleteConfirm")}
+                  onConfirm={() => handleDeleteType(record.id)}
+                  okText={t("users.yes")}
+                  cancelText={t("users.no")}
+                >
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    size="small"
+                  />
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const venueColumns = [
     {
-      title: t('directories.city'),
-      dataIndex: 'city',
-      key: 'city',
-      ...colSearch((r: any) => r.city || ''),
+      title: t("directories.city"),
+      dataIndex: "city",
+      key: "city",
+      ...colSearch((r: any) => r.city || ""),
     },
     {
-      title: t('directories.venueName'),
-      dataIndex: 'venueName',
-      key: 'venueName',
-      ...colSearch((r: any) => r.venueName || ''),
+      title: t("directories.venueName"),
+      dataIndex: "venueName",
+      key: "venueName",
+      ...colSearch((r: any) => r.venueName || ""),
     },
     {
-      title: t('directories.address'),
-      dataIndex: 'address',
-      key: 'address',
-      ...colSearch((r: any) => r.address || ''),
+      title: t("directories.address"),
+      dataIndex: "address",
+      key: "address",
+      ...colSearch((r: any) => r.address || ""),
     },
-    ...(canManage ? [{
-      title: t('users.actions'),
-      key: 'actions',
-      width: 100,
-      render: (_: any, record: any) => (
-        <Space size={4}>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            size="small"
-            onClick={() => {
-              setEditVenue(record);
-              editVenueForm.setFieldsValue({
-                city: record.city,
-                venueName: record.venueName,
-                address: record.address,
-              });
-            }}
-          />
-          <Popconfirm
-            title={t('directories.deleteConfirm')}
-            onConfirm={() => handleDeleteVenue(record.id)}
-            okText={t('users.yes')}
-            cancelText={t('users.no')}
-          >
-            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-          </Popconfirm>
-        </Space>
-      ),
-    }] : []),
+    ...(canManage
+      ? [
+          {
+            title: t("users.actions"),
+            key: "actions",
+            width: 100,
+            render: (_: any, record: any) => (
+              <Space size={4}>
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  size="small"
+                  onClick={() => {
+                    setEditVenue(record);
+                    editVenueForm.setFieldsValue({
+                      city: record.city,
+                      venueName: record.venueName,
+                      address: record.address,
+                    });
+                  }}
+                />
+                <Popconfirm
+                  title={t("directories.deleteConfirm")}
+                  onConfirm={() => handleDeleteVenue(record.id)}
+                  okText={t("users.yes")}
+                  cancelText={t("users.no")}
+                >
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    size="small"
+                  />
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
     <div>
-      <Title level={3}>{t('directories.title')}</Title>
+      <Title level={3}>{t("directories.title")}</Title>
 
       <Tabs
         items={[
           {
-            key: 'types',
-            label: t('directories.presentationTypes'),
+            key: "types",
+            label: t("directories.presentationTypes"),
             children: (
               <>
                 {canManage && (
                   <div style={{ marginBottom: 16 }}>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setTypeModalOpen(true)}>
-                      {t('common.add')}
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setTypeModalOpen(true)}
+                    >
+                      {t("common.add")}
                     </Button>
                   </div>
                 )}
@@ -242,21 +278,29 @@ export default function DirectoriesPage() {
                   columns={typeColumns}
                   rowKey="id"
                   loading={typesLoading}
-                  pagination={{ pageSize: 10, showSizeChanger: false, hideOnSinglePage: true }}
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: false,
+                    hideOnSinglePage: true,
+                  }}
                   size="small"
                 />
               </>
             ),
           },
           {
-            key: 'venues',
-            label: t('directories.venues'),
+            key: "venues",
+            label: t("directories.venues"),
             children: (
               <>
                 {canManage && (
                   <div style={{ marginBottom: 16 }}>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setVenueModalOpen(true)}>
-                      {t('common.add')}
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setVenueModalOpen(true)}
+                    >
+                      {t("common.add")}
                     </Button>
                   </div>
                 )}
@@ -265,7 +309,11 @@ export default function DirectoriesPage() {
                   columns={venueColumns}
                   rowKey="id"
                   loading={venuesLoading}
-                  pagination={{ pageSize: 10, showSizeChanger: false, hideOnSinglePage: true }}
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: false,
+                    hideOnSinglePage: true,
+                  }}
                   size="small"
                 />
               </>
@@ -276,18 +324,25 @@ export default function DirectoriesPage() {
 
       {/* Create Presentation Type */}
       <Modal
-        title={t('directories.addType')}
+        title={t("directories.addType")}
         open={typeModalOpen}
-        onCancel={() => { setTypeModalOpen(false); typeForm.resetFields(); }}
+        onCancel={() => {
+          setTypeModalOpen(false);
+          typeForm.resetFields();
+        }}
         onOk={() => typeForm.submit()}
-        okText={t('common.save')}
-        cancelText={t('common.cancel')}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
       >
         <Form form={typeForm} onFinish={handleCreateType} layout="vertical">
-          <Form.Item name="name" label={t('directories.name')} rules={[{ required: true }]}>
+          <Form.Item
+            name="name"
+            label={t("directories.name")}
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="description" label={t('directories.description')}>
+          <Form.Item name="description" label={t("directories.description")}>
             <Input.TextArea rows={2} />
           </Form.Item>
         </Form>
@@ -295,19 +350,23 @@ export default function DirectoriesPage() {
 
       {/* Edit Presentation Type */}
       <Modal
-        title={t('common.edit')}
+        title={t("common.edit")}
         open={!!editType}
         onCancel={() => setEditType(null)}
         onOk={() => editTypeForm.submit()}
-        okText={t('common.save')}
-        cancelText={t('common.cancel')}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
         destroyOnClose
       >
         <Form form={editTypeForm} onFinish={handleUpdateType} layout="vertical">
-          <Form.Item name="name" label={t('directories.name')} rules={[{ required: true }]}>
+          <Form.Item
+            name="name"
+            label={t("directories.name")}
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="description" label={t('directories.description')}>
+          <Form.Item name="description" label={t("directories.description")}>
             <Input.TextArea rows={2} />
           </Form.Item>
         </Form>
@@ -315,21 +374,36 @@ export default function DirectoriesPage() {
 
       {/* Create Venue */}
       <Modal
-        title={t('directories.addVenue')}
+        title={t("directories.addVenue")}
         open={venueModalOpen}
-        onCancel={() => { setVenueModalOpen(false); venueForm.resetFields(); }}
+        onCancel={() => {
+          setVenueModalOpen(false);
+          venueForm.resetFields();
+        }}
         onOk={() => venueForm.submit()}
-        okText={t('common.save')}
-        cancelText={t('common.cancel')}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
       >
         <Form form={venueForm} onFinish={handleCreateVenue} layout="vertical">
-          <Form.Item name="city" label={t('directories.city')} rules={[{ required: true }]}>
+          <Form.Item
+            name="city"
+            label={t("directories.city")}
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="venueName" label={t('directories.venueName')} rules={[{ required: true }]}>
+          <Form.Item
+            name="venueName"
+            label={t("directories.venueName")}
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="address" label={t('directories.address')} rules={[{ required: true }]}>
+          <Form.Item
+            name="address"
+            label={t("directories.address")}
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
         </Form>
@@ -337,22 +411,38 @@ export default function DirectoriesPage() {
 
       {/* Edit Venue */}
       <Modal
-        title={t('common.edit')}
+        title={t("common.edit")}
         open={!!editVenue}
         onCancel={() => setEditVenue(null)}
         onOk={() => editVenueForm.submit()}
-        okText={t('common.save')}
-        cancelText={t('common.cancel')}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
         destroyOnClose
       >
-        <Form form={editVenueForm} onFinish={handleUpdateVenue} layout="vertical">
-          <Form.Item name="city" label={t('directories.city')} rules={[{ required: true }]}>
+        <Form
+          form={editVenueForm}
+          onFinish={handleUpdateVenue}
+          layout="vertical"
+        >
+          <Form.Item
+            name="city"
+            label={t("directories.city")}
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="venueName" label={t('directories.venueName')} rules={[{ required: true }]}>
+          <Form.Item
+            name="venueName"
+            label={t("directories.venueName")}
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="address" label={t('directories.address')} rules={[{ required: true }]}>
+          <Form.Item
+            name="address"
+            label={t("directories.address")}
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
         </Form>

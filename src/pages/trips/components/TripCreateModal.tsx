@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Modal, Form, Input, DatePicker, message, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { tripsApi } from '../../../api/trips';
-import dayjs from 'dayjs';
 
 const { Text } = Typography;
 

@@ -1,9 +1,9 @@
-import { useRef } from 'react';
-import { Button, Input, Space } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import type { InputRef } from 'antd';
-import type { ColumnType } from 'antd/es/table';
+import { useRef } from "react";
+import { Button, Input, Space } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
+import type { InputRef } from "antd";
+import type { ColumnType } from "antd/es/table";
 
 /**
  * Hook returning helpers for Ant Design Table column filtering.
@@ -28,19 +28,33 @@ export function useTableFilters() {
   function colSearch<T>(
     getValue: (record: T) => string,
     placeholder?: string,
-  ): Pick<ColumnType<T>, 'filterDropdown' | 'filterIcon' | 'onFilter' | 'onFilterDropdownOpenChange'> {
+  ): Pick<
+    ColumnType<T>,
+    "filterDropdown" | "filterIcon" | "onFilter" | "onFilterDropdownOpenChange"
+  > {
     return {
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+        close,
+      }) => (
         <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
           <Input
             ref={searchInput}
-            placeholder={placeholder || t('common.search')}
+            placeholder={placeholder || t("common.search")}
             value={selectedKeys[0] as string}
-            onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
             onPressEnter={() => confirm()}
-            style={{ marginBottom: 8, display: 'block' }}
+            style={{ marginBottom: 8, display: "block" }}
             allowClear
-            onClear={() => { clearFilters?.(); confirm(); }}
+            onClear={() => {
+              clearFilters?.();
+              confirm();
+            }}
           />
           <Space>
             <Button
@@ -50,21 +64,26 @@ export function useTableFilters() {
               style={{ width: 90 }}
               onClick={() => confirm()}
             >
-              {t('common.search')}
+              {t("common.search")}
             </Button>
             <Button
               size="small"
               style={{ width: 90 }}
-              onClick={() => { clearFilters?.(); confirm(); }}
+              onClick={() => {
+                clearFilters?.();
+                confirm();
+              }}
             >
-              {t('common.reset')}
+              {t("common.reset")}
             </Button>
-            <Button type="link" size="small" onClick={close}>✕</Button>
+            <Button type="link" size="small" onClick={close}>
+              ✕
+            </Button>
           </Space>
         </div>
       ),
       filterIcon: (filtered) => (
-        <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+        <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
       ),
       onFilter: (value, record) =>
         getValue(record)
@@ -85,9 +104,12 @@ export function useTableFilters() {
   function colEnum<T>(
     filterValues: { text: string; value: string | boolean }[],
     matchFn: (value: string | boolean, record: T) => boolean,
-  ): Pick<ColumnType<T>, 'filters' | 'onFilter' | 'filterMultiple'> {
+  ): Pick<ColumnType<T>, "filters" | "onFilter" | "filterMultiple"> {
     return {
-      filters: filterValues.map((f) => ({ text: f.text, value: f.value as any })),
+      filters: filterValues.map((f) => ({
+        text: f.text,
+        value: f.value as any,
+      })),
       onFilter: (value, record) => matchFn(value as string | boolean, record),
       filterMultiple: true,
     };

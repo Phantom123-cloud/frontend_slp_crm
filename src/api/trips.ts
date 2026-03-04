@@ -1,11 +1,11 @@
-import api from './client';
+import api from "./client";
 
 export const tripsApi = {
   // Trips
-  list: (filter?: string) => api.get('/trips', { params: { filter } }),
+  list: (filter?: string) => api.get("/trips", { params: { filter } }),
   getById: (id: string) => api.get(`/trips/${id}`),
   create: (data: { teamName: string; startDate: string; endDate: string }) =>
-    api.post('/trips', data),
+    api.post("/trips", data),
   update: (id: string, data: any) => api.patch(`/trips/${id}`, data),
   updateStatus: (id: string, status: string) =>
     api.patch(`/trips/${id}/status`, { status }),
@@ -19,7 +19,7 @@ export const tripsApi = {
     api.patch(`/trips/${tripId}/coordinator`, { coordinatorId }),
 
   // Available users for crew selection
-  getAvailableUsers: () => api.get('/trips/available-users'),
+  getAvailableUsers: () => api.get("/trips/available-users"),
 
   // Presentations under trip
   getPresentations: (tripId: string) =>
@@ -29,6 +29,8 @@ export const tripsApi = {
 };
 
 export const presentationsApi = {
+  listAll: (filter?: string) =>
+    api.get("/presentations", { params: { filter } }),
   getById: (id: string) => api.get(`/presentations/${id}`),
   update: (id: string, data: any) => api.patch(`/presentations/${id}`, data),
   delete: (id: string) => api.delete(`/presentations/${id}`),
@@ -36,8 +38,7 @@ export const presentationsApi = {
     api.patch(`/presentations/${id}/crew`, { crew }),
   updateCoordinator: (id: string, coordinatorId: string) =>
     api.patch(`/presentations/${id}`, { coordinatorId }),
-  getSummary: (id: string) =>
-    api.get(`/presentations/${id}/summary`),
+  getSummary: (id: string) => api.get(`/presentations/${id}/summary`),
   saveSummary: (id: string, rows: any[]) =>
     api.post(`/presentations/${id}/summary`, { rows }),
 };

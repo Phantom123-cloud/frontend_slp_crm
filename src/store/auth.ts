@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface AuthUser {
   id: string;
@@ -14,7 +14,12 @@ interface AuthState {
   permissions: string[];
   isAuthenticated: boolean;
 
-  setAuth: (accessToken: string, refreshToken: string, user: AuthUser, permissions?: string[]) => void;
+  setAuth: (
+    accessToken: string,
+    refreshToken: string,
+    user: AuthUser,
+    permissions?: string[],
+  ) => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
   setPermissions: (permissions: string[]) => void;
   hasPermission: (permission: string) => boolean;
@@ -22,28 +27,38 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  accessToken: localStorage.getItem('accessToken'),
-  refreshToken: localStorage.getItem('refreshToken'),
-  user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
-  permissions: localStorage.getItem('permissions') ? JSON.parse(localStorage.getItem('permissions')!) : [],
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  accessToken: localStorage.getItem("accessToken"),
+  refreshToken: localStorage.getItem("refreshToken"),
+  user: localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user")!)
+    : null,
+  permissions: localStorage.getItem("permissions")
+    ? JSON.parse(localStorage.getItem("permissions")!)
+    : [],
+  isAuthenticated: !!localStorage.getItem("accessToken"),
 
   setAuth: (accessToken, refreshToken, user, permissions = []) => {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('permissions', JSON.stringify(permissions));
-    set({ accessToken, refreshToken, user, permissions, isAuthenticated: true });
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("permissions", JSON.stringify(permissions));
+    set({
+      accessToken,
+      refreshToken,
+      user,
+      permissions,
+      isAuthenticated: true,
+    });
   },
 
   setTokens: (accessToken, refreshToken) => {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
     set({ accessToken, refreshToken });
   },
 
   setPermissions: (permissions) => {
-    localStorage.setItem('permissions', JSON.stringify(permissions));
+    localStorage.setItem("permissions", JSON.stringify(permissions));
     set({ permissions });
   },
 
@@ -52,10 +67,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('permissions');
-    set({ accessToken: null, refreshToken: null, user: null, permissions: [], isAuthenticated: false });
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("permissions");
+    set({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      permissions: [],
+      isAuthenticated: false,
+    });
   },
 }));

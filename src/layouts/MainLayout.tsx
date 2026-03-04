@@ -1,18 +1,36 @@
-import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Dropdown, Space, Avatar, Drawer, Grid } from 'antd';
+import { useState, useEffect } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
-  UserOutlined, TeamOutlined, SafetyOutlined,
-  AuditOutlined, LogoutOutlined, MenuFoldOutlined,
-  MenuUnfoldOutlined, GlobalOutlined,
-  SunOutlined, MoonOutlined, MenuOutlined,
-  AppstoreOutlined, CarOutlined, BookOutlined,
-} from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../store/auth';
-import { useThemeStore } from '../store/theme';
-import { authApi } from '../api/auth';
-import { usePermission } from '../hooks/usePermission';
+  Layout,
+  Menu,
+  Button,
+  Dropdown,
+  Space,
+  Avatar,
+  Drawer,
+  Grid,
+} from "antd";
+import {
+  UserOutlined,
+  TeamOutlined,
+  SafetyOutlined,
+  AuditOutlined,
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  GlobalOutlined,
+  SunOutlined,
+  MoonOutlined,
+  MenuOutlined,
+  AppstoreOutlined,
+  CarOutlined,
+  BookOutlined,
+} from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
+import { useAuthStore } from "../store/auth";
+import { useThemeStore } from "../store/theme";
+import { authApi } from "../api/auth";
+import { usePermission } from "../hooks/usePermission";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -37,38 +55,70 @@ export default function MainLayout() {
   const handleLogout = async () => {
     try {
       if (refreshToken) await authApi.logout(refreshToken);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
-    localStorage.setItem('lang', lang);
+    localStorage.setItem("lang", lang);
   };
 
   const langMenu = {
     items: [
-      { key: 'ru', label: 'Русский' },
-      { key: 'en', label: 'English' },
-      { key: 'uz', label: "O'zbekcha" },
+      { key: "ru", label: "Русский" },
+      { key: "en", label: "English" },
+      { key: "uz", label: "O'zbekcha" },
     ],
     onClick: ({ key }: { key: string }) => changeLanguage(key),
   };
 
-  const canViewUsers = usePermission('users.view');
-  const canViewRoles = usePermission('roles.view');
-  const canViewAudit = usePermission('audit.view');
-  const canManageDirectories = usePermission('directories.manage');
+  const canViewUsers = usePermission("users.view");
+  const canViewRoles = usePermission("roles.view");
+  const canViewAudit = usePermission("audit.view");
+  const canManageDirectories = usePermission("directories.manage");
+  const canViewPresentations =
+    usePermission("presentations.view-all") ||
+    usePermission("presentations.view-person");
 
   const menuItems = [
-    { key: '/map', icon: <AppstoreOutlined />, label: t('menu.projectMap') },
-    canViewUsers && { key: '/users', icon: <TeamOutlined />, label: t('menu.users') },
-    { key: '/trips', icon: <CarOutlined />, label: t('menu.trips') },
-    canViewRoles && { key: '/roles', icon: <SafetyOutlined />, label: t('menu.roles') },
-    canViewAudit && { key: '/audit', icon: <AuditOutlined />, label: t('menu.audit') },
-    canManageDirectories && { key: '/directories', icon: <BookOutlined />, label: t('menu.directories') },
-  ].filter(Boolean) as { key: string; icon: React.ReactNode; label: string }[];
+    { key: "/map", icon: <AppstoreOutlined />, label: t("menu.projectMap") },
+    canViewUsers && {
+      key: "/users",
+      icon: <TeamOutlined />,
+      label: t("menu.users"),
+    },
+    {
+      key: "trips-group",
+      icon: <CarOutlined />,
+      label: t("menu.trips"),
+      children: [
+        { key: "/trips", label: t("menu.tripsList") },
+        canViewPresentations && {
+          key: "/presentations",
+          label: t("menu.presentations"),
+        },
+      ].filter(Boolean),
+    },
+    canViewRoles && {
+      key: "/roles",
+      icon: <SafetyOutlined />,
+      label: t("menu.roles"),
+    },
+    canViewAudit && {
+      key: "/audit",
+      icon: <AuditOutlined />,
+      label: t("menu.audit"),
+    },
+    canManageDirectories && {
+      key: "/directories",
+      icon: <BookOutlined />,
+      label: t("menu.directories"),
+    },
+  ].filter(Boolean) as any[];
 
   const handleMenuClick = (key: string) => {
     navigate(key);
@@ -77,18 +127,24 @@ export default function MainLayout() {
 
   const siderMenu = (
     <>
-      <div style={{
-        height: 64, display: 'flex', alignItems: 'center',
-        justifyContent: 'center', color: isDark ? '#fff' : '#1d2129',
-        fontSize: collapsed && !isMobile ? 16 : 20,
-        fontWeight: 'bold',
-      }}>
-        {collapsed && !isMobile ? 'SLP' : 'SLP CRM'}
+      <div
+        style={{
+          height: 64,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: isDark ? "#fff" : "#1d2129",
+          fontSize: collapsed && !isMobile ? 16 : 20,
+          fontWeight: "bold",
+        }}
+      >
+        {collapsed && !isMobile ? "SLP" : "SLP CRM"}
       </div>
       <Menu
-        theme={isDark ? 'dark' : 'light'}
+        theme={isDark ? "dark" : "light"}
         mode="inline"
-        selectedKeys={[location.pathname.split('/').slice(0, 2).join('/')]}
+        selectedKeys={[location.pathname.split("/").slice(0, 2).join("/")]}
+        defaultOpenKeys={["trips-group"]}
         items={menuItems}
         onClick={({ key }) => handleMenuClick(key)}
       />
@@ -96,16 +152,16 @@ export default function MainLayout() {
   );
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: "100vh" }}>
       {/* Desktop sidebar */}
       {!isMobile && (
         <Sider
           trigger={null}
           collapsible
           collapsed={collapsed}
-          theme={isDark ? 'dark' : 'light'}
+          theme={isDark ? "dark" : "light"}
           style={{
-            borderRight: isDark ? '1px solid #303030' : '1px solid #d0d5dd',
+            borderRight: isDark ? "1px solid #303030" : "1px solid #d0d5dd",
           }}
         >
           {siderMenu}
@@ -119,7 +175,9 @@ export default function MainLayout() {
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           width={240}
-          styles={{ body: { padding: 0, background: isDark ? '#141414' : '#e8eaed' } }}
+          styles={{
+            body: { padding: 0, background: isDark ? "#141414" : "#e8eaed" },
+          }}
           closable={false}
         >
           {siderMenu}
@@ -127,14 +185,18 @@ export default function MainLayout() {
       )}
 
       <Layout>
-        <Header style={{
-          padding: isMobile ? '0 12px' : '0 24px',
-          background: isDark ? '#141414' : '#f0f1f3',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: `1px solid ${isDark ? '#303030' : '#d0d5dd'}`,
-          height: 56,
-          lineHeight: '56px',
-        }}>
+        <Header
+          style={{
+            padding: isMobile ? "0 12px" : "0 24px",
+            background: isDark ? "#141414" : "#f0f1f3",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: `1px solid ${isDark ? "#303030" : "#d0d5dd"}`,
+            height: 56,
+            lineHeight: "56px",
+          }}
+        >
           {isMobile ? (
             <Button
               type="text"
@@ -148,42 +210,50 @@ export default function MainLayout() {
               onClick={() => setCollapsed(!collapsed)}
             />
           )}
-          <Space size={isMobile ? 'small' : 'middle'}>
+          <Space size={isMobile ? "small" : "middle"}>
             <Button
               type="text"
               icon={isDark ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
-              size={isMobile ? 'small' : 'middle'}
+              size={isMobile ? "small" : "middle"}
             />
             <Dropdown menu={langMenu}>
-              <Button type="text" icon={<GlobalOutlined />} size={isMobile ? 'small' : 'middle'}>
+              <Button
+                type="text"
+                icon={<GlobalOutlined />}
+                size={isMobile ? "small" : "middle"}
+              >
                 {i18n.language.toUpperCase()}
               </Button>
             </Dropdown>
             {!isMobile && (
               <Space>
                 <Avatar icon={<UserOutlined />} size="small" />
-                <span style={{ fontSize: 13 }}>{user?.firstName} {user?.lastName}</span>
+                <span style={{ fontSize: 13 }}>
+                  {user?.firstName} {user?.lastName}
+                </span>
               </Space>
             )}
             <Button
               type="text"
               icon={<LogoutOutlined />}
               onClick={handleLogout}
-              size={isMobile ? 'small' : 'middle'}
+              size={isMobile ? "small" : "middle"}
             >
-              {!isMobile && t('auth.logout')}
+              {!isMobile && t("auth.logout")}
             </Button>
           </Space>
         </Header>
-        <Content style={{
-          margin: isMobile ? 8 : 24,
-          padding: isMobile ? 12 : 24,
-          background: isDark ? '#1f1f1f' : '#ffffff',
-          borderRadius: 8,
-          minHeight: 280,
-          overflow: 'auto',
-        }}>
+        <Content
+          style={{
+            margin: isMobile ? 8 : 24,
+            padding: isMobile ? 12 : 24,
+            background: isDark ? "#1f1f1f" : "#ffffff",
+            borderRadius: 8,
+            minHeight: 280,
+            overflow: "auto",
+          }}
+        >
           <Outlet />
         </Content>
       </Layout>

@@ -1,4 +1,4 @@
-import api from './client';
+import api from "./client";
 
 export interface LoginRequest {
   email: string;
@@ -29,15 +29,12 @@ export interface MeResponse {
 }
 
 export const authApi = {
-  login: (data: LoginRequest) =>
-    api.post<LoginResponse>('/auth/login', data),
+  login: (data: LoginRequest) => api.post<LoginResponse>("/auth/login", data),
 
-  me: () =>
-    api.get<MeResponse>('/auth/me'),
+  me: () => api.get<MeResponse>("/auth/me"),
 
-  logout: (refreshToken: string) =>
-    api.post('/auth/logout', { refreshToken }),
+  logout: (refreshToken: string) => api.post("/auth/logout", { refreshToken }),
 
   updateMyMaxSessions: (maxSessions: number) =>
-    api.patch('/auth/my-sessions', { maxSessions }),
+    api.patch("/auth/my-sessions", { maxSessions }),
 };
