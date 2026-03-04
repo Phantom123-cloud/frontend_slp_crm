@@ -31,6 +31,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { tripsApi, presentationsApi } from "../../api/trips";
 import { usePermission } from "../../hooks/usePermission";
+import { useAuthStore } from "../../store/auth";
 import { useTableFilters } from "../../utils/tableFilters";
 import CrewModal from "./components/CrewModal";
 import PresentationCreateModal from "./components/PresentationCreateModal";
@@ -81,6 +82,11 @@ export default function TripDetailPage() {
   const canCreatePresentation = usePermission("presentations.create");
   const canEditPresentation = usePermission("presentations.edit");
   const canDeletePresentation = usePermission("presentations.delete");
+  const canViewPresAll = usePermission("presentations.view-all");
+  const canViewPresPerson = usePermission("presentations.view-person");
+  const canViewPresentations = canViewPresAll || canViewPresPerson;
+
+  const myId = useAuthStore((s) => s.user?.id);
 
   const { colSearch, colEnum } = useTableFilters();
 
@@ -209,6 +215,15 @@ export default function TripDetailPage() {
   const isClosed = trip.status === "CLOSED";
   const canModify = canEdit && (!isClosed || canAdmin);
   const canModifyPresentations = !isClosed || canAdmin;
+
+  // Роль текущего юзера в составе поездки
+  const myTripCrewRole = (trip.crew || []).find(
+    (c: any) => c.userId === myId,
+  )?.role;
+  const isGaInTrip = myTripCrewRole === "GA" || myTripCrewRole === "MV_GA";
+
+  // Редактировать итоги: trips.admin (любые) или (view-презентации + роль GA/МВ_ГА)
+  const canSaveItogi = canAdmin || (canViewPresentations && isGaInTrip);
 
   const filteredPresentations = (trip.presentations || []).filter((p: any) => {
     const eff = getEffectivePresStatus(p);
@@ -576,7 +591,7 @@ export default function TripDetailPage() {
             ) : null
           }
           items={[
-            {
+            canViewPresentations && {
               key: "presentations",
               label: t("trips.presentations"),
               children: (
@@ -674,7 +689,7 @@ export default function TripDetailPage() {
                 </div>
               ),
             },
-          ]}
+          ].filter(Boolean) as any[]}
         />
       </Card>
 
@@ -728,7 +743,7 @@ export default function TripDetailPage() {
         <PresentationSummaryModal
           open={!!summaryPresId}
           presentationId={summaryPresId}
-          canSave={canEditPresentation && canModifyPresentations}
+          canSave={canSaveItogi}
           onClose={() => setSummaryPresId(null)}
         />
       )}
