@@ -208,6 +208,7 @@ export default function TripDetailPage() {
 
   const isClosed = trip.status === "CLOSED";
   const canModify = canEdit && (!isClosed || canAdmin);
+  const canModifyPresentations = !isClosed || canAdmin;
 
   const filteredPresentations = (trip.presentations || []).filter((p: any) => {
     const eff = getEffectivePresStatus(p);
@@ -332,7 +333,7 @@ export default function TripDetailPage() {
       width: 120,
       render: (_: any, r: any) => (
         <Space>
-          {canEditPresentation && canModify && (
+          {canEditPresentation && canModifyPresentations && (
             <Tooltip title={t("trips.enterCrew")}>
               <Button
                 type="text"
@@ -350,7 +351,7 @@ export default function TripDetailPage() {
               onClick={() => setSummaryPresId(r.id)}
             />
           </Tooltip>
-          {canDeletePresentation && canModify && (
+          {canDeletePresentation && canModifyPresentations && (
             <Popconfirm
               title={
                 dayjs(r.date).isBefore(dayjs())
@@ -554,7 +555,7 @@ export default function TripDetailPage() {
           defaultActiveKey="presentations"
           style={{ padding: "0 16px" }}
           tabBarExtraContent={
-            canCreatePresentation && canModify ? (
+            canCreatePresentation && canModifyPresentations ? (
               <Tooltip
                 title={
                   !trip.crew?.length
@@ -727,7 +728,7 @@ export default function TripDetailPage() {
         <PresentationSummaryModal
           open={!!summaryPresId}
           presentationId={summaryPresId}
-          canSave={canEditPresentation && canModify}
+          canSave={canEditPresentation && canModifyPresentations}
           onClose={() => setSummaryPresId(null)}
         />
       )}
