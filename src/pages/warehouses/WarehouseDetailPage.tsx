@@ -9,7 +9,6 @@ import {
   message,
   Breadcrumb,
   Space,
-  Collapse,
   Modal,
   Form,
   Input,
@@ -24,18 +23,9 @@ import { directoriesApi } from "../../api/directories";
 import { usersApi } from "../../api/users";
 import { useAnyPermission } from "../../hooks/usePermission";
 import TransactionCreateModal from "./components/TransactionCreateModal";
+import TransactionsTable from "./components/TransactionsTable";
 
 const { Title, Text } = Typography;
-
-const TX_TYPE_COLORS: Record<string, string> = {
-  INCOMING: "green",
-  SALE: "blue",
-  GIFT: "purple",
-  CONTRACT: "cyan",
-  WRITE_OFF: "orange",
-  TRANSFER_OUT: "volcano",
-  TRANSFER_IN: "geekblue",
-};
 
 export default function WarehouseDetailPage() {
   const { t } = useTranslation();
@@ -135,62 +125,6 @@ export default function WarehouseDetailPage() {
     },
   ];
 
-  const txColumns = [
-    {
-      title: t("common.date"),
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 160,
-      render: (v: string) => new Date(v).toLocaleString("ru"),
-    },
-    {
-      title: t("common.type"),
-      dataIndex: "type",
-      key: "type",
-      width: 160,
-      render: (v: string) => (
-        <Tag color={TX_TYPE_COLORS[v] || "default"}>
-          {t(`warehouses.transType_${v}`)}
-        </Tag>
-      ),
-    },
-    {
-      title: t("warehouses.product"),
-      key: "items",
-      render: (_: any, record: any) => (
-        <Collapse
-          ghost
-          size="small"
-          items={[
-            {
-              key: "1",
-              label: `${record.items.length} ${t("warehouses.product")}`,
-              children: record.items.map((item: any) => (
-                <div key={item.id}>
-                  {item.product.name} — {Number(item.quantity)} {item.product.unit}
-                </div>
-              )),
-            },
-          ]}
-        />
-      ),
-    },
-    {
-      title: t("warehouses.note"),
-      dataIndex: "note",
-      key: "note",
-      render: (v: any) => v || "—",
-    },
-    {
-      title: t("users.name"),
-      key: "createdBy",
-      render: (_: any, r: any) =>
-        r.createdBy
-          ? `${r.createdBy.lastName} ${r.createdBy.firstName}`
-          : "—",
-    },
-  ];
-
   return (
     <div>
       <Breadcrumb
@@ -248,12 +182,11 @@ export default function WarehouseDetailPage() {
       </Card>
 
       <Card title={t("warehouses.transactions")}>
-        <Table
-          dataSource={transactions}
-          columns={txColumns}
-          rowKey="id"
-          size="small"
-          pagination={{ pageSize: 20, showSizeChanger: false, hideOnSinglePage: true }}
+        <TransactionsTable
+          transactions={transactions}
+          warehouseId={id!}
+          canTransact={canManage}
+          onRefresh={loadAll}
         />
       </Card>
 

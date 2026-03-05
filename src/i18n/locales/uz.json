@@ -471,7 +471,17 @@
     "nameSuffix": "Ombor nomi",
     "centralNameHint": "Yakuniy nom: «Markaziy ombor [matningiz]»",
     "personalNameHint": "Nom avtomatik shakllanadi: «Ombor Familiya Ism»",
-    "responsible": "Mas'ul"
+    "responsible": "Mas'ul",
+    "counterpart": "Kontragent",
+    "transferStatus_PENDING": "Kutilmoqda",
+    "transferStatus_COMPLETED": "Bajarildi",
+    "transferStatus_CANCELLED": "Bekor qilindi",
+    "acceptTransfer": "Qabul qilish",
+    "cancelTransfer": "Bekor qilish",
+    "acceptConfirm": "Ko'chirishni qabul qilib, omborga mahsulot qo'shilsinmi?",
+    "cancelConfirm": "Ko'chirishni bekor qilib, mahsulotni jo'natuvchiga qaytarilsinmi?",
+    "transferAccepted": "Ko'chirish qabul qilindi",
+    "transferCancelled": "Ko'chirish bekor qilindi"
   },
   "common": {
     "save": "Saqlash",

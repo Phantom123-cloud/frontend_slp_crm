@@ -471,7 +471,17 @@
     "nameSuffix": "Warehouse name",
     "centralNameHint": "Final name: «Central warehouse [your text]»",
     "personalNameHint": "Name will be generated automatically: «Warehouse Last First»",
-    "responsible": "Responsible"
+    "responsible": "Responsible",
+    "counterpart": "Counterpart",
+    "transferStatus_PENDING": "Pending",
+    "transferStatus_COMPLETED": "Completed",
+    "transferStatus_CANCELLED": "Cancelled",
+    "acceptTransfer": "Accept",
+    "cancelTransfer": "Cancel",
+    "acceptConfirm": "Accept the transfer and add goods to the warehouse?",
+    "cancelConfirm": "Cancel the transfer and return goods to the sender?",
+    "transferAccepted": "Transfer accepted",
+    "transferCancelled": "Transfer cancelled"
   },
   "common": {
     "save": "Save",

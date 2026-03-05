@@ -471,7 +471,17 @@
     "nameSuffix": "Название склада",
     "centralNameHint": "Итоговое название: «Центральный склад [ваш текст]»",
     "personalNameHint": "Название будет сформировано автоматически: «Склад Фамилия Имя»",
-    "responsible": "Ответственный"
+    "responsible": "Ответственный",
+    "counterpart": "Контрагент",
+    "transferStatus_PENDING": "Ожидает",
+    "transferStatus_COMPLETED": "Завершён",
+    "transferStatus_CANCELLED": "Отменён",
+    "acceptTransfer": "Принять",
+    "cancelTransfer": "Отменить",
+    "acceptConfirm": "Принять перевод и добавить товар на склад?",
+    "cancelConfirm": "Отменить перевод и вернуть товар отправителю?",
+    "transferAccepted": "Перевод принят",
+    "transferCancelled": "Перевод отменён"
   },
   "common": {
     "save": "Сохранить",
