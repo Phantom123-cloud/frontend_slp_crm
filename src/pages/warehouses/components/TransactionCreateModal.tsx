@@ -145,9 +145,13 @@ export default function TransactionCreateModal({
             rules={[{ required: true }]}
           >
             <Select
+              showSearch
+              filterOption={(input, opt) =>
+                (opt?.label as string)?.toLowerCase().includes(input.toLowerCase())
+              }
               options={otherWarehouses.map((w) => ({
                 value: w.id,
-                label: w.name,
+                label: `${w.name} (${t(`warehouses.type_${w.type}`)})`,
               }))}
               placeholder={t("warehouses.destination")}
             />
