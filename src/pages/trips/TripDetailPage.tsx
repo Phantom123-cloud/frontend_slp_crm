@@ -571,41 +571,28 @@ export default function TripDetailPage() {
         <Tabs
           defaultActiveKey="presentations"
           style={{ padding: "0 16px" }}
-          tabBarExtraContent={
-            canCreatePresentation && canModifyPresentations ? (
-              <Tooltip
-                title={
-                  !trip.crew?.length
-                    ? t("errors.tripNoCrewForPresentation")
-                    : undefined
-                }
-              >
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  size="small"
-                  disabled={!trip.crew?.length}
-                  onClick={() => setPresCreateOpen(true)}
-                >
-                  {t("trips.createPresentation")}
-                </Button>
-              </Tooltip>
-            ) : null
-          }
           items={[
             canViewPresentations && {
               key: "presentations",
               label: t("trips.presentations"),
               children: (
                 <div>
-                  <Radio.Group
-                    value={presStatusFilter}
-                    onChange={(e) => {
-                      setPresStatusFilter(e.target.value);
-                      setPresTablePage(1);
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 12,
+                      marginTop: 8,
                     }}
-                    style={{ marginBottom: 12, marginTop: 8 }}
                   >
+                    <Radio.Group
+                      value={presStatusFilter}
+                      onChange={(e) => {
+                        setPresStatusFilter(e.target.value);
+                        setPresTablePage(1);
+                      }}
+                    >
                     <Radio.Button value="all">
                       {t("trips.presFilter_all")}
                     </Radio.Button>
@@ -622,6 +609,26 @@ export default function TripDetailPage() {
                       {t("trips.presFilter_cancelled")}
                     </Radio.Button>
                   </Radio.Group>
+                  {canCreatePresentation && canModifyPresentations && (
+                    <Tooltip
+                      title={
+                        !trip.crew?.length
+                          ? t("errors.tripNoCrewForPresentation")
+                          : undefined
+                      }
+                    >
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        size="small"
+                        disabled={!trip.crew?.length}
+                        onClick={() => setPresCreateOpen(true)}
+                      >
+                        {t("trips.createPresentation")}
+                      </Button>
+                    </Tooltip>
+                  )}
+                  </div>
                   <Table
                     dataSource={filteredPresentations}
                     columns={presColumns}
