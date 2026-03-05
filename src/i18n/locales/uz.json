@@ -311,6 +311,8 @@
     "tripEndBeforeStart": "Tugash sanasi boshlanish sanasidan keyin bo'lishi kerak",
     "tripDatesConflict": "Sanalarni o'zgartirib bo'lmaydi: yangi oraliqdan tashqarida prezentatsiyalar mavjud",
     "tripHasPresentations": "Prezentatsiyalari bor sayohatni o'chirib bo'lmaydi",
+    "tripWarehouseNotEmpty": "Sayohatni yopib bo'lmaydi: omborda qoldiq bor. Avval omborni tozalang.",
+    "tripWarehousePendingTransfers": "Sayohatni yopib bo'lmaydi: omborda kutilayotgan ko'chirishlar mavjud.",
     "presentationNotFound": "Prezentatsiya topilmadi",
     "presentationDateOutOfRange": "Prezentatsiya sanasi sayohat oralig'idan tashqarida",
     "presentationTypeExists": "Prezentatsiya turi allaqachon mavjud",

@@ -311,6 +311,8 @@
     "tripEndBeforeStart": "End date must be after start date",
     "tripDatesConflict": "Cannot change dates: presentations exist outside new range",
     "tripHasPresentations": "Cannot delete trip with presentations",
+    "tripWarehouseNotEmpty": "Cannot close trip: warehouse still has stock. Clear the warehouse first.",
+    "tripWarehousePendingTransfers": "Cannot close trip: there are pending transfers on the warehouse.",
     "presentationNotFound": "Presentation not found",
     "presentationDateOutOfRange": "Presentation date is outside trip range",
     "presentationTypeExists": "Presentation type already exists",
