@@ -451,7 +451,7 @@
     "stock": "Qoldiq",
     "transactions": "Operatsiyalar",
     "noStock": "Ombor bo'sh",
-    "addTransaction": "+ Operatsiya",
+    "addTransaction": "Operatsiya",
     "transType_INCOMING": "Kirim",
     "transType_SALE": "Sotuv",
     "transType_GIFT": "Sovg'a",

@@ -451,7 +451,7 @@
     "stock": "Остатки",
     "transactions": "Операции",
     "noStock": "Склад пуст",
-    "addTransaction": "+ Транзакция",
+    "addTransaction": "Транзакция",
     "transType_INCOMING": "Приход",
     "transType_SALE": "Продажа",
     "transType_GIFT": "Подарок",

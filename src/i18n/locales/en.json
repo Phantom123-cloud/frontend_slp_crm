@@ -451,7 +451,7 @@
     "stock": "Stock",
     "transactions": "Transactions",
     "noStock": "Warehouse is empty",
-    "addTransaction": "+ Transaction",
+    "addTransaction": "Transaction",
     "transType_INCOMING": "Incoming",
     "transType_SALE": "Sale",
     "transType_GIFT": "Gift",
