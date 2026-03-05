@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Table, Tag, Button, Popconfirm, Space, Collapse } from "antd";
 import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../../api/warehouses";
 import { message } from "antd";
+import { useTableFilters } from "../../../utils/tableFilters";
+import dayjs from "dayjs";
 
 const { Text } = Typography;
 
@@ -23,6 +26,16 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "default",
 };
 
+const TX_TYPES = [
+  "INCOMING",
+  "SALE",
+  "GIFT",
+  "CONTRACT",
+  "WRITE_OFF",
+  "TRANSFER_OUT",
+  "TRANSFER_IN",
+];
+
 interface Props {
   transactions: any[];
   warehouseId: string;
@@ -39,6 +52,8 @@ export default function TransactionsTable({
   pagination = true,
 }: Props) {
   const { t } = useTranslation();
+  const { colSearch, colEnum } = useTableFilters();
+  const [page, setPage] = useState(1);
 
   const handleAccept = async (txId: string) => {
     try {
@@ -66,20 +81,33 @@ export default function TransactionsTable({
       dataIndex: "createdAt",
       key: "createdAt",
       width: 160,
-      render: (v: string) => new Date(v).toLocaleString("ru"),
+      ...colSearch((r: any) =>
+        dayjs(r.createdAt).format("DD.MM.YYYY HH:mm"),
+      ),
+      render: (v: string) => dayjs(v).format("DD.MM.YYYY HH:mm"),
     },
     {
       title: t("common.type"),
       dataIndex: "type",
       key: "type",
-      width: 180,
+      width: 190,
+      ...colEnum(
+        TX_TYPES.map((type) => ({
+          text: t(`warehouses.transType_${type}`),
+          value: type,
+        })),
+        (v, r: any) => r.type === v,
+      ),
       render: (v: string, record: any) => (
         <Space direction="vertical" size={2}>
           <Tag color={TX_TYPE_COLORS[v] || "default"}>
             {t(`warehouses.transType_${v}`)}
           </Tag>
           {v === "TRANSFER_OUT" && record.transferStatus && (
-            <Tag color={STATUS_COLORS[record.transferStatus] || "default"} style={{ fontSize: 11 }}>
+            <Tag
+              color={STATUS_COLORS[record.transferStatus] || "default"}
+              style={{ fontSize: 11 }}
+            >
               {t(`warehouses.transferStatus_${record.transferStatus}`)}
             </Tag>
           )}
@@ -90,16 +118,21 @@ export default function TransactionsTable({
       title: t("warehouses.counterpart"),
       key: "counterpart",
       width: 160,
+      ...colSearch((r: any) => {
+        if (r.type === "TRANSFER_OUT") return r.toWarehouse?.name ?? "";
+        if (r.type === "TRANSFER_IN") return r.fromWarehouse?.name ?? "";
+        return "";
+      }),
       render: (_: any, record: any) => {
         if (record.type === "TRANSFER_OUT") {
-          return record.toWarehouse
-            ? <Text type="secondary">{`→ ${record.toWarehouse.name}`}</Text>
-            : null;
+          return record.toWarehouse ? (
+            <Text type="secondary">{`→ ${record.toWarehouse.name}`}</Text>
+          ) : null;
         }
         if (record.type === "TRANSFER_IN") {
-          return record.fromWarehouse
-            ? <Text type="secondary">{`← ${record.fromWarehouse.name}`}</Text>
-            : null;
+          return record.fromWarehouse ? (
+            <Text type="secondary">{`← ${record.fromWarehouse.name}`}</Text>
+          ) : null;
         }
         return null;
       },
@@ -107,6 +140,9 @@ export default function TransactionsTable({
     {
       title: t("warehouses.product"),
       key: "items",
+      ...colSearch((r: any) =>
+        (r.items || []).map((i: any) => i.product?.name ?? "").join(" "),
+      ),
       render: (_: any, record: any) => (
         <Collapse
           ghost
@@ -117,7 +153,8 @@ export default function TransactionsTable({
               label: `${record.items.length} ${t("warehouses.product")}`,
               children: record.items.map((item: any) => (
                 <div key={item.id}>
-                  {item.product.name} — {Number(item.quantity)} {item.product.unit}
+                  {item.product.name} — {Number(item.quantity)}{" "}
+                  {item.product.unit}
                 </div>
               )),
             },
@@ -129,14 +166,23 @@ export default function TransactionsTable({
       title: t("warehouses.note"),
       dataIndex: "note",
       key: "note",
+      ...colSearch((r: any) => r.note ?? ""),
       render: (v: any) => v || "—",
     },
     {
       title: t("users.name"),
       key: "createdBy",
       width: 160,
+      ...colSearch(
+        (r: any) =>
+          r.createdBy
+            ? `${r.createdBy.lastName} ${r.createdBy.firstName}`
+            : "",
+      ),
       render: (_: any, r: any) =>
-        r.createdBy ? `${r.createdBy.lastName} ${r.createdBy.firstName}` : "—",
+        r.createdBy
+          ? `${r.createdBy.lastName} ${r.createdBy.firstName}`
+          : "—",
     },
     ...(canTransact
       ? [
@@ -203,9 +249,20 @@ export default function TransactionsTable({
           ? "ant-table-row-pending"
           : ""
       }
+      onChange={(pg, filters) => {
+        const hasFilter = Object.values(filters).some(
+          (f) => f && (f as any[]).length > 0,
+        );
+        setPage(hasFilter ? 1 : (pg.current ?? 1));
+      }}
       pagination={
         pagination
-          ? { pageSize: 20, showSizeChanger: false, hideOnSinglePage: true }
+          ? {
+              pageSize: 20,
+              showSizeChanger: false,
+              hideOnSinglePage: true,
+              current: page,
+            }
           : false
       }
     />
