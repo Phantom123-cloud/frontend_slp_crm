@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../api/warehouses";
 import { usersApi } from "../../api/users";
 import { useAnyPermission, usePermission } from "../../hooks/usePermission";
+import { useTableFilters } from "../../utils/tableFilters";
 
 const { Title } = Typography;
 
@@ -41,6 +42,8 @@ export default function WarehousesListPage() {
   const [createForm] = Form.useForm();
   const [selectedType, setSelectedType] = useState<string>("CENTRAL");
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const { colSearch, colEnum } = useTableFilters();
 
   const load = async () => {
     setLoading(true);
@@ -91,6 +94,7 @@ export default function WarehousesListPage() {
       title: t("warehouses.name"),
       dataIndex: "name",
       key: "name",
+      ...colSearch((r: any) => r.name ?? ""),
       render: (name: string, record: any) => (
         <a onClick={() => navigate(`/warehouses/${record.id}`)}>{name}</a>
       ),
@@ -100,6 +104,13 @@ export default function WarehousesListPage() {
       dataIndex: "type",
       key: "type",
       width: 140,
+      ...colEnum(
+        ["TRIP", "CENTRAL", "PERSONAL"].map((type) => ({
+          text: t(`warehouses.type_${type}`),
+          value: type,
+        })),
+        (v, r: any) => r.type === v,
+      ),
       render: (v: string) => (
         <Tag color={TYPE_COLORS[v] || "default"}>
           {t(`warehouses.type_${v}`)}
@@ -109,16 +120,17 @@ export default function WarehousesListPage() {
     {
       title: t("warehouses.owner"),
       key: "owner",
-      width: 180,
+      width: 200,
+      ...colSearch((r: any) =>
+        r.owner ? `${r.owner.lastName} ${r.owner.firstName}` : "",
+      ),
       render: (_: any, r: any) =>
-        r.owner
-          ? `${r.owner.lastName} ${r.owner.firstName}`
-          : "—",
+        r.owner ? `${r.owner.lastName} ${r.owner.firstName}` : "—",
     },
     {
       title: t("warehouses.stock"),
       key: "stockCount",
-      width: 120,
+      width: 100,
       render: (_: any, r: any) => r._count?.stock ?? 0,
     },
     {
@@ -126,6 +138,13 @@ export default function WarehousesListPage() {
       dataIndex: "isActive",
       key: "isActive",
       width: 100,
+      ...colEnum(
+        [
+          { text: t("users.yes"), value: true },
+          { text: t("users.no"), value: false },
+        ],
+        (v, r: any) => r.isActive === v,
+      ),
       render: (v: boolean) =>
         v ? (
           <Tag color="green">{t("users.yes")}</Tag>
@@ -160,7 +179,7 @@ export default function WarehousesListPage() {
 
       <Tabs
         activeKey={activeTab}
-        onChange={setActiveTab}
+        onChange={(key) => { setActiveTab(key); setPage(1); }}
         items={tabItems}
         style={{ marginBottom: 16 }}
       />
@@ -175,10 +194,16 @@ export default function WarehousesListPage() {
           onClick: () => navigate(`/warehouses/${record.id}`),
           style: { cursor: "pointer" },
         })}
+        onChange={(pg, filters) => {
+          const hasFilter = Object.values(filters).some(
+            (f) => f && (f as any[]).length > 0,
+          );
+          setPage(hasFilter ? 1 : (pg.current ?? 1));
+        }}
         pagination={{
           pageSize: 20,
           showSizeChanger: false,
-          hideOnSinglePage: true,
+          current: page,
         }}
       />
 
