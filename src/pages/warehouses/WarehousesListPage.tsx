@@ -63,12 +63,14 @@ export default function WarehousesListPage() {
 
   useEffect(() => {
     load();
-    if (canManage) loadUsers();
+    if (canCreate) loadUsers();
   }, []);
 
   const handleCreate = async (values: any) => {
     try {
-      await warehousesApi.create(values);
+      const payload: any = { type: values.type, ownerId: values.ownerId };
+      if (values.type === "CENTRAL") payload.name = values.name;
+      await warehousesApi.create(payload);
       message.success(t("common.success"));
       setCreateModalOpen(false);
       createForm.resetFields();
@@ -194,45 +196,47 @@ export default function WarehousesListPage() {
       >
         <Form form={createForm} onFinish={handleCreate} layout="vertical">
           <Form.Item
-            name="name"
-            label={t("warehouses.name")}
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
             name="type"
             label={t("warehouses.type")}
             initialValue="CENTRAL"
             rules={[{ required: true }]}
           >
             <Select
-              onChange={setSelectedType}
+              onChange={(v) => { setSelectedType(v); createForm.resetFields(["name", "ownerId"]); }}
               options={[
                 { value: "CENTRAL", label: t("warehouses.type_CENTRAL") },
                 { value: "PERSONAL", label: t("warehouses.type_PERSONAL") },
               ]}
             />
           </Form.Item>
-          {selectedType === "PERSONAL" && (
+          {selectedType === "CENTRAL" && (
             <Form.Item
-              name="ownerId"
-              label={t("warehouses.owner")}
+              name="name"
+              label={t("warehouses.nameSuffix")}
               rules={[{ required: true }]}
+              extra={t("warehouses.centralNameHint")}
             >
-              <Select
-                showSearch
-                filterOption={(input, opt) =>
-                  (opt?.label as string)?.toLowerCase().includes(input.toLowerCase())
-                }
-                options={users.map((u) => ({
-                  value: u.id,
-                  label: `${u.lastName} ${u.firstName}`,
-                }))}
-                placeholder={t("warehouses.owner")}
-              />
+              <Input addonBefore="Центральный склад" />
             </Form.Item>
           )}
+          <Form.Item
+            name="ownerId"
+            label={t("warehouses.owner")}
+            rules={[{ required: true }]}
+            extra={selectedType === "PERSONAL" ? t("warehouses.personalNameHint") : undefined}
+          >
+            <Select
+              showSearch
+              filterOption={(input, opt) =>
+                (opt?.label as string)?.toLowerCase().includes(input.toLowerCase())
+              }
+              options={users.map((u) => ({
+                value: u.id,
+                label: `${u.lastName} ${u.firstName}`,
+              }))}
+              placeholder={t("warehouses.owner")}
+            />
+          </Form.Item>
         </Form>
       </Modal>
     </div>

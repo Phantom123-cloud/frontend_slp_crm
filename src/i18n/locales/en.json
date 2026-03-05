@@ -466,7 +466,12 @@
     "negativeStockWarning": "Warning: stock will go negative",
     "deleteConfirm": "Deactivate warehouse?",
     "product": "Product",
-    "addItem": "Add product"
+    "addItem": "Add product",
+    "editWarehouse": "Edit warehouse",
+    "nameSuffix": "Warehouse name",
+    "centralNameHint": "Final name: «Central warehouse [your text]»",
+    "personalNameHint": "Name will be generated automatically: «Warehouse Last First»",
+    "responsible": "Responsible"
   },
   "common": {
     "save": "Save",

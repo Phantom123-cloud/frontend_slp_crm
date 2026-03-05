@@ -466,7 +466,12 @@
     "negativeStockWarning": "Diqqat: qoldiq manfiy bo'ladi",
     "deleteConfirm": "Omborni o'chirasizmi?",
     "product": "Mahsulot",
-    "addItem": "Mahsulot qo'shish"
+    "addItem": "Mahsulot qo'shish",
+    "editWarehouse": "Ombor tahrirlash",
+    "nameSuffix": "Ombor nomi",
+    "centralNameHint": "Yakuniy nom: «Markaziy ombor [matningiz]»",
+    "personalNameHint": "Nom avtomatik shakllanadi: «Ombor Familiya Ism»",
+    "responsible": "Mas'ul"
   },
   "common": {
     "save": "Saqlash",

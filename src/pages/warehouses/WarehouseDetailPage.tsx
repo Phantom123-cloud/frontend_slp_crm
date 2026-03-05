@@ -10,12 +10,18 @@ import {
   Breadcrumb,
   Space,
   Collapse,
+  Modal,
+  Form,
+  Input,
+  Select,
+  Descriptions,
 } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../api/warehouses";
 import { directoriesApi } from "../../api/directories";
+import { usersApi } from "../../api/users";
 import { useAnyPermission } from "../../hooks/usePermission";
 import TransactionCreateModal from "./components/TransactionCreateModal";
 
@@ -42,27 +48,57 @@ export default function WarehouseDetailPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [txModalOpen, setTxModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editForm] = Form.useForm();
 
   const loadAll = async () => {
     if (!id) return;
     setLoading(true);
     try {
-      const [wRes, txRes, allWRes, prodRes] = await Promise.all([
+      const [wRes, txRes, allWRes, prodRes, usersRes] = await Promise.all([
         warehousesApi.getById(id),
         warehousesApi.getTransactions(id),
         warehousesApi.list(),
         directoriesApi.getProducts(),
+        usersApi.getAll({ limit: 1000 }),
       ]);
       setWarehouse(wRes.data);
       setTransactions(txRes.data);
       setWarehouses(allWRes.data);
       setProducts(prodRes.data);
+      setUsers(usersRes.data.data || []);
     } catch (e: any) {
       message.error(t(e.response?.data?.message || "common.error"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openEditModal = (wh: any) => {
+    editForm.setFieldsValue({
+      name: wh.name,
+      ownerId: wh.owner?.id,
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEdit = async (values: any) => {
+    try {
+      const payload: any = { ownerId: values.ownerId };
+      // For PERSONAL, if only owner changed, backend auto-generates name.
+      // If name was explicitly changed by user, send it.
+      if (warehouse.type !== "PERSONAL" || values.name !== warehouse.name) {
+        payload.name = values.name;
+      }
+      await warehousesApi.update(id!, payload);
+      message.success(t("common.success"));
+      setEditModalOpen(false);
+      loadAll();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
     }
   };
 
@@ -165,13 +201,26 @@ export default function WarehouseDetailPage() {
         ]}
       />
 
-      <Space style={{ marginBottom: 16 }} align="center">
+      <Space style={{ marginBottom: 8 }} align="center">
         <Title level={3} style={{ margin: 0 }}>
           {warehouse.name}
         </Title>
         <Tag>{t(`warehouses.type_${warehouse.type}`)}</Tag>
         {!warehouse.isActive && <Tag color="red">{t("users.inactive")}</Tag>}
+        {canManage && (
+          <Button icon={<EditOutlined />} size="small" onClick={() => openEditModal(warehouse)}>
+            {t("common.edit")}
+          </Button>
+        )}
       </Space>
+
+      <Descriptions size="small" style={{ marginBottom: 16 }}>
+        <Descriptions.Item label={t("warehouses.owner")}>
+          {warehouse.owner
+            ? `${warehouse.owner.lastName} ${warehouse.owner.firstName}`
+            : "—"}
+        </Descriptions.Item>
+      </Descriptions>
 
       <Card
         title={t("warehouses.stock")}
@@ -217,6 +266,41 @@ export default function WarehouseDetailPage() {
         products={products}
         stock={warehouse.stock}
       />
+
+      <Modal
+        title={t("warehouses.editWarehouse")}
+        open={editModalOpen}
+        onCancel={() => setEditModalOpen(false)}
+        onOk={() => editForm.submit()}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+      >
+        <Form form={editForm} onFinish={handleEdit} layout="vertical">
+          {warehouse.type !== "PERSONAL" && (
+            <Form.Item name="name" label={t("warehouses.name")} rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+          )}
+          <Form.Item
+            name="ownerId"
+            label={t("warehouses.owner")}
+            rules={[{ required: true }]}
+            extra={warehouse.type === "PERSONAL" ? t("warehouses.personalNameHint") : undefined}
+          >
+            <Select
+              showSearch
+              filterOption={(input, opt) =>
+                (opt?.label as string)?.toLowerCase().includes(input.toLowerCase())
+              }
+              options={users.map((u: any) => ({
+                value: u.id,
+                label: `${u.lastName} ${u.firstName}`,
+              }))}
+              placeholder={t("warehouses.owner")}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }
