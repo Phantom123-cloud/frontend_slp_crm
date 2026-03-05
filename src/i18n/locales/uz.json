@@ -20,7 +20,8 @@
     "trips": "Sayohatlar",
     "tripsList": "Sayohatlar",
     "presentations": "Taqdimotlar",
-    "directories": "Ma'lumotnomalar"
+    "directories": "Ma'lumotnomalar",
+    "warehouses": "Omborlar"
   },
   "users": {
     "title": "Foydalanuvchilar",
@@ -82,6 +83,9 @@
     "exportFields": "Maydonlarni tanlang",
     "exportDownload": "Yuklab olish",
     "status": "Holat",
+    "active": "Faol",
+    "inactive": "Nofaol",
+    "name": "F.I.Sh.",
     "online": "Onlayn",
     "maxSessions": "Maks. bir vaqtdagi sessiyalar",
     "fullInfo": "To'liq ma'lumot",
@@ -421,7 +425,48 @@
     "venueName": "Joy nomi",
     "addType": "Prezentatsiya turi qo'shish",
     "addVenue": "O'tkazish joyi qo'shish",
-    "deleteConfirm": "O'chirishni xohlaysizmi?"
+    "deleteConfirm": "O'chirishni xohlaysizmi?",
+    "products": "Mahsulotlar",
+    "addProduct": "Mahsulot qo'shish",
+    "productName": "Mahsulot nomi",
+    "unit": "O'lchov birligi",
+    "sku": "Artikul (SKU)",
+    "unitOptions": {
+      "pcs": "dona",
+      "kg": "kg",
+      "l": "l",
+      "pack": "qad.",
+      "m": "m"
+    }
+  },
+  "warehouses": {
+    "title": "Omborlar",
+    "type_CENTRAL": "Markaziy",
+    "type_PERSONAL": "Shaxsiy",
+    "type_TRIP": "Safar",
+    "create": "Ombor yaratish",
+    "name": "Nomi",
+    "type": "Turi",
+    "owner": "Egasi",
+    "stock": "Qoldiq",
+    "transactions": "Operatsiyalar",
+    "noStock": "Ombor bo'sh",
+    "addTransaction": "+ Operatsiya",
+    "transType_INCOMING": "Kirim",
+    "transType_SALE": "Sotuv",
+    "transType_GIFT": "Sovg'a",
+    "transType_CONTRACT": "Shartnoma",
+    "transType_WRITE_OFF": "Hisobdan chiqarish",
+    "transType_TRANSFER_OUT": "Ko'chirish (chiqish)",
+    "transType_TRANSFER_IN": "Ko'chirish (kirish)",
+    "transType_TRANSFER": "Ko'chirish",
+    "quantity": "Miqdor",
+    "note": "Izoh",
+    "destination": "Manzil ombor",
+    "negativeStockWarning": "Diqqat: qoldiq manfiy bo'ladi",
+    "deleteConfirm": "Omborni o'chirasizmi?",
+    "product": "Mahsulot",
+    "addItem": "Mahsulot qo'shish"
   },
   "common": {
     "save": "Saqlash",
@@ -437,6 +482,9 @@
     "error": "Xatolik",
     "selectAll": "Hammasini tanlash",
     "deselectAll": "Hammasini olib tashlash",
-    "itemsPerPage": "/ sah."
+    "itemsPerPage": "/ sah.",
+    "all": "Barchasi",
+    "date": "Sana",
+    "type": "Turi"
   }
 }

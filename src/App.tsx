@@ -22,6 +22,8 @@ import TripDetailPage from "./pages/trips/TripDetailPage";
 import PresentationDetailPage from "./pages/trips/PresentationDetailPage";
 import DirectoriesPage from "./pages/directories/DirectoriesPage";
 import PresentationsListPage from "./pages/presentations/PresentationsListPage";
+import WarehousesListPage from "./pages/warehouses/WarehousesListPage";
+import WarehouseDetailPage from "./pages/warehouses/WarehouseDetailPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -248,6 +250,34 @@ export default function App() {
                 element={<PresentationDetailPage />}
               />
               <Route path="directories" element={<DirectoriesPage />} />
+              <Route
+                path="warehouses"
+                element={
+                  <PermissionRoute
+                    permission={[
+                      "warehouses.view",
+                      "warehouses.create",
+                      "warehouses.manage",
+                    ]}
+                  >
+                    <WarehousesListPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="warehouses/:id"
+                element={
+                  <PermissionRoute
+                    permission={[
+                      "warehouses.view",
+                      "warehouses.create",
+                      "warehouses.manage",
+                    ]}
+                  >
+                    <WarehouseDetailPage />
+                  </PermissionRoute>
+                }
+              />
             </Route>
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

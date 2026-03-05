@@ -12,6 +12,16 @@ export const directoriesApi = {
   deletePresentationType: (id: string) =>
     api.delete(`/presentation-types/${id}`),
 
+  // Products
+  getProducts: () => api.get("/products"),
+  createProduct: (data: { name: string; unit: string; sku?: string }) =>
+    api.post("/products", data),
+  updateProduct: (
+    id: string,
+    data: { name?: string; unit?: string; sku?: string; isActive?: boolean },
+  ) => api.patch(`/products/${id}`, data),
+  deleteProduct: (id: string) => api.delete(`/products/${id}`),
+
   // Venues
   getVenues: () => api.get("/venues"),
   createVenue: (data: { city: string; address: string; venueName: string }) =>

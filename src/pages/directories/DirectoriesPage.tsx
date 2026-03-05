@@ -6,10 +6,12 @@ import {
   Modal,
   Form,
   Input,
+  Select,
   Space,
   Popconfirm,
   message,
   Typography,
+  Tag,
 } from "antd";
 import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
@@ -77,6 +79,59 @@ export default function DirectoriesPage() {
     }
   };
 
+  // === Products ===
+  const [products, setProducts] = useState<any[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<any>(null);
+  const [productForm] = Form.useForm();
+  const [editProductForm] = Form.useForm();
+
+  const loadProducts = async () => {
+    setProductsLoading(true);
+    try {
+      const { data } = await directoriesApi.getProducts();
+      setProducts(data);
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const handleCreateProduct = async (values: any) => {
+    try {
+      await directoriesApi.createProduct(values);
+      message.success(t("common.success"));
+      setProductModalOpen(false);
+      productForm.resetFields();
+      loadProducts();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleUpdateProduct = async (values: any) => {
+    try {
+      await directoriesApi.updateProduct(editProduct.id, values);
+      message.success(t("common.success"));
+      setEditProduct(null);
+      loadProducts();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      await directoriesApi.deleteProduct(id);
+      message.success(t("common.success"));
+      loadProducts();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
   // === Venues ===
   const [venues, setVenues] = useState<any[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(false);
@@ -133,6 +188,7 @@ export default function DirectoriesPage() {
   useEffect(() => {
     loadTypes();
     loadVenues();
+    loadProducts();
   }, []);
 
   // === Columns ===
@@ -174,6 +230,79 @@ export default function DirectoriesPage() {
                 <Popconfirm
                   title={t("directories.deleteConfirm")}
                   onConfirm={() => handleDeleteType(record.id)}
+                  okText={t("users.yes")}
+                  cancelText={t("users.no")}
+                >
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    size="small"
+                  />
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ]
+      : []),
+  ];
+
+  const productColumns = [
+    {
+      title: t("directories.productName"),
+      dataIndex: "name",
+      key: "name",
+      ...colSearch((r: any) => r.name || ""),
+    },
+    {
+      title: t("directories.unit"),
+      dataIndex: "unit",
+      key: "unit",
+      width: 100,
+    },
+    {
+      title: t("directories.sku"),
+      dataIndex: "sku",
+      key: "sku",
+      ...colSearch((r: any) => r.sku || ""),
+      render: (v: any) => v || "—",
+    },
+    {
+      title: t("users.active"),
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 100,
+      render: (v: boolean) =>
+        v ? (
+          <Tag color="green">{t("users.yes")}</Tag>
+        ) : (
+          <Tag color="red">{t("users.no")}</Tag>
+        ),
+    },
+    ...(canManage
+      ? [
+          {
+            title: t("users.actions"),
+            key: "actions",
+            width: 100,
+            render: (_: any, record: any) => (
+              <Space size={4}>
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  size="small"
+                  onClick={() => {
+                    setEditProduct(record);
+                    editProductForm.setFieldsValue({
+                      name: record.name,
+                      unit: record.unit,
+                      sku: record.sku,
+                    });
+                  }}
+                />
+                <Popconfirm
+                  title={t("warehouses.deleteConfirm")}
+                  onConfirm={() => handleDeleteProduct(record.id)}
                   okText={t("users.yes")}
                   cancelText={t("users.no")}
                 >
@@ -289,6 +418,37 @@ export default function DirectoriesPage() {
             ),
           },
           {
+            key: "products",
+            label: t("directories.products"),
+            children: (
+              <>
+                {canManage && (
+                  <div style={{ marginBottom: 16 }}>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setProductModalOpen(true)}
+                    >
+                      {t("directories.addProduct")}
+                    </Button>
+                  </div>
+                )}
+                <Table
+                  dataSource={products}
+                  columns={productColumns}
+                  rowKey="id"
+                  loading={productsLoading}
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: false,
+                    hideOnSinglePage: true,
+                  }}
+                  size="small"
+                />
+              </>
+            ),
+          },
+          {
             key: "venues",
             label: t("directories.venues"),
             children: (
@@ -321,6 +481,86 @@ export default function DirectoriesPage() {
           },
         ]}
       />
+
+      {/* Create Product */}
+      <Modal
+        title={t("directories.addProduct")}
+        open={productModalOpen}
+        onCancel={() => {
+          setProductModalOpen(false);
+          productForm.resetFields();
+        }}
+        onOk={() => productForm.submit()}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+      >
+        <Form form={productForm} onFinish={handleCreateProduct} layout="vertical">
+          <Form.Item
+            name="name"
+            label={t("directories.productName")}
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="unit"
+            label={t("directories.unit")}
+            rules={[{ required: true }]}
+          >
+            <Select
+              options={[
+                { value: "шт", label: t("directories.unitOptions.pcs") },
+                { value: "кг", label: t("directories.unitOptions.kg") },
+                { value: "л", label: t("directories.unitOptions.l") },
+                { value: "уп", label: t("directories.unitOptions.pack") },
+                { value: "м", label: t("directories.unitOptions.m") },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item name="sku" label={t("directories.sku")}>
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Edit Product */}
+      <Modal
+        title={t("common.edit")}
+        open={!!editProduct}
+        onCancel={() => setEditProduct(null)}
+        onOk={() => editProductForm.submit()}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+        destroyOnClose
+      >
+        <Form form={editProductForm} onFinish={handleUpdateProduct} layout="vertical">
+          <Form.Item
+            name="name"
+            label={t("directories.productName")}
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="unit"
+            label={t("directories.unit")}
+            rules={[{ required: true }]}
+          >
+            <Select
+              options={[
+                { value: "шт", label: t("directories.unitOptions.pcs") },
+                { value: "кг", label: t("directories.unitOptions.kg") },
+                { value: "л", label: t("directories.unitOptions.l") },
+                { value: "уп", label: t("directories.unitOptions.pack") },
+                { value: "м", label: t("directories.unitOptions.m") },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item name="sku" label={t("directories.sku")}>
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* Create Presentation Type */}
       <Modal

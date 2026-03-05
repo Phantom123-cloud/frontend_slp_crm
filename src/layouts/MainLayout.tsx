@@ -25,12 +25,13 @@ import {
   AppstoreOutlined,
   CarOutlined,
   BookOutlined,
+  InboxOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
 import { useThemeStore } from "../store/theme";
 import { authApi } from "../api/auth";
-import { usePermission } from "../hooks/usePermission";
+import { usePermission, useAnyPermission } from "../hooks/usePermission";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -85,6 +86,11 @@ export default function MainLayout() {
     usePermission("presentations.view-person");
   const canViewTrips =
     usePermission("trips.view-all") || usePermission("trips.view-person");
+  const canViewWarehouses = useAnyPermission([
+    "warehouses.view",
+    "warehouses.create",
+    "warehouses.manage",
+  ]);
 
   const tripsChildren = [
     canViewTrips && { key: "/trips", label: t("menu.tripsList") },
@@ -121,6 +127,11 @@ export default function MainLayout() {
       key: "/directories",
       icon: <BookOutlined />,
       label: t("menu.directories"),
+    },
+    canViewWarehouses && {
+      key: "/warehouses",
+      icon: <InboxOutlined />,
+      label: t("menu.warehouses"),
     },
   ].filter(Boolean) as any[];
 

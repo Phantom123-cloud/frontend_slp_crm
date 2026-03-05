@@ -20,7 +20,8 @@
     "trips": "Trips",
     "tripsList": "Trips",
     "presentations": "Presentations",
-    "directories": "Directories"
+    "directories": "Directories",
+    "warehouses": "Warehouses"
   },
   "users": {
     "title": "Users",
@@ -82,6 +83,9 @@
     "exportFields": "Select fields",
     "exportDownload": "Download",
     "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "name": "Full name",
     "online": "Online",
     "maxSessions": "Max concurrent sessions",
     "fullInfo": "Full information",
@@ -421,7 +425,48 @@
     "venueName": "Venue name",
     "addType": "Add presentation type",
     "addVenue": "Add venue",
-    "deleteConfirm": "Are you sure you want to delete?"
+    "deleteConfirm": "Are you sure you want to delete?",
+    "products": "Products",
+    "addProduct": "Add product",
+    "productName": "Product name",
+    "unit": "Unit",
+    "sku": "SKU",
+    "unitOptions": {
+      "pcs": "pcs",
+      "kg": "kg",
+      "l": "l",
+      "pack": "pack",
+      "m": "m"
+    }
+  },
+  "warehouses": {
+    "title": "Warehouses",
+    "type_CENTRAL": "Central",
+    "type_PERSONAL": "Personal",
+    "type_TRIP": "Trip",
+    "create": "Create warehouse",
+    "name": "Name",
+    "type": "Type",
+    "owner": "Owner",
+    "stock": "Stock",
+    "transactions": "Transactions",
+    "noStock": "Warehouse is empty",
+    "addTransaction": "+ Transaction",
+    "transType_INCOMING": "Incoming",
+    "transType_SALE": "Sale",
+    "transType_GIFT": "Gift",
+    "transType_CONTRACT": "Contract",
+    "transType_WRITE_OFF": "Write-off",
+    "transType_TRANSFER_OUT": "Transfer (out)",
+    "transType_TRANSFER_IN": "Transfer (in)",
+    "transType_TRANSFER": "Transfer",
+    "quantity": "Quantity",
+    "note": "Note",
+    "destination": "Destination warehouse",
+    "negativeStockWarning": "Warning: stock will go negative",
+    "deleteConfirm": "Deactivate warehouse?",
+    "product": "Product",
+    "addItem": "Add product"
   },
   "common": {
     "save": "Save",
@@ -437,6 +482,9 @@
     "error": "Error",
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
-    "itemsPerPage": "/ page"
+    "itemsPerPage": "/ page",
+    "all": "All",
+    "date": "Date",
+    "type": "Type"
   }
 }

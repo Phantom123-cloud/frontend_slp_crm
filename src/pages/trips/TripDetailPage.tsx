@@ -30,13 +30,14 @@ import {
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { tripsApi, presentationsApi } from "../../api/trips";
-import { usePermission } from "../../hooks/usePermission";
+import { usePermission, useAnyPermission } from "../../hooks/usePermission";
 import { useAuthStore } from "../../store/auth";
 import { useTableFilters } from "../../utils/tableFilters";
 import CrewModal from "./components/CrewModal";
 import PresentationCreateModal from "./components/PresentationCreateModal";
 import PresentationSummaryModal from "./components/PresentationSummaryModal";
 import PresentationCrewModal from "./components/PresentationCrewModal";
+import TripWarehouseTab from "./components/TripWarehouseTab";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -85,6 +86,7 @@ export default function TripDetailPage() {
   const canViewPresAll = usePermission("presentations.view-all");
   const canViewPresPerson = usePermission("presentations.view-person");
   const canViewPresentations = canViewPresAll || canViewPresPerson;
+  const canViewTrips = usePermission("trips.view-person");
 
   const myId = useAuthStore((s) => s.user?.id);
 
@@ -647,7 +649,16 @@ export default function TripDetailPage() {
             {
               key: "warehouse",
               label: t("trips.warehouse"),
-              children: (
+              children: trip.warehouse ? (
+                <TripWarehouseTab
+                  warehouseId={trip.warehouse.id}
+                  canTransact={
+                    canAdmin ||
+                    (canViewTrips &&
+                      (myTripCrewRole === "MV" || myTripCrewRole === "MV_GA"))
+                  }
+                />
+              ) : (
                 <div
                   style={{
                     textAlign: "center",

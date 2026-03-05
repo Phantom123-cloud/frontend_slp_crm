@@ -20,7 +20,8 @@
     "trips": "Поездки",
     "tripsList": "Поездки",
     "presentations": "Презентации",
-    "directories": "Справочники"
+    "directories": "Справочники",
+    "warehouses": "Склады"
   },
   "users": {
     "title": "Пользователи",
@@ -82,6 +83,9 @@
     "exportFields": "Выберите поля",
     "exportDownload": "Скачать",
     "status": "Статус",
+    "active": "Активен",
+    "inactive": "Неактивен",
+    "name": "ФИО",
     "online": "Онлайн",
     "maxSessions": "Макс. одновременных сессий",
     "fullInfo": "Полная информация",
@@ -421,7 +425,48 @@
     "venueName": "Название места",
     "addType": "Добавить тип презентации",
     "addVenue": "Добавить место проведения",
-    "deleteConfirm": "Вы уверены, что хотите удалить?"
+    "deleteConfirm": "Вы уверены, что хотите удалить?",
+    "products": "Товары",
+    "addProduct": "Добавить товар",
+    "productName": "Название товара",
+    "unit": "Единица измерения",
+    "sku": "Артикул (SKU)",
+    "unitOptions": {
+      "pcs": "шт",
+      "kg": "кг",
+      "l": "л",
+      "pack": "уп",
+      "m": "м"
+    }
+  },
+  "warehouses": {
+    "title": "Склады",
+    "type_CENTRAL": "Центральный",
+    "type_PERSONAL": "Личный",
+    "type_TRIP": "Поездки",
+    "create": "Создать склад",
+    "name": "Название",
+    "type": "Тип",
+    "owner": "Владелец",
+    "stock": "Остатки",
+    "transactions": "Операции",
+    "noStock": "Склад пуст",
+    "addTransaction": "+ Транзакция",
+    "transType_INCOMING": "Приход",
+    "transType_SALE": "Продажа",
+    "transType_GIFT": "Подарок",
+    "transType_CONTRACT": "К договору",
+    "transType_WRITE_OFF": "Списание",
+    "transType_TRANSFER_OUT": "Перемещение (исх.)",
+    "transType_TRANSFER_IN": "Перемещение (вх.)",
+    "transType_TRANSFER": "Перемещение",
+    "quantity": "Количество",
+    "note": "Примечание",
+    "destination": "Склад назначения",
+    "negativeStockWarning": "Внимание: остаток уйдёт в минус",
+    "deleteConfirm": "Деактивировать склад?",
+    "product": "Товар",
+    "addItem": "Добавить товар"
   },
   "common": {
     "save": "Сохранить",
@@ -437,6 +482,9 @@
     "error": "Ошибка",
     "selectAll": "Выбрать все",
     "deselectAll": "Снять все",
-    "itemsPerPage": "/ стр."
+    "itemsPerPage": "/ стр.",
+    "all": "Все",
+    "date": "Дата",
+    "type": "Тип"
   }
 }
