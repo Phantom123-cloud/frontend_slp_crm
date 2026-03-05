@@ -260,7 +260,6 @@ export default function TransactionsTable({
           ? {
               pageSize: 20,
               showSizeChanger: false,
-              hideOnSinglePage: true,
               current: page,
             }
           : false
