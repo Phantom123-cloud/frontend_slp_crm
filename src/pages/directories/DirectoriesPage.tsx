@@ -410,7 +410,6 @@ export default function DirectoriesPage() {
                   pagination={{
                     pageSize: 10,
                     showSizeChanger: false,
-                    hideOnSinglePage: true,
                   }}
                   size="small"
                 />
@@ -441,7 +440,6 @@ export default function DirectoriesPage() {
                   pagination={{
                     pageSize: 10,
                     showSizeChanger: false,
-                    hideOnSinglePage: true,
                   }}
                   size="small"
                 />
@@ -472,7 +470,6 @@ export default function DirectoriesPage() {
                   pagination={{
                     pageSize: 10,
                     showSizeChanger: false,
-                    hideOnSinglePage: true,
                   }}
                   size="small"
                 />
