@@ -255,7 +255,8 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission={[
-                      "warehouses.view",
+                      "warehouses.view-all",
+                      "warehouses.view-person",
                       "warehouses.create",
                       "warehouses.manage",
                     ]}
@@ -269,7 +270,8 @@ export default function App() {
                 element={
                   <PermissionRoute
                     permission={[
-                      "warehouses.view",
+                      "warehouses.view-all",
+                      "warehouses.view-person",
                       "warehouses.create",
                       "warehouses.manage",
                     ]}

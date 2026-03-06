@@ -492,6 +492,8 @@
     "blocked": "Bloklangan"
   },
   "common": {
+    "yes": "Ha",
+    "no": "Yo'q",
     "save": "Saqlash",
     "cancel": "Bekor qilish",
     "delete": "O'chirish",

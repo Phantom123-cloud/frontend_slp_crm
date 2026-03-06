@@ -492,6 +492,8 @@
     "blocked": "Blocked"
   },
   "common": {
+    "yes": "Yes",
+    "no": "No",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
