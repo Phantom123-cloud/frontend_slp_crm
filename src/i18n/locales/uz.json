@@ -456,8 +456,8 @@
     "addTransaction": "Operatsiya",
     "transType_INCOMING": "Kirim",
     "transType_SALE": "Sotuv",
-    "transType_GIFT": "Sovg'a",
-    "transType_CONTRACT": "Shartnoma",
+    "transType_GIFT": "Shartnomaga sovg'a",
+    "transType_CONTRACT": "Sotuv",
     "transType_WRITE_OFF": "Hisobdan chiqarish",
     "transType_TRANSFER_OUT": "Ko'chirish (chiqish)",
     "transType_TRANSFER_IN": "Ko'chirish (kirish)",
@@ -483,7 +483,13 @@
     "acceptConfirm": "Ko'chirishni qabul qilib, omborga mahsulot qo'shilsinmi?",
     "cancelConfirm": "Ko'chirishni bekor qilib, mahsulotni jo'natuvchiga qaytarilsinmi?",
     "transferAccepted": "Ko'chirish qabul qilindi",
-    "transferCancelled": "Ko'chirish bekor qilindi"
+    "transferCancelled": "Ko'chirish bekor qilindi",
+    "deactivate": "Bloklash",
+    "reactivate": "Blokdan chiqarish",
+    "deactivateConfirm": "Omborni bloklash? Bu barcha operatsiyalarni taqiqlaydi.",
+    "deleteConfirmPermanent": "Omborni butunlay o'chirish? Bu amal qaytarib bo'lmaydi.",
+    "type_TRIP": "Sayohat",
+    "blocked": "Bloklangan"
   },
   "common": {
     "save": "Saqlash",

@@ -87,8 +87,8 @@ export default function MainLayout() {
   const canViewTrips =
     usePermission("trips.view-all") || usePermission("trips.view-person");
   const canViewWarehouses = useAnyPermission([
-    "warehouses.view",
-    "warehouses.create",
+    "warehouses.view-all",
+    "warehouses.view-person",
     "warehouses.manage",
   ]);
 

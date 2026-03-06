@@ -11,8 +11,15 @@ import {
   Typography,
   message,
   Tabs,
+  Popconfirm,
+  Tooltip,
 } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  StopOutlined,
+  CheckCircleOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../api/warehouses";
@@ -84,6 +91,36 @@ export default function WarehousesListPage() {
     }
   };
 
+  const handleDeactivate = async (id: string) => {
+    try {
+      await warehousesApi.deactivate(id);
+      message.success(t("common.success"));
+      load();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleReactivate = async (id: string) => {
+    try {
+      await warehousesApi.reactivate(id);
+      message.success(t("common.success"));
+      load();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await warehousesApi.delete(id);
+      message.success(t("common.success"));
+      load();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
   const filteredWarehouses =
     activeTab === "all"
       ? warehouses
@@ -96,7 +133,14 @@ export default function WarehousesListPage() {
       key: "name",
       ...colSearch((r: any) => r.name ?? ""),
       render: (name: string, record: any) => (
-        <a onClick={() => navigate(`/warehouses/${record.id}`)}>{name}</a>
+        <Space>
+          <a onClick={() => navigate(`/warehouses/${record.id}`)}>{name}</a>
+          {!record.isActive && (
+            <Tag color="red" style={{ fontSize: 11 }}>
+              {t("warehouses.blocked")}
+            </Tag>
+          )}
+        </Space>
       ),
     },
     {
@@ -133,29 +177,85 @@ export default function WarehousesListPage() {
       width: 100,
       render: (_: any, r: any) => r._count?.stock ?? 0,
     },
-    {
-      title: t("users.active"),
-      dataIndex: "isActive",
-      key: "isActive",
-      width: 100,
-      ...colEnum(
-        [
-          { text: t("users.yes"), value: true },
-          { text: t("users.no"), value: false },
-        ],
-        (v, r: any) => r.isActive === v,
-      ),
-      render: (v: boolean) =>
-        v ? (
-          <Tag color="green">{t("users.yes")}</Tag>
-        ) : (
-          <Tag color="red">{t("users.no")}</Tag>
-        ),
-    },
+    ...(canManage
+      ? [
+          {
+            title: t("users.actions"),
+            key: "actions",
+            width: 120,
+            render: (_: any, record: any) => {
+              const hasTransactions =
+                (record._count?.outgoing ?? 0) +
+                  (record._count?.incoming ?? 0) >
+                0;
+              const isTrip = record.type === "TRIP";
+
+              return (
+                <Space onClick={(e) => e.stopPropagation()}>
+                  {/* Reactivate if blocked */}
+                  {!record.isActive && (
+                    <Popconfirm
+                      title={t("warehouses.reactivate") + "?"}
+                      onConfirm={() => handleReactivate(record.id)}
+                      okText={t("common.yes")}
+                      cancelText={t("common.cancel")}
+                    >
+                      <Tooltip title={t("warehouses.reactivate")}>
+                        <Button
+                          type="text"
+                          icon={<CheckCircleOutlined />}
+                          size="small"
+                        />
+                      </Tooltip>
+                    </Popconfirm>
+                  )}
+                  {/* Deactivate: only if active and not TRIP */}
+                  {record.isActive && !isTrip && (
+                    <Popconfirm
+                      title={t("warehouses.deactivateConfirm")}
+                      onConfirm={() => handleDeactivate(record.id)}
+                      okText={t("common.yes")}
+                      cancelText={t("common.cancel")}
+                    >
+                      <Tooltip title={t("warehouses.deactivate")}>
+                        <Button
+                          type="text"
+                          icon={<StopOutlined />}
+                          size="small"
+                          danger
+                        />
+                      </Tooltip>
+                    </Popconfirm>
+                  )}
+                  {/* Delete: only if never had transactions and not TRIP */}
+                  {!hasTransactions && !isTrip && (
+                    <Popconfirm
+                      title={t("warehouses.deleteConfirmPermanent")}
+                      onConfirm={() => handleDelete(record.id)}
+                      okText={t("common.yes")}
+                      cancelText={t("common.cancel")}
+                    >
+                      <Tooltip title={t("common.delete")}>
+                        <Button
+                          type="text"
+                          icon={<DeleteOutlined />}
+                          size="small"
+                          danger
+                        />
+                      </Tooltip>
+                    </Popconfirm>
+                  )}
+                </Space>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   const tabItems = [
     { key: "all", label: t("common.all") },
+    { key: "trip", label: t("warehouses.type_TRIP") },
     { key: "central", label: t("warehouses.type_CENTRAL") },
     { key: "personal", label: t("warehouses.type_PERSONAL") },
   ];
@@ -179,7 +279,10 @@ export default function WarehousesListPage() {
 
       <Tabs
         activeKey={activeTab}
-        onChange={(key) => { setActiveTab(key); setPage(1); }}
+        onChange={(key) => {
+          setActiveTab(key);
+          setPage(1);
+        }}
         items={tabItems}
         style={{ marginBottom: 16 }}
       />
@@ -227,7 +330,10 @@ export default function WarehousesListPage() {
             rules={[{ required: true }]}
           >
             <Select
-              onChange={(v) => { setSelectedType(v); createForm.resetFields(["name", "ownerId"]); }}
+              onChange={(v) => {
+                setSelectedType(v);
+                createForm.resetFields(["name", "ownerId"]);
+              }}
               options={[
                 { value: "CENTRAL", label: t("warehouses.type_CENTRAL") },
                 { value: "PERSONAL", label: t("warehouses.type_PERSONAL") },
@@ -248,12 +354,18 @@ export default function WarehousesListPage() {
             name="ownerId"
             label={t("warehouses.owner")}
             rules={[{ required: true }]}
-            extra={selectedType === "PERSONAL" ? t("warehouses.personalNameHint") : undefined}
+            extra={
+              selectedType === "PERSONAL"
+                ? t("warehouses.personalNameHint")
+                : undefined
+            }
           >
             <Select
               showSearch
               filterOption={(input, opt) =>
-                (opt?.label as string)?.toLowerCase().includes(input.toLowerCase())
+                (opt?.label as string)
+                  ?.toLowerCase()
+                  .includes(input.toLowerCase())
               }
               options={users.map((u) => ({
                 value: u.id,

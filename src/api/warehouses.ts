@@ -7,6 +7,8 @@ export const warehousesApi = {
     api.post("/warehouses", data),
   update: (id: string, data: { name?: string; isActive?: boolean; ownerId?: string }) =>
     api.patch(`/warehouses/${id}`, data),
+  deactivate: (id: string) => api.post(`/warehouses/${id}/deactivate`, {}),
+  reactivate: (id: string) => api.post(`/warehouses/${id}/reactivate`, {}),
   delete: (id: string) => api.delete(`/warehouses/${id}`),
   getTransactions: (id: string) => api.get(`/warehouses/${id}/transactions`),
   createTransaction: (
@@ -18,4 +20,6 @@ export const warehousesApi = {
       note?: string;
     },
   ) => api.post(`/warehouses/${id}/transactions`, data),
+  acceptTransfer: (txId: string) => api.post(`/warehouses/transfers/${txId}/accept`, {}),
+  cancelTransfer: (txId: string) => api.post(`/warehouses/transfers/${txId}/cancel`, {}),
 };

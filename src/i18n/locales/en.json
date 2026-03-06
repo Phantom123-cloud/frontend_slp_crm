@@ -456,8 +456,8 @@
     "addTransaction": "Transaction",
     "transType_INCOMING": "Incoming",
     "transType_SALE": "Sale",
-    "transType_GIFT": "Gift",
-    "transType_CONTRACT": "Contract",
+    "transType_GIFT": "Gift to contract",
+    "transType_CONTRACT": "Sale",
     "transType_WRITE_OFF": "Write-off",
     "transType_TRANSFER_OUT": "Transfer (out)",
     "transType_TRANSFER_IN": "Transfer (in)",
@@ -483,7 +483,13 @@
     "acceptConfirm": "Accept the transfer and add goods to the warehouse?",
     "cancelConfirm": "Cancel the transfer and return goods to the sender?",
     "transferAccepted": "Transfer accepted",
-    "transferCancelled": "Transfer cancelled"
+    "transferCancelled": "Transfer cancelled",
+    "deactivate": "Block",
+    "reactivate": "Unblock",
+    "deactivateConfirm": "Block the warehouse? This will disable all operations on it.",
+    "deleteConfirmPermanent": "Permanently delete the warehouse? This cannot be undone.",
+    "type_TRIP": "Trip",
+    "blocked": "Blocked"
   },
   "common": {
     "save": "Save",
