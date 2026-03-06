@@ -86,11 +86,12 @@ export default function TripDetailPage() {
   const canViewPresAll = usePermission("presentations.view-all");
   const canViewPresPerson = usePermission("presentations.view-person");
   const canViewPresentations = canViewPresAll || canViewPresPerson;
-  const canViewTrips = usePermission("trips.view-person");
   const canViewTripWarehouse = useAnyPermission([
     "warehouses.view-all",
     "warehouses.manage",
   ]);
+  const canTransactWarehouse = usePermission("warehouses.transaction");
+  const canManageWarehouses = usePermission("warehouses.manage");
 
   const myId = useAuthStore((s) => s.user?.id);
 
@@ -665,8 +666,8 @@ export default function TripDetailPage() {
             },
             (canViewTripWarehouse ||
               canAdmin ||
-              myTripCrewRole === "MV" ||
-              myTripCrewRole === "MV_GA") && {
+              (canTransactWarehouse &&
+                (myTripCrewRole === "MV" || myTripCrewRole === "MV_GA"))) && {
               key: "warehouse",
               label: t("trips.warehouse"),
               children: trip.warehouse ? (
@@ -674,7 +675,8 @@ export default function TripDetailPage() {
                   warehouseId={trip.warehouse.id}
                   canTransact={
                     canAdmin ||
-                    (canViewTrips &&
+                    canManageWarehouses ||
+                    (canTransactWarehouse &&
                       (myTripCrewRole === "MV" || myTripCrewRole === "MV_GA"))
                   }
                 />
