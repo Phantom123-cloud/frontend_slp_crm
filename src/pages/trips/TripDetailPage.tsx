@@ -234,8 +234,8 @@ export default function TripDetailPage() {
   // Создать презентацию в поездке: trips.admin — всегда; create — только ГА/МВ_ГА
   const canCreateTripPresentation = canAdmin || (canCreatePresentation && isGaInTrip);
 
-  // Редактировать итоги: trips.admin (любые) или (view-презентации + роль GA/МВ_ГА)
-  const canSaveItogi = canAdmin || (canViewPresentations && isGaInTrip);
+  // Редактировать итоги: trips.admin (любые) или (presentations.edit + роль GA/МВ_ГА)
+  const canSaveItogi = canAdmin || (canEditPresentation && isGaInTrip);
 
   const filteredPresentations = (trip.presentations || []).filter((p: any) => {
     const eff = getEffectivePresStatus(p);
