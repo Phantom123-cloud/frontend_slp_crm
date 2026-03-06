@@ -87,9 +87,8 @@ export default function TripDetailPage() {
   const canViewPresPerson = usePermission("presentations.view-person");
   const canViewPresentations = canViewPresAll || canViewPresPerson;
   const canViewTrips = usePermission("trips.view-person");
-  const canViewWarehouses = useAnyPermission([
+  const canViewTripWarehouse = useAnyPermission([
     "warehouses.view-all",
-    "warehouses.view-person",
     "warehouses.manage",
   ]);
 
@@ -658,10 +657,10 @@ export default function TripDetailPage() {
                 </div>
               ),
             },
-            (canViewWarehouses ||
+            (canViewTripWarehouse ||
               canAdmin ||
-              (canViewTrips &&
-                (myTripCrewRole === "MV" || myTripCrewRole === "MV_GA"))) && {
+              myTripCrewRole === "MV" ||
+              myTripCrewRole === "MV_GA") && {
               key: "warehouse",
               label: t("trips.warehouse"),
               children: trip.warehouse ? (
