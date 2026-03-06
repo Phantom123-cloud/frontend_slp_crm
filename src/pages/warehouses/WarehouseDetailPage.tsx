@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../api/warehouses";
 import { directoriesApi } from "../../api/directories";
 import { usersApi } from "../../api/users";
-import { useAnyPermission } from "../../hooks/usePermission";
+import { useAnyPermission, usePermission } from "../../hooks/usePermission";
 import TransactionCreateModal from "./components/TransactionCreateModal";
 import TransactionsTable from "./components/TransactionsTable";
 
@@ -33,6 +33,8 @@ export default function WarehouseDetailPage() {
   const navigate = useNavigate();
 
   const canManage = useAnyPermission(["warehouses.manage", "trips.admin"]);
+  const canTransaction = usePermission("warehouses.transaction");
+  const canTransact = canManage || canTransaction;
 
   const [warehouse, setWarehouse] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -160,7 +162,7 @@ export default function WarehouseDetailPage() {
         title={t("warehouses.stock")}
         style={{ marginBottom: 24 }}
         extra={
-          canManage && (
+          canTransact && (
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -185,7 +187,7 @@ export default function WarehouseDetailPage() {
         <TransactionsTable
           transactions={transactions}
           warehouseId={id!}
-          canTransact={canManage}
+          canTransact={canTransact}
           onRefresh={loadAll}
         />
       </Card>

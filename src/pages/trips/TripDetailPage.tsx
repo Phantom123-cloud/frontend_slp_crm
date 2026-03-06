@@ -90,6 +90,7 @@ export default function TripDetailPage() {
     "warehouses.view-all",
     "warehouses.manage",
   ]);
+  const canViewPersonWarehouses = usePermission("warehouses.view-person");
   const canTransactWarehouse = usePermission("warehouses.transaction");
   const canManageWarehouses = usePermission("warehouses.manage");
 
@@ -666,7 +667,7 @@ export default function TripDetailPage() {
             },
             (canViewTripWarehouse ||
               canAdmin ||
-              (canTransactWarehouse &&
+              ((canViewPersonWarehouses || canTransactWarehouse) &&
                 (myTripCrewRole === "MV" || myTripCrewRole === "MV_GA"))) && {
               key: "warehouse",
               label: t("trips.warehouse"),
