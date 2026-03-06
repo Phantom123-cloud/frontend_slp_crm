@@ -29,6 +29,8 @@ import {
   EnvironmentOutlined,
   CarOutlined,
   CalendarOutlined,
+  InboxOutlined,
+  SwapOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
@@ -342,6 +344,58 @@ const MODULES: ModuleConfig[] = [
       },
     ],
     link: "/presentations",
+  },
+  {
+    titleKey: "projectMap.warehousesTitle",
+    descKey: "projectMap.warehousesDesc",
+    icon: <InboxOutlined style={{ fontSize: 28 }} />,
+    color: "#fa8c16",
+    permissions: [
+      "warehouses.view-all",
+      "warehouses.view-person",
+      "warehouses.create",
+      "warehouses.transaction",
+      "warehouses.manage",
+    ],
+    actions: [
+      {
+        permission: "warehouses.view-all",
+        labelKey: "projectMap.warehousesViewAll",
+        detailKey: "projectMap.warehousesViewAllDetail",
+        locationKey: "projectMap.warehousesViewAllLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "warehouses.view-person",
+        labelKey: "projectMap.warehousesViewPerson",
+        detailKey: "projectMap.warehousesViewPersonDetail",
+        locationKey: "projectMap.warehousesViewPersonLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "warehouses.create",
+        labelKey: "projectMap.warehousesCreate",
+        detailKey: "projectMap.warehousesCreateDetail",
+        locationKey: "projectMap.warehousesCreateLocation",
+        icon: <PlusOutlined />,
+        buttonType: "primary",
+      },
+      {
+        permission: "warehouses.transaction",
+        labelKey: "projectMap.warehousesTransaction",
+        detailKey: "projectMap.warehousesTransactionDetail",
+        locationKey: "projectMap.warehousesTransactionLocation",
+        icon: <SwapOutlined />,
+      },
+      {
+        permission: "warehouses.manage",
+        labelKey: "projectMap.warehousesManage",
+        detailKey: "projectMap.warehousesManageDetail",
+        locationKey: "projectMap.warehousesManageLocation",
+        icon: <SettingOutlined />,
+      },
+    ],
+    link: "/warehouses",
   },
 ];
 
