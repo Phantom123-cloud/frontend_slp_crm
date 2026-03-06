@@ -228,6 +228,12 @@ export default function TripDetailPage() {
   )?.role;
   const isGaInTrip = myTripCrewRole === "GA" || myTripCrewRole === "MV_GA";
 
+  // Презентации в поездке: view-all/trips.admin — всегда; view-person — только ГА/МВ_ГА
+  const canViewTripPresentations =
+    canViewPresAll || canAdmin || (canViewPresPerson && isGaInTrip);
+  // Создать презентацию в поездке: trips.admin — всегда; create — только ГА/МВ_ГА
+  const canCreateTripPresentation = canAdmin || (canCreatePresentation && isGaInTrip);
+
   // Редактировать итоги: trips.admin (любые) или (view-презентации + роль GA/МВ_ГА)
   const canSaveItogi = canAdmin || (canViewPresentations && isGaInTrip);
 
@@ -576,7 +582,7 @@ export default function TripDetailPage() {
           defaultActiveKey="presentations"
           style={{ padding: "0 16px" }}
           items={[
-            canViewPresentations && {
+            canViewTripPresentations && {
               key: "presentations",
               label: t("trips.presentations"),
               children: (
@@ -613,7 +619,7 @@ export default function TripDetailPage() {
                       {t("trips.presFilter_cancelled")}
                     </Radio.Button>
                   </Radio.Group>
-                  {canCreatePresentation && canModifyPresentations && (
+                  {canCreateTripPresentation && canModifyPresentations && (
                     <Tooltip
                       title={
                         !trip.crew?.length
