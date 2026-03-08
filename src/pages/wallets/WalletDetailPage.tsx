@@ -697,7 +697,12 @@ export default function WalletDetailPage() {
               <Form.Item name="fromCurrency" label={t("wallets.fromCurrency")} rules={[{ required: true }]}>
                 <Select
                   showSearch
-                  options={COMMON_CURRENCIES.map((c) => ({ label: c, value: c }))}
+                  options={(wallet?.balances ?? [])
+                    .filter((b: any) => Number(b.amount) > 0)
+                    .map((b: any) => ({
+                      label: `${b.currency} (${Number(b.amount).toLocaleString()})`,
+                      value: b.currency,
+                    }))}
                   onChange={onConvCurrencyChange}
                 />
               </Form.Item>

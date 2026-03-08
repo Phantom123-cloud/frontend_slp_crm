@@ -394,7 +394,13 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
           <Row gutter={12}>
             <Col span={12}>
               <Form.Item name="fromCurrency" label={t("wallets.fromCurrency")} rules={[{ required: true }]}>
-                <Select showSearch options={COMMON_CURRENCIES.map((c) => ({ label: c, value: c }))}
+                <Select showSearch
+                  options={(wallet?.balances ?? [])
+                    .filter((b: any) => Number(b.amount) > 0)
+                    .map((b: any) => ({
+                      label: `${b.currency} (${Number(b.amount).toLocaleString()})`,
+                      value: b.currency,
+                    }))}
                   onChange={() => { const from = conversionForm.getFieldValue("fromCurrency"); const to = conversionForm.getFieldValue("toCurrency"); if (from && to) fetchRate(from, to); }} />
               </Form.Item>
             </Col>
