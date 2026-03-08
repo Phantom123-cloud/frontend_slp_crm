@@ -128,7 +128,7 @@ export default function WalletsListPage() {
       title: t("wallets.name"),
       dataIndex: "name",
       key: "name",
-      ...colSearch("name"),
+      ...colSearch((r: any) => r.name ?? ""),
       render: (name: string, record: any) => (
         <a onClick={() => navigate(`/wallets/${record.id}`)}>
           {name ||
@@ -142,10 +142,13 @@ export default function WalletsListPage() {
       title: t("wallets.type"),
       dataIndex: "type",
       key: "type",
-      ...colEnum("type", [
-        { text: t("wallets.personal"), value: "PERSONAL" },
-        { text: t("wallets.trip"), value: "TRIP" },
-      ]),
+      ...colEnum(
+        [
+          { text: t("wallets.personal"), value: "PERSONAL" },
+          { text: t("wallets.trip"), value: "TRIP" },
+        ],
+        (v, r: any) => r.type === v,
+      ),
       render: (type: string) => (
         <Tag color={TYPE_COLORS[type] || "default"}>
           {t(`wallets.${type.toLowerCase()}`)}
@@ -186,10 +189,13 @@ export default function WalletsListPage() {
     {
       title: t("wallets.status"),
       key: "isBlocked",
-      ...colEnum("isBlocked", [
-        { text: t("wallets.active"), value: false },
-        { text: t("wallets.blocked"), value: true },
-      ]),
+      ...colEnum(
+        [
+          { text: t("wallets.active"), value: false },
+          { text: t("wallets.blocked"), value: true },
+        ],
+        (v, r: any) => r.isBlocked === v,
+      ),
       render: (_: any, record: any) =>
         record.isBlocked ? (
           <Tag color="red">{t("wallets.blocked")}</Tag>

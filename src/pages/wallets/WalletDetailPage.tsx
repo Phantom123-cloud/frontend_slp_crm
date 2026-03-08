@@ -260,12 +260,15 @@ export default function WalletDetailPage() {
       title: t("wallets.tx.type"),
       dataIndex: "type",
       key: "type",
-      ...colEnum("type", [
-        { text: t("wallets.tx.INCOME"), value: "INCOME" },
-        { text: t("wallets.tx.TRANSFER_OUT"), value: "TRANSFER_OUT" },
-        { text: t("wallets.tx.TRANSFER_IN"), value: "TRANSFER_IN" },
-        { text: t("wallets.tx.CONVERSION"), value: "CONVERSION" },
-      ]),
+      ...colEnum(
+        [
+          { text: t("wallets.tx.INCOME"), value: "INCOME" },
+          { text: t("wallets.tx.TRANSFER_OUT"), value: "TRANSFER_OUT" },
+          { text: t("wallets.tx.TRANSFER_IN"), value: "TRANSFER_IN" },
+          { text: t("wallets.tx.CONVERSION"), value: "CONVERSION" },
+        ],
+        (v, r: any) => r.type === v,
+      ),
       render: (type: string) => (
         <Tag color={TX_TYPE_COLORS[type] || "default"}>{t(`wallets.tx.${type}`)}</Tag>
       ),
@@ -327,7 +330,7 @@ export default function WalletDetailPage() {
       title: t("wallets.tx.description"),
       dataIndex: "description",
       key: "description",
-      ...colSearch("description"),
+      ...colSearch((r: any) => r.description ?? ""),
       render: (v: string) => v || "—",
     },
     {

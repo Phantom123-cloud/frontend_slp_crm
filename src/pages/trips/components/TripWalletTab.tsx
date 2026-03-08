@@ -164,12 +164,15 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
       title: t("wallets.tx.type"),
       dataIndex: "type",
       key: "type",
-      ...colEnum("type", [
-        { text: t("wallets.tx.INCOME"), value: "INCOME" },
-        { text: t("wallets.tx.TRANSFER_OUT"), value: "TRANSFER_OUT" },
-        { text: t("wallets.tx.TRANSFER_IN"), value: "TRANSFER_IN" },
-        { text: t("wallets.tx.CONVERSION"), value: "CONVERSION" },
-      ]),
+      ...colEnum(
+        [
+          { text: t("wallets.tx.INCOME"), value: "INCOME" },
+          { text: t("wallets.tx.TRANSFER_OUT"), value: "TRANSFER_OUT" },
+          { text: t("wallets.tx.TRANSFER_IN"), value: "TRANSFER_IN" },
+          { text: t("wallets.tx.CONVERSION"), value: "CONVERSION" },
+        ],
+        (v, r: any) => r.type === v,
+      ),
       render: (type: string) => (
         <Tag color={TX_TYPE_COLORS[type]}>{t(`wallets.tx.${type}`)}</Tag>
       ),
