@@ -554,7 +554,8 @@
     "totalItems": "Jami: {{count}}",
     "actions": "Amallar",
     "confirmDelete": "O'chirishni tasdiqlaysizmi?",
-    "create": "Yaratish"
+    "create": "Yaratish",
+    "close": "Yopish"
   },
   "wallets": {
     "title": "Hamyonlar",

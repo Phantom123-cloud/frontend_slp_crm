@@ -29,6 +29,7 @@ import {
   RetweetOutlined,
   LockOutlined,
   PaperClipOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { walletsApi } from "../../../api/wallets";
@@ -83,6 +84,12 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
   const [transferImages, setTransferImages] = useState<string[]>([]);
   const [conversionImages, setConversionImages] = useState<string[]>([]);
   const [customRate, setCustomRate] = useState(false);
+
+  // Модалка просмотра/редактирования транзакции
+  const [selectedTx, setSelectedTx] = useState<any>(null);
+  const [txEditForm] = Form.useForm();
+  const [txEditImages, setTxEditImages] = useState<string[]>([]);
+  const [keptImages, setKeptImages] = useState<{ id: string; url: string }[]>([]);
 
   const loadAll = async () => {
     setLoading(true);
@@ -163,6 +170,40 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
       setConversionOpen(false); conversionForm.resetFields(); setConversionImages([]); setCustomRate(false);
       loadAll();
     } catch (e: any) { message.error(t(e.response?.data?.message || "common.error")); }
+  };
+
+  const openTxView = (record: any) => {
+    setSelectedTx(record);
+    txEditForm.setFieldsValue({
+      description: record.description,
+      expenseTypeId: record.expenseType?.id,
+    });
+    setKeptImages(record.images ?? []);
+    setTxEditImages([]);
+  };
+
+  const closeTxModal = () => {
+    setSelectedTx(null);
+    txEditForm.resetFields();
+    setTxEditImages([]);
+    setKeptImages([]);
+  };
+
+  const handleUpdateTx = async (values: any) => {
+    if (!selectedTx) return;
+    try {
+      const images = [...keptImages.map((img) => img.url), ...txEditImages];
+      await walletsApi.updateTransaction(selectedTx.id, {
+        description: values.description,
+        expenseTypeId: values.expenseTypeId || null,
+        images,
+      });
+      message.success(t("common.success"));
+      closeTxModal();
+      loadAll();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
   };
 
   const handleClose = async (txId: string) => {
@@ -336,6 +377,10 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
         columns={txColumns}
         dataSource={transactions}
         rowKey="id"
+        onRow={(record) => ({
+          onClick: () => openTxView(record),
+          style: { cursor: "pointer" },
+        })}
         pagination={{
           current: txPage,
           pageSize: 20,
@@ -519,6 +564,205 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
             </Upload>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Просмотр / редактирование транзакции */}
+      <Modal
+        open={!!selectedTx}
+        title={
+          selectedTx ? (
+            <Space>
+              <Tag color={TX_TYPE_COLORS[selectedTx.type] || "default"}>
+                {t(`wallets.tx.${selectedTx.type}`)}
+              </Tag>
+              <span>{new Date(selectedTx.createdAt).toLocaleDateString("ru")}</span>
+            </Space>
+          ) : ""
+        }
+        onCancel={closeTxModal}
+        footer={
+          !selectedTx?.isClosed && canTransact
+            ? [
+                <Button key="cancel" onClick={closeTxModal}>{t("common.cancel")}</Button>,
+                <Button key="save" type="primary" onClick={() => txEditForm.submit()}>{t("common.save")}</Button>,
+              ]
+            : [
+                <Button key="close" type="primary" onClick={closeTxModal}>{t("common.close")}</Button>,
+              ]
+        }
+        width={580}
+        destroyOnClose
+      >
+        {selectedTx && (
+          <>
+            <Descriptions column={1} size="small" bordered style={{ marginBottom: 16 }}>
+              {/* Сумма */}
+              <Descriptions.Item label={t("wallets.tx.amount")}>
+                {selectedTx.type === "CONVERSION" ? (
+                  <span>
+                    <Text delete style={{ color: "#ff4d4f" }}>
+                      -{Number(selectedTx.amount).toLocaleString()} {selectedTx.currency}
+                    </Text>
+                    {" → "}
+                    <Text style={{ color: "#52c41a" }}>
+                      +{Number(selectedTx.toAmount).toLocaleString()} {selectedTx.toCurrency}
+                    </Text>
+                    {selectedTx.isCustomRate && (
+                      <Tag style={{ marginLeft: 4 }} color="orange">{t("wallets.customRate")}</Tag>
+                    )}
+                  </span>
+                ) : (
+                  <Text style={{ color: selectedTx.type === "INCOME" || selectedTx.type === "TRANSFER_IN" ? "#52c41a" : "#ff4d4f" }}>
+                    {selectedTx.type === "INCOME" || selectedTx.type === "TRANSFER_IN" ? "+" : "-"}
+                    {Number(selectedTx.amount).toLocaleString()} {selectedTx.currency}
+                  </Text>
+                )}
+              </Descriptions.Item>
+
+              {/* Курс (только для конвертации) */}
+              {selectedTx.type === "CONVERSION" && selectedTx.rate && (
+                <Descriptions.Item label={t("wallets.tx.rate")}>
+                  {Number(selectedTx.rate).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                  {" "}{selectedTx.currency}/{selectedTx.toCurrency}
+                </Descriptions.Item>
+              )}
+
+              {/* Контрагент */}
+              {(selectedTx.transferOut || selectedTx.transferIn || selectedTx.expenseType) && (
+                <Descriptions.Item label={t("wallets.tx.counterpart")}>
+                  {selectedTx.transferOut
+                    ? `→ ${selectedTx.transferOut.toWallet?.name || (selectedTx.transferOut.toWallet?.trip ? selectedTx.transferOut.toWallet.trip.name : "—")}`
+                    : selectedTx.transferIn
+                    ? `← ${selectedTx.transferIn.fromWallet?.name || (selectedTx.transferIn.fromWallet?.trip ? selectedTx.transferIn.fromWallet.trip.name : "—")}`
+                    : selectedTx.expenseType?.name}
+                </Descriptions.Item>
+              )}
+
+              {/* Автор */}
+              <Descriptions.Item label={t("wallets.tx.createdBy")}>
+                {selectedTx.createdBy
+                  ? `${selectedTx.createdBy.lastName} ${selectedTx.createdBy.firstName}`
+                  : "—"}
+              </Descriptions.Item>
+
+              {/* Статус */}
+              <Descriptions.Item label={t("wallets.tx.status")}>
+                {selectedTx.isClosed ? (
+                  <Tag color="red" icon={<LockOutlined />}>{t("wallets.tx.closed")}</Tag>
+                ) : (
+                  <Tag color="green">{t("wallets.tx.open")}</Tag>
+                )}
+              </Descriptions.Item>
+
+              {/* Кто закрыл */}
+              {selectedTx.isClosed && selectedTx.closedBy && (
+                <Descriptions.Item label={t("wallets.tx.closedBy")}>
+                  {selectedTx.closedBy.lastName} {selectedTx.closedBy.firstName}
+                  {selectedTx.closedAt ? `, ${new Date(selectedTx.closedAt).toLocaleDateString("ru")}` : ""}
+                </Descriptions.Item>
+              )}
+
+              {/* Read-only поля (если закрыта или нет прав) */}
+              {(selectedTx.isClosed || !canTransact) && (
+                <>
+                  <Descriptions.Item label={t("wallets.description")}>
+                    {selectedTx.description || "—"}
+                  </Descriptions.Item>
+                  {selectedTx.expenseType && (
+                    <Descriptions.Item label={t("wallets.expenseType")}>
+                      {selectedTx.expenseType.name}
+                    </Descriptions.Item>
+                  )}
+                </>
+              )}
+            </Descriptions>
+
+            {/* Фото read-only */}
+            {(selectedTx.isClosed || !canTransact) && selectedTx.images?.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <Text type="secondary" style={{ display: "block", marginBottom: 8 }}>
+                  {t("wallets.images")}
+                </Text>
+                <Image.PreviewGroup>
+                  <Space wrap>
+                    {selectedTx.images.map((img: any) => (
+                      <Image key={img.id} width={64} height={64} src={img.url}
+                        style={{ objectFit: "cover", borderRadius: 6 }} />
+                    ))}
+                  </Space>
+                </Image.PreviewGroup>
+              </div>
+            )}
+
+            {/* Форма редактирования (только если не закрыта и есть права) */}
+            {!selectedTx.isClosed && canTransact && (
+              <>
+                <Divider style={{ margin: "0 0 16px" }} />
+                <Form form={txEditForm} onFinish={handleUpdateTx} layout="vertical">
+                  <Form.Item name="description" label={t("wallets.description")}>
+                    <Input.TextArea rows={2} />
+                  </Form.Item>
+                  {(selectedTx.type === "INCOME" || selectedTx.type === "EXPENSE") && (
+                    <Form.Item name="expenseTypeId" label={t("wallets.expenseType")}>
+                      <Select
+                        allowClear
+                        placeholder={t("wallets.selectExpenseType")}
+                        options={expenseTypes.map((et) => ({ label: et.name, value: et.id }))}
+                      />
+                    </Form.Item>
+                  )}
+                  <Form.Item label={t("wallets.images")}>
+                    {/* Существующие фото с кнопкой удаления */}
+                    {keptImages.length > 0 && (
+                      <Space wrap style={{ marginBottom: 8 }}>
+                        {keptImages.map((img) => (
+                          <div key={img.id} style={{ position: "relative", display: "inline-block" }}>
+                            <Image width={64} height={64} src={img.url}
+                              style={{ objectFit: "cover", borderRadius: 6 }} />
+                            <Button
+                              size="small" type="primary" danger
+                              icon={<CloseOutlined />}
+                              style={{
+                                position: "absolute", top: -6, right: -6,
+                                width: 20, height: 20, minWidth: 0,
+                                padding: 0, borderRadius: "50%",
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setKeptImages((prev) => prev.filter((i) => i.id !== img.id));
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </Space>
+                    )}
+                    {/* Загрузка новых фото */}
+                    <Upload
+                      listType="picture-card" multiple
+                      beforeUpload={async (file) => {
+                        if (keptImages.length + txEditImages.length >= 15) {
+                          message.error(t("wallets.tooManyImages")); return false;
+                        }
+                        try {
+                          const form = new FormData();
+                          form.append("file", file);
+                          const { data } = await filesApi.upload(form);
+                          setTxEditImages((prev) => [...prev, data.url]);
+                        } catch {}
+                        return false;
+                      }}
+                      onRemove={() => setTxEditImages((prev) => prev.slice(0, -1))}
+                    >
+                      {keptImages.length + txEditImages.length < 15 && (
+                        <div><PaperClipOutlined /><div>{t("wallets.upload")}</div></div>
+                      )}
+                    </Upload>
+                  </Form.Item>
+                </Form>
+              </>
+            )}
+          </>
+        )}
       </Modal>
     </div>
   );

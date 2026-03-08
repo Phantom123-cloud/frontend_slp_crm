@@ -55,6 +55,10 @@ export const walletsApi = {
       images?: string[];
     },
   ) => api.post(`/wallets/${id}/conversion`, data),
+  updateTransaction: (
+    txId: string,
+    data: { description?: string; expenseTypeId?: string | null; images?: string[] },
+  ) => api.patch(`/wallets/transactions/${txId}`, data),
   closeTransaction: (txId: string) =>
     api.post(`/wallets/transactions/${txId}/close`, {}),
 };

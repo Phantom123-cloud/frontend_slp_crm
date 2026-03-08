@@ -557,7 +557,8 @@
     "totalItems": "Всего: {{count}}",
     "actions": "Действия",
     "confirmDelete": "Вы уверены, что хотите удалить?",
-    "create": "Создать"
+    "create": "Создать",
+    "close": "Закрыть"
   },
   "wallets": {
     "title": "Кошельки",

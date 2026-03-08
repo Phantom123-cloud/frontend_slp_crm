@@ -554,7 +554,8 @@
     "totalItems": "Total: {{count}}",
     "actions": "Actions",
     "confirmDelete": "Are you sure you want to delete?",
-    "create": "Create"
+    "create": "Create",
+    "close": "Close"
   },
   "wallets": {
     "title": "Wallets",
