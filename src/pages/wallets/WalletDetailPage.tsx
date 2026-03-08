@@ -657,13 +657,6 @@ export default function WalletDetailPage() {
           <Form.Item name="amount" label={t("wallets.amount")} rules={[{ required: true }]}>
             <InputNumber style={{ width: "100%" }} min={0.0001} precision={4} />
           </Form.Item>
-          <Form.Item name="expenseTypeId" label={t("wallets.expenseType")}>
-            <Select
-              allowClear
-              placeholder={t("wallets.selectExpenseType")}
-              options={expenseTypes.map((et) => ({ label: et.name, value: et.id }))}
-            />
-          </Form.Item>
           <Form.Item name="description" label={t("wallets.description")}>
             <Input.TextArea rows={2} />
           </Form.Item>
