@@ -24,6 +24,7 @@ import {
 } from "antd";
 import {
   PlusOutlined,
+  MinusOutlined,
   SwapOutlined,
   RetweetOutlined,
   LockOutlined,
@@ -44,6 +45,7 @@ const COMMON_CURRENCIES = [
 
 const TX_TYPE_COLORS: Record<string, string> = {
   INCOME: "green",
+  EXPENSE: "red",
   TRANSFER_OUT: "orange",
   TRANSFER_IN: "blue",
   CONVERSION: "purple",
@@ -67,14 +69,17 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
   const [txPage, setTxPage] = useState(1);
 
   const [incomeOpen, setIncomeOpen] = useState(false);
+  const [expenseOpen, setExpenseOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [conversionOpen, setConversionOpen] = useState(false);
 
   const [incomeForm] = Form.useForm();
+  const [expenseForm] = Form.useForm();
   const [transferForm] = Form.useForm();
   const [conversionForm] = Form.useForm();
 
   const [incomeImages, setIncomeImages] = useState<string[]>([]);
+  const [expenseImages, setExpenseImages] = useState<string[]>([]);
   const [transferImages, setTransferImages] = useState<string[]>([]);
   const [conversionImages, setConversionImages] = useState<string[]>([]);
   const [customRate, setCustomRate] = useState(false);
@@ -128,6 +133,15 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
     } catch (e: any) { message.error(t(e.response?.data?.message || "common.error")); }
   };
 
+  const handleExpense = async (values: any) => {
+    try {
+      await walletsApi.expense(walletId, { ...values, images: expenseImages });
+      message.success(t("common.success"));
+      setExpenseOpen(false); expenseForm.resetFields(); setExpenseImages([]);
+      loadAll();
+    } catch (e: any) { message.error(t(e.response?.data?.message || "common.error")); }
+  };
+
   const handleTransfer = async (values: any) => {
     try {
       await walletsApi.transfer(walletId, { ...values, images: transferImages });
@@ -167,6 +181,7 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
       ...colEnum(
         [
           { text: t("wallets.tx.INCOME"), value: "INCOME" },
+          { text: t("wallets.tx.EXPENSE"), value: "EXPENSE" },
           { text: t("wallets.tx.TRANSFER_OUT"), value: "TRANSFER_OUT" },
           { text: t("wallets.tx.TRANSFER_IN"), value: "TRANSFER_IN" },
           { text: t("wallets.tx.CONVERSION"), value: "CONVERSION" },
@@ -194,6 +209,21 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
         const sign = r.type === "INCOME" || r.type === "TRANSFER_IN" ? "+" : "-";
         const color = r.type === "INCOME" || r.type === "TRANSFER_IN" ? "#52c41a" : "#ff4d4f";
         return <Text style={{ color }}>{sign}{Number(r.amount).toLocaleString()} {r.currency}</Text>;
+      },
+    },
+    {
+      title: t("wallets.tx.rate"),
+      key: "rate",
+      width: 110,
+      render: (_: any, r: any) => {
+        if (r.type !== "CONVERSION" || !r.rate) return "—";
+        return (
+          <span style={{ fontSize: 12 }}>
+            {Number(r.rate).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+            <br />
+            <span style={{ color: "#8c8c8c" }}>{r.currency}/{r.toCurrency}</span>
+          </span>
+        );
       },
     },
     {
@@ -287,6 +317,9 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
               <Button type="primary" icon={<PlusOutlined />} onClick={() => setIncomeOpen(true)}>
                 {t("wallets.tx.income")}
               </Button>
+              <Button danger icon={<MinusOutlined />} onClick={() => setExpenseOpen(true)}>
+                {t("wallets.tx.expense")}
+              </Button>
               <Button icon={<SwapOutlined />} onClick={() => setTransferOpen(true)}>
                 {t("wallets.tx.transfer")}
               </Button>
@@ -349,6 +382,40 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
               }}
               onRemove={() => setIncomeImages((p) => p.slice(0, -1))}>
               {incomeImages.length < 15 && <div><PaperClipOutlined /><div>{t("wallets.upload")}</div></div>}
+            </Upload>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Модалка расхода */}
+      <Modal open={expenseOpen} title={t("wallets.tx.expenseTitle")}
+        onCancel={() => { setExpenseOpen(false); expenseForm.resetFields(); setExpenseImages([]); }}
+        onOk={() => expenseForm.submit()} okText={t("common.save")} cancelText={t("common.cancel")} width={520}>
+        <Form form={expenseForm} onFinish={handleExpense} layout="vertical">
+          <Form.Item name="currency" label={t("wallets.currency")} rules={[{ required: true }]}>
+            <Select showSearch placeholder={t("wallets.selectCurrency")}
+              options={(wallet?.balances ?? [])
+                .filter((b: any) => Number(b.amount) > 0)
+                .map((b: any) => ({ label: `${b.currency} (${Number(b.amount).toLocaleString()})`, value: b.currency }))} />
+          </Form.Item>
+          <Form.Item name="amount" label={t("wallets.amount")} rules={[{ required: true }]}>
+            <InputNumber style={{ width: "100%" }} min={0.0001} precision={4} />
+          </Form.Item>
+          <Form.Item name="expenseTypeId" label={t("wallets.expenseType")}>
+            <Select allowClear options={expenseTypes.map((et) => ({ label: et.name, value: et.id }))} />
+          </Form.Item>
+          <Form.Item name="description" label={t("wallets.description")}>
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Form.Item label={t("wallets.images")}>
+            <Upload listType="picture-card" multiple
+              beforeUpload={async (file) => {
+                if (expenseImages.length >= 15) { message.error(t("wallets.tooManyImages")); return false; }
+                try { const form = new FormData(); form.append("file", file); const { data } = await filesApi.upload(form); setExpenseImages((p) => [...p, data.url]); } catch {}
+                return false;
+              }}
+              onRemove={() => setExpenseImages((p) => p.slice(0, -1))}>
+              {expenseImages.length < 15 && <div><PaperClipOutlined /><div>{t("wallets.upload")}</div></div>}
             </Upload>
           </Form.Item>
         </Form>

@@ -622,9 +622,13 @@
       "toWallet": "Qabul qiluvchi hamyon",
       "selectWallet": "Hamyonni tanlang",
       "INCOME": "Kirim",
+      "EXPENSE": "Chiqim",
       "TRANSFER_OUT": "O'tkazma (chiq.)",
       "TRANSFER_IN": "O'tkazma (kir.)",
-      "CONVERSION": "Konvertatsiya"
+      "CONVERSION": "Konvertatsiya",
+      "expense": "Chiqim",
+      "expenseTitle": "Chiqim qo'shish",
+      "rate": "Kurs"
     }
   }
 }

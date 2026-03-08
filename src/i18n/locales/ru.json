@@ -625,9 +625,13 @@
       "toWallet": "Кошелёк получателя",
       "selectWallet": "Выберите кошелёк",
       "INCOME": "Приход",
+      "EXPENSE": "Расход",
       "TRANSFER_OUT": "Перевод (исх.)",
       "TRANSFER_IN": "Перевод (вх.)",
-      "CONVERSION": "Конвертация"
+      "CONVERSION": "Конвертация",
+      "expense": "Расход",
+      "expenseTitle": "Внести расход",
+      "rate": "Курс"
     }
   }
 }

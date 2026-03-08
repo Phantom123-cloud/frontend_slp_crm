@@ -27,6 +27,7 @@ import {
 } from "antd";
 import {
   PlusOutlined,
+  MinusOutlined,
   EditOutlined,
   SwapOutlined,
   RetweetOutlined,
@@ -52,6 +53,7 @@ const COMMON_CURRENCIES = [
 
 const TX_TYPE_COLORS: Record<string, string> = {
   INCOME: "green",
+  EXPENSE: "red",
   TRANSFER_OUT: "orange",
   TRANSFER_IN: "blue",
   CONVERSION: "purple",
@@ -77,17 +79,20 @@ export default function WalletDetailPage() {
 
   // Модалки
   const [incomeOpen, setIncomeOpen] = useState(false);
+  const [expenseOpen, setExpenseOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [conversionOpen, setConversionOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
   const [incomeForm] = Form.useForm();
+  const [expenseForm] = Form.useForm();
   const [transferForm] = Form.useForm();
   const [conversionForm] = Form.useForm();
   const [editForm] = Form.useForm();
 
   // Загрузка файлов для модалок
   const [incomeImages, setIncomeImages] = useState<string[]>([]);
+  const [expenseImages, setExpenseImages] = useState<string[]>([]);
   const [transferImages, setTransferImages] = useState<string[]>([]);
   const [conversionImages, setConversionImages] = useState<string[]>([]);
 
@@ -144,6 +149,19 @@ export default function WalletDetailPage() {
       setIncomeOpen(false);
       incomeForm.resetFields();
       setIncomeImages([]);
+      loadAll();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleExpense = async (values: any) => {
+    try {
+      await walletsApi.expense(id!, { ...values, images: expenseImages });
+      message.success(t("common.success"));
+      setExpenseOpen(false);
+      expenseForm.resetFields();
+      setExpenseImages([]);
       loadAll();
     } catch (e: any) {
       message.error(t(e.response?.data?.message || "common.error"));
@@ -263,6 +281,7 @@ export default function WalletDetailPage() {
       ...colEnum(
         [
           { text: t("wallets.tx.INCOME"), value: "INCOME" },
+          { text: t("wallets.tx.EXPENSE"), value: "EXPENSE" },
           { text: t("wallets.tx.TRANSFER_OUT"), value: "TRANSFER_OUT" },
           { text: t("wallets.tx.TRANSFER_IN"), value: "TRANSFER_IN" },
           { text: t("wallets.tx.CONVERSION"), value: "CONVERSION" },
@@ -306,6 +325,21 @@ export default function WalletDetailPage() {
             {sign}
             {Number(record.amount).toLocaleString()} {record.currency}
           </Text>
+        );
+      },
+    },
+    {
+      title: t("wallets.tx.rate"),
+      key: "rate",
+      width: 110,
+      render: (_: any, record: any) => {
+        if (record.type !== "CONVERSION" || !record.rate) return "—";
+        return (
+          <span style={{ fontSize: 12 }}>
+            {Number(record.rate).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+            <br />
+            <span style={{ color: "#8c8c8c" }}>{record.currency}/{record.toCurrency}</span>
+          </span>
         );
       },
     },
@@ -453,6 +487,13 @@ export default function WalletDetailPage() {
                 onClick={() => setIncomeOpen(true)}
               >
                 {t("wallets.tx.income")}
+              </Button>
+              <Button
+                danger
+                icon={<MinusOutlined />}
+                onClick={() => setExpenseOpen(true)}
+              >
+                {t("wallets.tx.expense")}
               </Button>
               <Button icon={<SwapOutlined />} onClick={() => setTransferOpen(true)}>
                 {t("wallets.tx.transfer")}
@@ -612,6 +653,64 @@ export default function WalletDetailPage() {
                   <div>{t("wallets.upload")}</div>
                 </div>
               )}
+            </Upload>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Расход */}
+      <Modal
+        open={expenseOpen}
+        title={t("wallets.tx.expenseTitle")}
+        onCancel={() => { setExpenseOpen(false); expenseForm.resetFields(); setExpenseImages([]); }}
+        onOk={() => expenseForm.submit()}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+        width={520}
+      >
+        <Form form={expenseForm} onFinish={handleExpense} layout="vertical">
+          <Form.Item name="currency" label={t("wallets.currency")} rules={[{ required: true }]}>
+            <Select
+              showSearch
+              placeholder={t("wallets.selectCurrency")}
+              options={(wallet?.balances ?? [])
+                .filter((b: any) => Number(b.amount) > 0)
+                .map((b: any) => ({
+                  label: `${b.currency} (${Number(b.amount).toLocaleString()})`,
+                  value: b.currency,
+                }))}
+            />
+          </Form.Item>
+          <Form.Item name="amount" label={t("wallets.amount")} rules={[{ required: true }]}>
+            <InputNumber style={{ width: "100%" }} min={0.0001} precision={4} />
+          </Form.Item>
+          <Form.Item name="expenseTypeId" label={t("wallets.expenseType")}>
+            <Select
+              allowClear
+              placeholder={t("wallets.selectExpenseType")}
+              options={expenseTypes.map((et) => ({ label: et.name, value: et.id }))}
+            />
+          </Form.Item>
+          <Form.Item name="description" label={t("wallets.description")}>
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Form.Item label={t("wallets.images")}>
+            <Upload
+              listType="picture-card"
+              multiple
+              beforeUpload={async (file) => {
+                if (expenseImages.length >= 15) { message.error(t("wallets.tooManyImages")); return false; }
+                try {
+                  const form = new FormData();
+                  form.append("file", file);
+                  const { data } = await filesApi.upload(form);
+                  setExpenseImages((prev) => [...prev, data.url]);
+                } catch {}
+                return false;
+              }}
+              onRemove={() => setExpenseImages((prev) => prev.slice(0, -1))}
+            >
+              {expenseImages.length < 15 && <div><PaperClipOutlined /><div>{t("wallets.upload")}</div></div>}
             </Upload>
           </Form.Item>
         </Form>

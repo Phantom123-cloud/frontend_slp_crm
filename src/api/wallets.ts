@@ -22,6 +22,16 @@ export const walletsApi = {
       images?: string[];
     },
   ) => api.post(`/wallets/${id}/income`, data),
+  expense: (
+    id: string,
+    data: {
+      currency: string;
+      amount: number;
+      expenseTypeId?: string;
+      description?: string;
+      images?: string[];
+    },
+  ) => api.post(`/wallets/${id}/expense`, data),
   transfer: (
     id: string,
     data: {

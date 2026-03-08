@@ -622,9 +622,13 @@
       "toWallet": "Recipient wallet",
       "selectWallet": "Select wallet",
       "INCOME": "Income",
+      "EXPENSE": "Expense",
       "TRANSFER_OUT": "Transfer (out)",
       "TRANSFER_IN": "Transfer (in)",
-      "CONVERSION": "Conversion"
+      "CONVERSION": "Conversion",
+      "expense": "Expense",
+      "expenseTitle": "Add expense",
+      "rate": "Rate"
     }
   }
 }
