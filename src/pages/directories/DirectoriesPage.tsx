@@ -185,13 +185,106 @@ export default function DirectoriesPage() {
     }
   };
 
+  // === Expense Types ===
+  const [expenseTypes, setExpenseTypes] = useState<any[]>([]);
+  const [expenseTypesLoading, setExpenseTypesLoading] = useState(false);
+  const [expenseTypeModalOpen, setExpenseTypeModalOpen] = useState(false);
+  const [editExpenseType, setEditExpenseType] = useState<any>(null);
+  const [expenseTypeForm] = Form.useForm();
+  const [editExpenseTypeForm] = Form.useForm();
+
+  const loadExpenseTypes = async () => {
+    setExpenseTypesLoading(true);
+    try {
+      const { data } = await directoriesApi.getExpenseTypes();
+      setExpenseTypes(data);
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    } finally {
+      setExpenseTypesLoading(false);
+    }
+  };
+
+  const handleCreateExpenseType = async (values: any) => {
+    try {
+      await directoriesApi.createExpenseType(values);
+      message.success(t("common.success"));
+      setExpenseTypeModalOpen(false);
+      expenseTypeForm.resetFields();
+      loadExpenseTypes();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleUpdateExpenseType = async (values: any) => {
+    try {
+      await directoriesApi.updateExpenseType(editExpenseType.id, values);
+      message.success(t("common.success"));
+      setEditExpenseType(null);
+      loadExpenseTypes();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleDeleteExpenseType = async (id: string) => {
+    try {
+      await directoriesApi.deleteExpenseType(id);
+      message.success(t("common.success"));
+      loadExpenseTypes();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
   useEffect(() => {
     loadTypes();
     loadVenues();
     loadProducts();
+    loadExpenseTypes();
   }, []);
 
   // === Columns ===
+
+  const expenseTypeColumns = [
+    {
+      title: t("directories.name"),
+      dataIndex: "name",
+      key: "name",
+      ...colSearch((r: any) => r.name || ""),
+    },
+    ...(canManage
+      ? [
+          {
+            title: t("users.actions"),
+            key: "actions",
+            width: 100,
+            render: (_: any, record: any) => (
+              <Space size={4}>
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  size="small"
+                  onClick={() => {
+                    setEditExpenseType(record);
+                    editExpenseTypeForm.setFieldsValue({ name: record.name });
+                  }}
+                />
+                <Popconfirm
+                  title={t("common.confirmDelete")}
+                  onConfirm={() => handleDeleteExpenseType(record.id)}
+                  okText={t("common.yes")}
+                  cancelText={t("common.no")}
+                >
+                  <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                </Popconfirm>
+              </Space>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   const typeColumns = [
     {
@@ -447,6 +540,29 @@ export default function DirectoriesPage() {
             ),
           },
           {
+            key: "expenseTypes",
+            label: t("directories.expenseTypes"),
+            children: (
+              <>
+                {canManage && (
+                  <div style={{ marginBottom: 16 }}>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setExpenseTypeModalOpen(true)}>
+                      {t("common.add")}
+                    </Button>
+                  </div>
+                )}
+                <Table
+                  dataSource={expenseTypes}
+                  columns={expenseTypeColumns}
+                  rowKey="id"
+                  loading={expenseTypesLoading}
+                  pagination={{ pageSize: 20, showSizeChanger: false }}
+                  size="small"
+                />
+              </>
+            ),
+          },
+          {
             key: "venues",
             label: t("directories.venues"),
             children: (
@@ -680,6 +796,39 @@ export default function DirectoriesPage() {
             label={t("directories.address")}
             rules={[{ required: true }]}
           >
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Create Expense Type */}
+      <Modal
+        title={t("directories.addExpenseType")}
+        open={expenseTypeModalOpen}
+        onCancel={() => { setExpenseTypeModalOpen(false); expenseTypeForm.resetFields(); }}
+        onOk={() => expenseTypeForm.submit()}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+      >
+        <Form form={expenseTypeForm} onFinish={handleCreateExpenseType} layout="vertical">
+          <Form.Item name="name" label={t("directories.name")} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Edit Expense Type */}
+      <Modal
+        title={t("common.edit")}
+        open={!!editExpenseType}
+        onCancel={() => setEditExpenseType(null)}
+        onOk={() => editExpenseTypeForm.submit()}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+        destroyOnClose
+      >
+        <Form form={editExpenseTypeForm} onFinish={handleUpdateExpenseType} layout="vertical">
+          <Form.Item name="name" label={t("directories.name")} rules={[{ required: true }]}>
             <Input />
           </Form.Item>
         </Form>

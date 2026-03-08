@@ -31,6 +31,9 @@ import {
   CalendarOutlined,
   InboxOutlined,
   SwapOutlined,
+  WalletOutlined,
+  TransactionOutlined,
+  LockOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
@@ -396,6 +399,66 @@ const MODULES: ModuleConfig[] = [
       },
     ],
     link: "/warehouses",
+  },
+  {
+    titleKey: "projectMap.walletsTitle",
+    descKey: "projectMap.walletsDesc",
+    icon: <WalletOutlined style={{ fontSize: 28 }} />,
+    color: "#13c2c2",
+    permissions: [
+      "wallets.view-all",
+      "wallets.view-person",
+      "wallets.create",
+      "wallets.edit",
+      "wallets.manage",
+      "wallets.auditor",
+    ],
+    actions: [
+      {
+        permission: "wallets.view-all",
+        labelKey: "projectMap.walletsViewAll",
+        detailKey: "projectMap.walletsViewAllDetail",
+        locationKey: "projectMap.walletsViewAllLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "wallets.view-person",
+        labelKey: "projectMap.walletsViewPerson",
+        detailKey: "projectMap.walletsViewPersonDetail",
+        locationKey: "projectMap.walletsViewPersonLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "wallets.create",
+        labelKey: "projectMap.walletsCreate",
+        detailKey: "projectMap.walletsCreateDetail",
+        locationKey: "projectMap.walletsCreateLocation",
+        icon: <PlusOutlined />,
+        buttonType: "primary",
+      },
+      {
+        permission: "wallets.edit",
+        labelKey: "projectMap.walletsEdit",
+        detailKey: "projectMap.walletsEditDetail",
+        locationKey: "projectMap.walletsEditLocation",
+        icon: <EditOutlined />,
+      },
+      {
+        permission: "wallets.manage",
+        labelKey: "projectMap.walletsManage",
+        detailKey: "projectMap.walletsManageDetail",
+        locationKey: "projectMap.walletsManageLocation",
+        icon: <SettingOutlined />,
+      },
+      {
+        permission: "wallets.auditor",
+        labelKey: "projectMap.walletsAuditor",
+        detailKey: "projectMap.walletsAuditorDetail",
+        locationKey: "projectMap.walletsAuditorLocation",
+        icon: <LockOutlined />,
+      },
+    ],
+    link: "/wallets",
   },
 ];
 

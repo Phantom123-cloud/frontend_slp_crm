@@ -38,6 +38,7 @@ import PresentationCreateModal from "./components/PresentationCreateModal";
 import PresentationSummaryModal from "./components/PresentationSummaryModal";
 import PresentationCrewModal from "./components/PresentationCrewModal";
 import TripWarehouseTab from "./components/TripWarehouseTab";
+import TripWalletTab from "./components/TripWalletTab";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -93,6 +94,11 @@ export default function TripDetailPage() {
   const canViewPersonWarehouses = usePermission("warehouses.view-person");
   const canTransactWarehouse = usePermission("warehouses.transaction");
   const canManageWarehouses = usePermission("warehouses.manage");
+
+  const canViewAllWallets = useAnyPermission(["wallets.view-all", "wallets.manage"]);
+  const canViewPersonWallets = useAnyPermission(["wallets.view-person", "wallets.edit"]);
+  const canManageWallets = usePermission("wallets.manage");
+  const canAuditWallets = useAnyPermission(["wallets.auditor", "wallets.manage"]);
 
   const myId = useAuthStore((s) => s.user?.id);
 
@@ -238,6 +244,12 @@ export default function TripDetailPage() {
 
   // Редактировать итоги: trips.admin (любые) или (presentations.edit + роль GA/МВ_ГА)
   const canSaveItogi = canAdmin || (canEditPresentation && isGaInTrip);
+
+  // Кошелёк: GA/MV_GA в составе — видят и делают транзакции с соответствующими правами
+  const canViewTripWallet =
+    canViewAllWallets || canAdmin || (canViewPersonWallets && isGaInTrip);
+  const canTransactTripWallet =
+    canManageWallets || (canViewPersonWallets && isGaInTrip);
 
   const filteredPresentations = (trip.presentations || []).filter((p: any) => {
     const eff = getEffectivePresStatus(p);
@@ -693,21 +705,18 @@ export default function TripDetailPage() {
                 </div>
               ),
             },
-            {
-              key: "wallet",
-              label: t("trips.wallet"),
-              children: (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "40px 0",
-                    color: "#999",
-                  }}
-                >
-                  {t("trips.tabPlaceholder")}
-                </div>
-              ),
-            },
+            canViewTripWallet &&
+              trip.wallet && {
+                key: "wallet",
+                label: t("trips.wallet"),
+                children: (
+                  <TripWalletTab
+                    walletId={trip.wallet.id}
+                    canTransact={canTransactTripWallet}
+                    canAudit={canAuditWallets}
+                  />
+                ),
+              },
             {
               key: "contracts",
               label: t("trips.contracts"),

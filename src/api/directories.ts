@@ -12,6 +12,14 @@ export const directoriesApi = {
   deletePresentationType: (id: string) =>
     api.delete(`/presentation-types/${id}`),
 
+  // Expense Types
+  getExpenseTypes: () => api.get("/expense-types"),
+  createExpenseType: (data: { name: string }) =>
+    api.post("/expense-types", data),
+  updateExpenseType: (id: string, data: { name?: string }) =>
+    api.patch(`/expense-types/${id}`, data),
+  deleteExpenseType: (id: string) => api.delete(`/expense-types/${id}`),
+
   // Products
   getProducts: () => api.get("/products"),
   createProduct: (data: { name: string; unit: string; sku?: string }) =>

@@ -26,6 +26,7 @@ import {
   CarOutlined,
   BookOutlined,
   InboxOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
@@ -91,6 +92,13 @@ export default function MainLayout() {
     "warehouses.view-person",
     "warehouses.manage",
   ]);
+  const canViewWallets = useAnyPermission([
+    "wallets.view-all",
+    "wallets.view-person",
+    "wallets.manage",
+    "wallets.edit",
+    "wallets.auditor",
+  ]);
 
   const tripsChildren = [
     canViewTrips && { key: "/trips", label: t("menu.tripsList") },
@@ -132,6 +140,11 @@ export default function MainLayout() {
       key: "/warehouses",
       icon: <InboxOutlined />,
       label: t("menu.warehouses"),
+    },
+    canViewWallets && {
+      key: "/wallets",
+      icon: <WalletOutlined />,
+      label: t("menu.wallets"),
     },
   ].filter(Boolean) as any[];
 

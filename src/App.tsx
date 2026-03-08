@@ -24,6 +24,8 @@ import DirectoriesPage from "./pages/directories/DirectoriesPage";
 import PresentationsListPage from "./pages/presentations/PresentationsListPage";
 import WarehousesListPage from "./pages/warehouses/WarehousesListPage";
 import WarehouseDetailPage from "./pages/warehouses/WarehouseDetailPage";
+import WalletsListPage from "./pages/wallets/WalletsListPage";
+import WalletDetailPage from "./pages/wallets/WalletDetailPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -277,6 +279,40 @@ export default function App() {
                     ]}
                   >
                     <WarehouseDetailPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="wallets"
+                element={
+                  <PermissionRoute
+                    permission={[
+                      "wallets.view-all",
+                      "wallets.view-person",
+                      "wallets.create",
+                      "wallets.manage",
+                      "wallets.edit",
+                      "wallets.auditor",
+                    ]}
+                  >
+                    <WalletsListPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="wallets/:id"
+                element={
+                  <PermissionRoute
+                    permission={[
+                      "wallets.view-all",
+                      "wallets.view-person",
+                      "wallets.create",
+                      "wallets.manage",
+                      "wallets.edit",
+                      "wallets.auditor",
+                    ]}
+                  >
+                    <WalletDetailPage />
                   </PermissionRoute>
                 }
               />
