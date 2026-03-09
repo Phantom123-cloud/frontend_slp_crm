@@ -21,6 +21,7 @@ import {
   Col,
   Divider,
   Switch,
+  Dropdown,
 } from "antd";
 import {
   PlusOutlined,
@@ -31,6 +32,7 @@ import {
   UnlockOutlined,
   PaperClipOutlined,
   CloseOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { walletsApi } from "../../../api/wallets";
@@ -68,6 +70,7 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
   const [allWallets, setAllWallets] = useState<any[]>([]);
   const [expenseTypes, setExpenseTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [txPage, setTxPage] = useState(1);
 
   const [incomeOpen, setIncomeOpen] = useState(false);
@@ -223,6 +226,23 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
       if (selectedTx?.id === txId) setSelectedTx((prev: any) => prev ? { ...prev, isClosed: false, closedAt: null, closedBy: null } : null);
       loadAll();
     } catch (e: any) { message.error(t(e.response?.data?.message || "common.error")); }
+  };
+
+  const handleExport = async (format: 'xlsx' | 'csv') => {
+    setExporting(true);
+    try {
+      const res = await walletsApi.exportTransactions(walletId, format);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `transactions.${format}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      message.error(t("common.error"));
+    } finally {
+      setExporting(false);
+    }
   };
 
   const txColumns = [
@@ -391,6 +411,24 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
           </div>
         )}
       </Card>
+
+      {/* Транзакции — заголовок с кнопкой экспорта */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <Typography.Text strong style={{ fontSize: 16 }}>{t("wallets.transactions")}</Typography.Text>
+        <Dropdown
+          menu={{
+            items: [
+              { key: 'xlsx', label: t("wallets.exportExcel"), icon: <DownloadOutlined /> },
+              { key: 'csv',  label: t("wallets.exportCsv"),   icon: <DownloadOutlined /> },
+            ],
+            onClick: ({ key }) => handleExport(key as 'xlsx' | 'csv'),
+          }}
+        >
+          <Button icon={<DownloadOutlined />} loading={exporting} size="small">
+            {t("wallets.exportData")}
+          </Button>
+        </Dropdown>
+      </div>
 
       {/* Транзакции */}
       <Table

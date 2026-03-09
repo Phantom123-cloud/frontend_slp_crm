@@ -63,4 +63,6 @@ export const walletsApi = {
     api.post(`/wallets/transactions/${txId}/close`, {}),
   reopenTransaction: (txId: string) =>
     api.post(`/wallets/transactions/${txId}/reopen`, {}),
+  exportTransactions: (walletId: string, format: 'xlsx' | 'csv') =>
+    api.post(`/wallets/${walletId}/transactions/export`, { format }, { responseType: 'blob' }),
 };

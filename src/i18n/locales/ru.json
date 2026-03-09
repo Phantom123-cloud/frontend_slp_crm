@@ -601,6 +601,9 @@
     "images": "Фото (до 15)",
     "upload": "Загрузить",
     "tooManyImages": "Максимум 15 фото",
+    "exportData": "Скачать данные",
+    "exportExcel": "Excel (.xlsx)",
+    "exportCsv": "CSV (.csv)",
     "selectCurrency": "Выберите или введите валюту",
     "enterCurrencyCode": "Введите код (напр. UZS)",
     "tx": {

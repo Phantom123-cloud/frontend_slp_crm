@@ -24,6 +24,7 @@ import {
   Row,
   Col,
   Divider,
+  Dropdown,
 } from "antd";
 import {
   PlusOutlined,
@@ -35,6 +36,7 @@ import {
   UnlockOutlined,
   PaperClipOutlined,
   CloseOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -70,6 +72,8 @@ export default function WalletDetailPage() {
   const canManage = usePermission("wallets.manage");
   const canEdit = useAnyPermission(["wallets.edit", "wallets.manage"]);
   const canAudit = useAnyPermission(["wallets.auditor", "wallets.manage"]);
+
+  const [exporting, setExporting] = useState(false);
 
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -279,6 +283,24 @@ export default function WalletDetailPage() {
       loadAll();
     } catch (e: any) {
       message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleExport = async (format: 'xlsx' | 'csv') => {
+    if (!id) return;
+    setExporting(true);
+    try {
+      const res = await walletsApi.exportTransactions(id, format);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `transactions.${format}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      message.error(t("common.error"));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -623,7 +645,24 @@ export default function WalletDetailPage() {
       </Row>
 
       {/* Транзакции */}
-      <Card title={t("wallets.transactions")}>
+      <Card
+        title={t("wallets.transactions")}
+        extra={
+          <Dropdown
+            menu={{
+              items: [
+                { key: 'xlsx', label: t("wallets.exportExcel"), icon: <DownloadOutlined /> },
+                { key: 'csv',  label: t("wallets.exportCsv"),   icon: <DownloadOutlined /> },
+              ],
+              onClick: ({ key }) => handleExport(key as 'xlsx' | 'csv'),
+            }}
+          >
+            <Button icon={<DownloadOutlined />} loading={exporting}>
+              {t("wallets.exportData")}
+            </Button>
+          </Dropdown>
+        }
+      >
         <Table
           columns={txColumns}
           dataSource={transactions}

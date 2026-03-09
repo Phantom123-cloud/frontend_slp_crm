@@ -598,6 +598,9 @@
     "images": "Photos (up to 15)",
     "upload": "Upload",
     "tooManyImages": "Maximum 15 photos",
+    "exportData": "Download data",
+    "exportExcel": "Excel (.xlsx)",
+    "exportCsv": "CSV (.csv)",
     "selectCurrency": "Select or enter currency",
     "enterCurrencyCode": "Enter code (e.g. UZS)",
     "tx": {

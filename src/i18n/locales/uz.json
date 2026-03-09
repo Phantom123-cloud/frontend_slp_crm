@@ -598,6 +598,9 @@
     "images": "Rasmlar (15 tagacha)",
     "upload": "Yuklash",
     "tooManyImages": "Maksimal 15 rasm",
+    "exportData": "Ma'lumotlarni yuklab olish",
+    "exportExcel": "Excel (.xlsx)",
+    "exportCsv": "CSV (.csv)",
     "selectCurrency": "Valyutani tanlang yoki kiriting",
     "enterCurrencyCode": "Kodni kiriting (mas. UZS)",
     "tx": {
