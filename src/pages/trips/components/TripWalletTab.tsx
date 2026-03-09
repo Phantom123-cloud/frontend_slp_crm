@@ -28,6 +28,7 @@ import {
   SwapOutlined,
   RetweetOutlined,
   LockOutlined,
+  UnlockOutlined,
   PaperClipOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
@@ -214,6 +215,16 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
     } catch (e: any) { message.error(t(e.response?.data?.message || "common.error")); }
   };
 
+  const handleReopen = async (txId: string) => {
+    try {
+      await walletsApi.reopenTransaction(txId);
+      message.success(t("common.success"));
+      // Если открыли из модалки — обновить selectedTx
+      if (selectedTx?.id === txId) setSelectedTx((prev: any) => prev ? { ...prev, isClosed: false, closedAt: null, closedBy: null } : null);
+      loadAll();
+    } catch (e: any) { message.error(t(e.response?.data?.message || "common.error")); }
+  };
+
   const txColumns = [
     {
       title: t("wallets.tx.type"),
@@ -322,16 +333,25 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
       title: "",
       key: "closeAction",
       render: (_: any, r: any) =>
-        !r.isClosed ? (
+        r.isClosed ? (
           <Popconfirm
-            title={t("wallets.tx.confirmClose")}
-            onConfirm={() => handleClose(r.id)}
+            title={t("wallets.tx.confirmReopen")}
+            onConfirm={(e) => { e?.stopPropagation(); handleReopen(r.id); }}
             okText={t("common.yes")}
             cancelText={t("common.no")}
           >
-            <Button size="small" icon={<LockOutlined />}>{t("wallets.tx.close")}</Button>
+            <Button size="small" icon={<UnlockOutlined />} onClick={(e) => e.stopPropagation()}>{t("wallets.tx.reopen")}</Button>
           </Popconfirm>
-        ) : null,
+        ) : (
+          <Popconfirm
+            title={t("wallets.tx.confirmClose")}
+            onConfirm={(e) => { e?.stopPropagation(); handleClose(r.id); }}
+            okText={t("common.yes")}
+            cancelText={t("common.no")}
+          >
+            <Button size="small" icon={<LockOutlined />} onClick={(e) => e.stopPropagation()}>{t("wallets.tx.close")}</Button>
+          </Popconfirm>
+        ),
     }] : []),
   ];
 
@@ -584,6 +604,19 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
                 <Button key="save" type="primary" onClick={() => txEditForm.submit()}>{t("common.save")}</Button>,
               ]
             : [
+                ...(selectedTx?.isClosed && canAudit
+                  ? [
+                      <Popconfirm
+                        key="reopen"
+                        title={t("wallets.tx.confirmReopen")}
+                        onConfirm={() => handleReopen(selectedTx.id)}
+                        okText={t("common.yes")}
+                        cancelText={t("common.no")}
+                      >
+                        <Button icon={<UnlockOutlined />}>{t("wallets.tx.reopen")}</Button>
+                      </Popconfirm>,
+                    ]
+                  : []),
                 <Button key="close" type="primary" onClick={closeTxModal}>{t("common.close")}</Button>,
               ]
         }

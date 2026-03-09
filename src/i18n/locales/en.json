@@ -614,6 +614,8 @@
       "close": "Close",
       "closedBy": "Closed by",
       "confirmClose": "Close transaction? It cannot be edited after closing.",
+      "reopen": "Reopen",
+      "confirmReopen": "Reopen (unclose) this transaction?",
       "income": "Income",
       "transfer": "Transfer",
       "conversion": "Conversion",

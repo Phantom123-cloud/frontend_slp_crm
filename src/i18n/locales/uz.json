@@ -614,6 +614,8 @@
       "close": "Yopish",
       "closedBy": "Yopdi",
       "confirmClose": "Tranzaksiyani yopish? Yopilgandan so'ng tahrirlab bo'lmaydi.",
+      "reopen": "Ochish",
+      "confirmReopen": "Tranzaksiyani ochish?",
       "income": "Kirim",
       "transfer": "O'tkazma",
       "conversion": "Konvertatsiya",
