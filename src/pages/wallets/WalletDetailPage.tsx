@@ -544,8 +544,8 @@ export default function WalletDetailPage() {
     ? wallet.trip.name
     : "—";
 
-  // Может ли текущий пользователь делать транзакции
-  const canTransact = canManage || canEdit || canTransaction;
+  // Может ли текущий пользователь делать транзакции (edit — только для настроек кошелька)
+  const canTransact = canManage || canTransaction;
 
   return (
     <div>
