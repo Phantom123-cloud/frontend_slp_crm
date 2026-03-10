@@ -246,11 +246,12 @@ export default function TripDetailPage() {
   // Редактировать итоги: trips.admin (любые) или (presentations.edit + роль GA/МВ_ГА)
   const canSaveItogi = canAdmin || (canEditPresentation && isGaInTrip);
 
-  // Кошелёк: GA/MV_GA в составе — видят и делают транзакции с соответствующими правами
+  // Кошелёк: просмотр — view-person/transaction/manage/admin + ГА в выезде
+  // Транзакции — только wallets.transaction или manage (view-person не даёт транзакций)
   const canViewTripWallet =
     canViewAllWallets || canAdmin || ((canViewPersonWallets || canTransactWallets) && isGaInTrip);
   const canTransactTripWallet =
-    canManageWallets || ((canViewPersonWallets || canTransactWallets) && isGaInTrip);
+    canManageWallets || (canTransactWallets && isGaInTrip);
 
   const filteredPresentations = (trip.presentations || []).filter((p: any) => {
     const eff = getEffectivePresStatus(p);
