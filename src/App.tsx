@@ -293,6 +293,7 @@ export default function App() {
                       "wallets.manage",
                       "wallets.edit",
                       "wallets.auditor",
+                      "wallets.transaction",
                     ]}
                   >
                     <WalletsListPage />
@@ -310,6 +311,7 @@ export default function App() {
                       "wallets.manage",
                       "wallets.edit",
                       "wallets.auditor",
+                      "wallets.transaction",
                     ]}
                   >
                     <WalletDetailPage />

@@ -98,6 +98,7 @@ export default function MainLayout() {
     "wallets.manage",
     "wallets.edit",
     "wallets.auditor",
+    "wallets.transaction",
   ]);
 
   const tripsChildren = [

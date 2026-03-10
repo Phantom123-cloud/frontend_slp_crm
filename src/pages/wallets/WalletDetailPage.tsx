@@ -72,6 +72,7 @@ export default function WalletDetailPage() {
   const canManage = usePermission("wallets.manage");
   const canEdit = useAnyPermission(["wallets.edit", "wallets.manage"]);
   const canAudit = useAnyPermission(["wallets.auditor", "wallets.manage"]);
+  const canTransaction = usePermission("wallets.transaction");
 
   const [exporting, setExporting] = useState(false);
 
@@ -543,8 +544,8 @@ export default function WalletDetailPage() {
     ? wallet.trip.name
     : "—";
 
-  // Может ли текущий пользователь делать транзакции (проверка на backend — здесь только canEdit как приближение)
-  const canTransact = canManage || canEdit;
+  // Может ли текущий пользователь делать транзакции
+  const canTransact = canManage || canEdit || canTransaction;
 
   return (
     <div>

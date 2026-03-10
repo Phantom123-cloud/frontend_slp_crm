@@ -97,6 +97,7 @@ export default function TripDetailPage() {
 
   const canViewAllWallets = useAnyPermission(["wallets.view-all", "wallets.manage"]);
   const canViewPersonWallets = useAnyPermission(["wallets.view-person", "wallets.edit"]);
+  const canTransactWallets = usePermission("wallets.transaction");
   const canManageWallets = usePermission("wallets.manage");
   const canAuditWallets = useAnyPermission(["wallets.auditor", "wallets.manage"]);
 
@@ -247,9 +248,9 @@ export default function TripDetailPage() {
 
   // Кошелёк: GA/MV_GA в составе — видят и делают транзакции с соответствующими правами
   const canViewTripWallet =
-    canViewAllWallets || canAdmin || (canViewPersonWallets && isGaInTrip);
+    canViewAllWallets || canAdmin || ((canViewPersonWallets || canTransactWallets) && isGaInTrip);
   const canTransactTripWallet =
-    canManageWallets || (canViewPersonWallets && isGaInTrip);
+    canManageWallets || ((canViewPersonWallets || canTransactWallets) && isGaInTrip);
 
   const filteredPresentations = (trip.presentations || []).filter((p: any) => {
     const eff = getEffectivePresStatus(p);
