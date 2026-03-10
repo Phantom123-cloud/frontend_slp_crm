@@ -402,6 +402,7 @@ const MODULES: ModuleConfig[] = [
       "warehouses.view-all",
       "warehouses.view-person",
       "warehouses.create",
+      "warehouses.edit",
       "warehouses.transaction",
       "warehouses.manage",
     ],
@@ -427,6 +428,13 @@ const MODULES: ModuleConfig[] = [
         locationKey: "projectMap.warehousesCreateLocation",
         icon: <PlusOutlined />,
         buttonType: "primary",
+      },
+      {
+        permission: "warehouses.edit",
+        labelKey: "projectMap.warehousesEdit",
+        detailKey: "projectMap.warehousesEditDetail",
+        locationKey: "projectMap.warehousesEditLocation",
+        icon: <EditOutlined />,
       },
       {
         permission: "warehouses.transaction",

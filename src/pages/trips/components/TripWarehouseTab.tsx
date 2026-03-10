@@ -19,9 +19,11 @@ const { Text } = Typography;
 interface Props {
   warehouseId: string;
   canTransact: boolean;
+  // Право редактировать примечание транзакций (warehouses.edit)
+  canEdit?: boolean;
 }
 
-export default function TripWarehouseTab({ warehouseId, canTransact }: Props) {
+export default function TripWarehouseTab({ warehouseId, canTransact, canEdit = false }: Props) {
   const { t } = useTranslation();
 
   const [warehouse, setWarehouse] = useState<any>(null);
@@ -117,6 +119,7 @@ export default function TripWarehouseTab({ warehouseId, canTransact }: Props) {
           transactions={transactions}
           warehouseId={warehouseId}
           canTransact={canTransact}
+          canEdit={canEdit}
           onRefresh={loadAll}
         />
       </Card>

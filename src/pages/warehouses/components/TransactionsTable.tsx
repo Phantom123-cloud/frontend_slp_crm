@@ -1,6 +1,16 @@
 import { useState } from "react";
-import { Table, Tag, Button, Popconfirm, Space, Collapse } from "antd";
-import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Tag,
+  Button,
+  Popconfirm,
+  Space,
+  Collapse,
+  Modal,
+  Input,
+  Form,
+} from "antd";
+import { CheckOutlined, CloseOutlined, EditOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../../api/warehouses";
@@ -40,6 +50,8 @@ interface Props {
   transactions: any[];
   warehouseId: string;
   canTransact: boolean;
+  // Право редактировать примечание (warehouses.edit) — помимо canTransact (manage/transaction тоже могут)
+  canEdit?: boolean;
   onRefresh: () => void;
   pagination?: boolean;
 }
@@ -48,12 +60,44 @@ export default function TransactionsTable({
   transactions,
   warehouseId,
   canTransact,
+  canEdit = false,
   onRefresh,
   pagination = true,
 }: Props) {
   const { t } = useTranslation();
   const { colSearch, colEnum } = useTableFilters();
   const [page, setPage] = useState(1);
+
+  // Состояние модалки редактирования примечания
+  const [editTx, setEditTx] = useState<any>(null);
+  const [editNoteOpen, setEditNoteOpen] = useState(false);
+  const [editNoteLoading, setEditNoteLoading] = useState(false);
+  const [noteForm] = Form.useForm();
+
+  // Может редактировать примечание: manage/transaction (canTransact) или warehouses.edit (canEdit)
+  const canEditNote = canTransact || canEdit;
+
+  const openNoteEdit = (record: any) => {
+    setEditTx(record);
+    noteForm.setFieldsValue({ note: record.note || "" });
+    setEditNoteOpen(true);
+  };
+
+  const handleNoteSubmit = async (values: { note: string }) => {
+    if (!editTx) return;
+    setEditNoteLoading(true);
+    try {
+      await warehousesApi.updateTransaction(editTx.id, { note: values.note || undefined });
+      message.success(t("warehouses.noteEdited"));
+      setEditNoteOpen(false);
+      setEditTx(null);
+      onRefresh();
+    } catch (e: any) {
+      message.error(t(e?.response?.data?.message || "common.error"));
+    } finally {
+      setEditNoteLoading(false);
+    }
+  };
 
   const handleAccept = async (txId: string) => {
     try {
@@ -167,7 +211,19 @@ export default function TransactionsTable({
       dataIndex: "note",
       key: "note",
       ...colSearch((r: any) => r.note ?? ""),
-      render: (v: any) => v || "—",
+      render: (v: any, record: any) => (
+        <Space size={4}>
+          <span>{v || "—"}</span>
+          {canEditNote && (
+            <Button
+              size="small"
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => openNoteEdit(record)}
+            />
+          )}
+        </Space>
+      ),
     },
     {
       title: t("users.name"),
@@ -239,31 +295,54 @@ export default function TransactionsTable({
   ];
 
   return (
-    <Table
-      dataSource={transactions}
-      columns={columns}
-      rowKey="id"
-      size="small"
-      rowClassName={(record) =>
-        record.type === "TRANSFER_OUT" && record.transferStatus === "PENDING"
-          ? "ant-table-row-pending"
-          : ""
-      }
-      onChange={(pg, filters) => {
-        const hasFilter = Object.values(filters).some(
-          (f) => f && (f as any[]).length > 0,
-        );
-        setPage(hasFilter ? 1 : (pg.current ?? 1));
-      }}
-      pagination={
-        pagination
-          ? {
-              pageSize: 20,
-              showSizeChanger: false,
-              current: page,
-            }
-          : false
-      }
-    />
+    <>
+      <Table
+        dataSource={transactions}
+        columns={columns}
+        rowKey="id"
+        size="small"
+        rowClassName={(record) =>
+          record.type === "TRANSFER_OUT" && record.transferStatus === "PENDING"
+            ? "ant-table-row-pending"
+            : ""
+        }
+        onChange={(pg, filters) => {
+          const hasFilter = Object.values(filters).some(
+            (f) => f && (f as any[]).length > 0,
+          );
+          setPage(hasFilter ? 1 : (pg.current ?? 1));
+        }}
+        pagination={
+          pagination
+            ? {
+                pageSize: 20,
+                showSizeChanger: false,
+                current: page,
+              }
+            : false
+        }
+      />
+
+      {/* Модалка редактирования примечания транзакции */}
+      <Modal
+        title={t("warehouses.editNote")}
+        open={editNoteOpen}
+        onCancel={() => {
+          setEditNoteOpen(false);
+          setEditTx(null);
+        }}
+        onOk={() => noteForm.submit()}
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
+        confirmLoading={editNoteLoading}
+        destroyOnClose
+      >
+        <Form form={noteForm} onFinish={handleNoteSubmit} layout="vertical">
+          <Form.Item name="note" label={t("warehouses.note")}>
+            <Input.TextArea rows={3} maxLength={500} showCount />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 }

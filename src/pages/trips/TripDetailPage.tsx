@@ -94,6 +94,8 @@ export default function TripDetailPage() {
   const canViewPersonWarehouses = usePermission("warehouses.view-person");
   const canTransactWarehouse = usePermission("warehouses.transaction");
   const canManageWarehouses = usePermission("warehouses.manage");
+  // warehouses.edit — редактирование названия, ответственного и примечаний транзакций
+  const canEditWarehouse = usePermission("warehouses.edit");
 
   const canViewAllWallets = useAnyPermission(["wallets.view-all", "wallets.manage"]);
   const canViewPersonWallets = useAnyPermission(["wallets.view-person", "wallets.edit"]);
@@ -694,6 +696,7 @@ export default function TripDetailPage() {
                     (canTransactWarehouse &&
                       (myTripCrewRole === "MV" || myTripCrewRole === "MV_GA"))
                   }
+                  canEdit={canAdmin || canManageWarehouses || canEditWarehouse}
                 />
               ) : (
                 <div

@@ -34,6 +34,7 @@ export default function WarehouseDetailPage() {
 
   const canManage = useAnyPermission(["warehouses.manage", "trips.admin"]);
   const canTransaction = usePermission("warehouses.transaction");
+  const canEdit = usePermission("warehouses.edit");
   const canTransact = canManage || canTransaction;
 
   const [warehouse, setWarehouse] = useState<any>(null);
@@ -143,7 +144,7 @@ export default function WarehouseDetailPage() {
         </Title>
         <Tag>{t(`warehouses.type_${warehouse.type}`)}</Tag>
         {!warehouse.isActive && <Tag color="red">{t("users.inactive")}</Tag>}
-        {canManage && (
+        {(canManage || canEdit) && (
           <Button icon={<EditOutlined />} size="small" onClick={() => openEditModal(warehouse)}>
             {t("common.edit")}
           </Button>
@@ -188,6 +189,7 @@ export default function WarehouseDetailPage() {
           transactions={transactions}
           warehouseId={id!}
           canTransact={canTransact}
+          canEdit={canEdit}
           onRefresh={loadAll}
         />
       </Card>

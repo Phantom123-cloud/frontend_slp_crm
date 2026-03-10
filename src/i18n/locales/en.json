@@ -293,6 +293,9 @@
     "warehousesTransaction": "Transactions on own warehouses",
     "warehousesTransactionDetail": "Create incoming and transfer transactions on warehouses where assigned as responsible. For trip warehouses — requires MV or MV_GA role.",
     "warehousesTransactionLocation": "Warehouse page or \"Warehouse\" tab in trip — \"Transaction\" button",
+    "warehousesEdit": "Edit warehouses",
+    "warehousesEditDetail": "Change responsible person, rename warehouse, edit transaction notes.",
+    "warehousesEditLocation": "Warehouse page — \"Edit\" button, \"Note\" column in transactions table",
     "warehousesManage": "Manage warehouses",
     "warehousesManageDetail": "Transactions on any warehouse, edit names and responsible persons, block and delete warehouses.",
     "warehousesManageLocation": "\"Warehouses\" section, block and delete buttons",
@@ -546,7 +549,9 @@
     "deactivateConfirm": "Block the warehouse? This will disable all operations on it.",
     "deleteConfirmPermanent": "Permanently delete the warehouse? This cannot be undone.",
     "type_TRIP": "Trip",
-    "blocked": "Blocked"
+    "blocked": "Blocked",
+    "editNote": "Edit note",
+    "noteEdited": "Note updated"
   },
   "common": {
     "yes": "Yes",

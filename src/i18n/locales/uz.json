@@ -293,6 +293,9 @@
     "warehousesTransaction": "O'z omborlarida tranzaksiyalar",
     "warehousesTransactionDetail": "Mas'ul bo'lgan omborlarda kirim va ko'chirish tranzaksiyalari. Sayohat omborlari uchun — MV yoki MV_GA roli talab qilinadi.",
     "warehousesTransactionLocation": "Ombor sahifasi yoki sayohatdagi «Ombor» tab — «Tranzaksiya» tugmasi",
+    "warehousesEdit": "Omborlarni tahrirlash",
+    "warehousesEditDetail": "Mas'ulni o'zgartirish, ombor nomini o'zgartirish, tranzaksiya izohlarini tahrirlash.",
+    "warehousesEditLocation": "Ombor sahifasi — «Tahrirlash» tugmasi, tranzaksiyalar jadvalidagi «Izoh» ustuni",
     "warehousesManage": "Omborlarni boshqarish",
     "warehousesManageDetail": "Istalgan omborida tranzaksiyalar, nomlarni va mas'ullarni tahrirlash, bloklash va o'chirish.",
     "warehousesManageLocation": "«Omborlar» bo'limi, bloklash va o'chirish tugmalari",
@@ -546,7 +549,9 @@
     "deactivateConfirm": "Omborni bloklash? Bu barcha operatsiyalarni taqiqlaydi.",
     "deleteConfirmPermanent": "Omborni butunlay o'chirish? Bu amal qaytarib bo'lmaydi.",
     "type_TRIP": "Sayohat",
-    "blocked": "Bloklangan"
+    "blocked": "Bloklangan",
+    "editNote": "Izohni tahrirlash",
+    "noteEdited": "Izoh yangilandi"
   },
   "common": {
     "yes": "Ha",
