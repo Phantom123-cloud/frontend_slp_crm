@@ -1026,7 +1026,7 @@ export default function WalletDetailPage() {
         }
         onCancel={closeTxModal}
         footer={
-          !selectedTx?.isClosed && canEdit
+          !selectedTx?.isClosed && (canEdit || canTransaction)
             ? [
                 <Button key="cancel" onClick={closeTxModal}>{t("common.cancel")}</Button>,
                 <Button key="save" type="primary" onClick={() => txEditForm.submit()}>{t("common.save")}</Button>,
@@ -1121,7 +1121,7 @@ export default function WalletDetailPage() {
               )}
 
               {/* Read-only поля (если закрыта или нет прав на редактирование) */}
-              {(selectedTx.isClosed || !canEdit) && (
+              {(selectedTx.isClosed || (!canEdit && !canTransaction)) && (
                 <>
                   <Descriptions.Item label={t("wallets.description")}>
                     {selectedTx.description || "—"}
@@ -1136,7 +1136,7 @@ export default function WalletDetailPage() {
             </Descriptions>
 
             {/* Фото read-only */}
-            {(selectedTx.isClosed || !canEdit) && selectedTx.images?.length > 0 && (
+            {(selectedTx.isClosed || (!canEdit && !canTransaction)) && selectedTx.images?.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <Text type="secondary" style={{ display: "block", marginBottom: 8 }}>
                   {t("wallets.images")}
@@ -1153,7 +1153,7 @@ export default function WalletDetailPage() {
             )}
 
             {/* Форма редактирования (только если не закрыта и есть права) */}
-            {!selectedTx.isClosed && canEdit && (
+            {!selectedTx.isClosed && (canEdit || canTransaction) && (
               <>
                 <Divider style={{ margin: "0 0 16px" }} />
                 <Form form={txEditForm} onFinish={handleUpdateTx} layout="vertical">
