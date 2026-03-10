@@ -34,6 +34,7 @@ import {
   WalletOutlined,
   TransactionOutlined,
   LockOutlined,
+  BookOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
@@ -349,6 +350,50 @@ const MODULES: ModuleConfig[] = [
     link: "/presentations",
   },
   {
+    titleKey: "projectMap.directoriesTitle",
+    descKey: "projectMap.directoriesDesc",
+    icon: <BookOutlined style={{ fontSize: 28 }} />,
+    color: "#722ed1",
+    permissions: [
+      "directories.view",
+      "directories.create",
+      "directories.edit",
+      "directories.delete",
+    ],
+    actions: [
+      {
+        permission: "directories.view",
+        labelKey: "projectMap.directoriesView",
+        detailKey: "projectMap.directoriesViewDetail",
+        locationKey: "projectMap.directoriesViewLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "directories.create",
+        labelKey: "projectMap.directoriesCreate",
+        detailKey: "projectMap.directoriesCreateDetail",
+        locationKey: "projectMap.directoriesCreateLocation",
+        icon: <PlusOutlined />,
+        buttonType: "primary",
+      },
+      {
+        permission: "directories.edit",
+        labelKey: "projectMap.directoriesEdit",
+        detailKey: "projectMap.directoriesEditDetail",
+        locationKey: "projectMap.directoriesEditLocation",
+        icon: <EditOutlined />,
+      },
+      {
+        permission: "directories.delete",
+        labelKey: "projectMap.directoriesDelete",
+        detailKey: "projectMap.directoriesDeleteDetail",
+        locationKey: "projectMap.directoriesDeleteLocation",
+        icon: <DeleteOutlined />,
+      },
+    ],
+    link: "/directories",
+  },
+  {
     titleKey: "projectMap.warehousesTitle",
     descKey: "projectMap.warehousesDesc",
     icon: <InboxOutlined style={{ fontSize: 28 }} />,
@@ -596,7 +641,7 @@ function ModuleCard({
         {/* Quick tags */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
           {availableActions.map((a) => (
-            <Tag key={a.permission} color={config.color} style={{ margin: 0 }}>
+            <Tag key={a.labelKey} color={config.color} style={{ margin: 0 }}>
               {t(a.labelKey)}
             </Tag>
           ))}
@@ -624,7 +669,7 @@ function ModuleCard({
                 <div>
                   {availableActions.map((a) => (
                     <ActionRow
-                      key={a.permission}
+                      key={a.labelKey}
                       action={a}
                       color={config.color}
                       t={t}

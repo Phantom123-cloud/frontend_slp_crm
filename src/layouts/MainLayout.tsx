@@ -81,7 +81,12 @@ export default function MainLayout() {
   const canViewUsers = usePermission("users.view");
   const canViewRoles = usePermission("roles.view");
   const canViewAudit = usePermission("audit.view");
-  const canManageDirectories = usePermission("directories.manage");
+  const canManageDirectories = useAnyPermission([
+    "directories.view",
+    "directories.create",
+    "directories.edit",
+    "directories.delete",
+  ]);
   const canViewPresentations =
     usePermission("presentations.view-all") ||
     usePermission("presentations.view-person");

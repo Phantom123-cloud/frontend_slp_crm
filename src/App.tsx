@@ -251,7 +251,21 @@ export default function App() {
                 path="presentations/:id"
                 element={<PresentationDetailPage />}
               />
-              <Route path="directories" element={<DirectoriesPage />} />
+              <Route
+                path="directories"
+                element={
+                  <PermissionRoute
+                    permission={[
+                      "directories.view",
+                      "directories.create",
+                      "directories.edit",
+                      "directories.delete",
+                    ]}
+                  >
+                    <DirectoriesPage />
+                  </PermissionRoute>
+                }
+              />
               <Route
                 path="warehouses"
                 element={

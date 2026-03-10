@@ -16,14 +16,17 @@ import {
 import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { directoriesApi } from "../../api/directories";
-import { usePermission } from "../../hooks/usePermission";
+import { useAnyPermission } from "../../hooks/usePermission";
 import { useTableFilters } from "../../utils/tableFilters";
 
 const { Title } = Typography;
 
 export default function DirectoriesPage() {
   const { t } = useTranslation();
-  const canManage = usePermission("directories.manage");
+  const canCreate = useAnyPermission(["directories.create"]);
+  const canEdit = useAnyPermission(["directories.edit"]);
+  const canDelete = useAnyPermission(["directories.delete"]);
+  const canManage = canCreate || canEdit || canDelete;
   const { colSearch } = useTableFilters();
 
   // === Presentation Types ===
@@ -254,7 +257,7 @@ export default function DirectoriesPage() {
       key: "name",
       ...colSearch((r: any) => r.name || ""),
     },
-    ...(canManage
+    ...(canEdit || canDelete
       ? [
           {
             title: t("users.actions"),
@@ -262,7 +265,7 @@ export default function DirectoriesPage() {
             width: 100,
             render: (_: any, record: any) => (
               <Space size={4}>
-                <Button
+                {canEdit && <Button
                   type="text"
                   icon={<EditOutlined />}
                   size="small"
@@ -270,15 +273,15 @@ export default function DirectoriesPage() {
                     setEditExpenseType(record);
                     editExpenseTypeForm.setFieldsValue({ name: record.name });
                   }}
-                />
-                <Popconfirm
+                />}
+                {canDelete && <Popconfirm
                   title={t("common.confirmDelete")}
                   onConfirm={() => handleDeleteExpenseType(record.id)}
                   okText={t("common.yes")}
                   cancelText={t("common.no")}
                 >
                   <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-                </Popconfirm>
+                </Popconfirm>}
               </Space>
             ),
           },
@@ -300,7 +303,7 @@ export default function DirectoriesPage() {
       ...colSearch((r: any) => r.description || ""),
       render: (v: any) => v || "—",
     },
-    ...(canManage
+    ...(canEdit || canDelete
       ? [
           {
             title: t("users.actions"),
@@ -308,7 +311,7 @@ export default function DirectoriesPage() {
             width: 100,
             render: (_: any, record: any) => (
               <Space size={4}>
-                <Button
+                {canEdit && <Button
                   type="text"
                   icon={<EditOutlined />}
                   size="small"
@@ -319,8 +322,8 @@ export default function DirectoriesPage() {
                       description: record.description,
                     });
                   }}
-                />
-                <Popconfirm
+                />}
+                {canDelete && <Popconfirm
                   title={t("directories.deleteConfirm")}
                   onConfirm={() => handleDeleteType(record.id)}
                   okText={t("users.yes")}
@@ -332,7 +335,7 @@ export default function DirectoriesPage() {
                     icon={<DeleteOutlined />}
                     size="small"
                   />
-                </Popconfirm>
+                </Popconfirm>}
               </Space>
             ),
           },
@@ -372,7 +375,7 @@ export default function DirectoriesPage() {
           <Tag color="red">{t("users.no")}</Tag>
         ),
     },
-    ...(canManage
+    ...(canEdit || canDelete
       ? [
           {
             title: t("users.actions"),
@@ -380,7 +383,7 @@ export default function DirectoriesPage() {
             width: 100,
             render: (_: any, record: any) => (
               <Space size={4}>
-                <Button
+                {canEdit && <Button
                   type="text"
                   icon={<EditOutlined />}
                   size="small"
@@ -392,8 +395,8 @@ export default function DirectoriesPage() {
                       sku: record.sku,
                     });
                   }}
-                />
-                <Popconfirm
+                />}
+                {canDelete && <Popconfirm
                   title={t("warehouses.deleteConfirm")}
                   onConfirm={() => handleDeleteProduct(record.id)}
                   okText={t("users.yes")}
@@ -405,7 +408,7 @@ export default function DirectoriesPage() {
                     icon={<DeleteOutlined />}
                     size="small"
                   />
-                </Popconfirm>
+                </Popconfirm>}
               </Space>
             ),
           },
@@ -432,7 +435,7 @@ export default function DirectoriesPage() {
       key: "address",
       ...colSearch((r: any) => r.address || ""),
     },
-    ...(canManage
+    ...(canEdit || canDelete
       ? [
           {
             title: t("users.actions"),
@@ -440,7 +443,7 @@ export default function DirectoriesPage() {
             width: 100,
             render: (_: any, record: any) => (
               <Space size={4}>
-                <Button
+                {canEdit && <Button
                   type="text"
                   icon={<EditOutlined />}
                   size="small"
@@ -452,8 +455,8 @@ export default function DirectoriesPage() {
                       address: record.address,
                     });
                   }}
-                />
-                <Popconfirm
+                />}
+                {canDelete && <Popconfirm
                   title={t("directories.deleteConfirm")}
                   onConfirm={() => handleDeleteVenue(record.id)}
                   okText={t("users.yes")}
@@ -465,7 +468,7 @@ export default function DirectoriesPage() {
                     icon={<DeleteOutlined />}
                     size="small"
                   />
-                </Popconfirm>
+                </Popconfirm>}
               </Space>
             ),
           },
@@ -484,7 +487,7 @@ export default function DirectoriesPage() {
             label: t("directories.presentationTypes"),
             children: (
               <>
-                {canManage && (
+                {canCreate && (
                   <div style={{ marginBottom: 16 }}>
                     <Button
                       type="primary"
@@ -514,7 +517,7 @@ export default function DirectoriesPage() {
             label: t("directories.products"),
             children: (
               <>
-                {canManage && (
+                {canCreate && (
                   <div style={{ marginBottom: 16 }}>
                     <Button
                       type="primary"
@@ -544,7 +547,7 @@ export default function DirectoriesPage() {
             label: t("directories.expenseTypes"),
             children: (
               <>
-                {canManage && (
+                {canCreate && (
                   <div style={{ marginBottom: 16 }}>
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => setExpenseTypeModalOpen(true)}>
                       {t("common.add")}
@@ -567,7 +570,7 @@ export default function DirectoriesPage() {
             label: t("directories.venues"),
             children: (
               <>
-                {canManage && (
+                {canCreate && (
                   <div style={{ marginBottom: 16 }}>
                     <Button
                       type="primary"
