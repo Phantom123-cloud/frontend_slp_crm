@@ -410,6 +410,7 @@ const MODULES: ModuleConfig[] = [
       "wallets.view-person",
       "wallets.create",
       "wallets.edit",
+      "wallets.transaction",
       "wallets.manage",
       "wallets.auditor",
     ],
@@ -442,6 +443,13 @@ const MODULES: ModuleConfig[] = [
         detailKey: "projectMap.walletsEditDetail",
         locationKey: "projectMap.walletsEditLocation",
         icon: <EditOutlined />,
+      },
+      {
+        permission: "wallets.transaction",
+        labelKey: "projectMap.walletsTransaction",
+        detailKey: "projectMap.walletsTransactionDetail",
+        locationKey: "projectMap.walletsTransactionLocation",
+        icon: <SwapOutlined />,
       },
       {
         permission: "wallets.manage",
