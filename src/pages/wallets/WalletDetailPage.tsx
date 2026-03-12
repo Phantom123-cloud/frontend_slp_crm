@@ -63,6 +63,7 @@ const TX_TYPE_COLORS: Record<string, string> = {
   TRANSFER_OUT: "orange",
   TRANSFER_IN: "blue",
   CONVERSION: "purple",
+  REVERSAL: "magenta",
 };
 
 export default function WalletDetailPage() {

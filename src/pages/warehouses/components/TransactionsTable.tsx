@@ -29,6 +29,7 @@ const TX_TYPE_COLORS: Record<string, string> = {
   WRITE_OFF: "orange",
   TRANSFER_OUT: "volcano",
   TRANSFER_IN: "geekblue",
+  REVERSAL: "red",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -45,6 +46,7 @@ const TX_TYPES = [
   "WRITE_OFF",
   "TRANSFER_OUT",
   "TRANSFER_IN",
+  "REVERSAL",
 ];
 
 interface Props {
