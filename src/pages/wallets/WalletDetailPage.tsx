@@ -37,6 +37,8 @@ import {
   PaperClipOutlined,
   CloseOutlined,
   DownloadOutlined,
+  RollbackOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -78,6 +80,7 @@ export default function WalletDetailPage() {
 
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [pendingTransfers, setPendingTransfers] = useState<any[]>([]);
   const [allWallets, setAllWallets] = useState<any[]>([]);
   const [expenseTypes, setExpenseTypes] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -116,15 +119,17 @@ export default function WalletDetailPage() {
     if (!id) return;
     setLoading(true);
     try {
-      const [wRes, txRes, allWRes, etRes, usersRes] = await Promise.all([
+      const [wRes, txRes, pendingRes, allWRes, etRes, usersRes] = await Promise.all([
         walletsApi.getById(id),
         walletsApi.getTransactions(id),
+        walletsApi.getPendingTransfers(id),
         walletsApi.list(),
         directoriesApi.getExpenseTypes(),
         usersApi.getAll({ limit: 1000 }),
       ]);
       setWallet(wRes.data);
       setTransactions(txRes.data);
+      setPendingTransfers(pendingRes.data);
       setAllWallets(allWRes.data.filter((w: any) => w.id !== id));
       setExpenseTypes(etRes.data);
       setUsers(usersRes.data.data || []);
@@ -281,6 +286,37 @@ export default function WalletDetailPage() {
       message.success(t("common.success"));
       // Если открыли из модалки — обновить selectedTx
       if (selectedTx?.id === txId) setSelectedTx((prev: any) => prev ? { ...prev, isClosed: false, closedAt: null, closedBy: null } : null);
+      loadAll();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleReverseTx = async (txId: string) => {
+    try {
+      await walletsApi.reverseTransaction(txId);
+      message.success(t("wallets.reversalCreated"));
+      closeTxModal();
+      loadAll();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleAcceptTransfer = async (transferId: string) => {
+    try {
+      await walletsApi.acceptTransfer(transferId);
+      message.success(t("wallets.transferAccepted"));
+      loadAll();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleCancelTransfer = async (transferId: string) => {
+    try {
+      await walletsApi.cancelTransfer(transferId);
+      message.success(t("wallets.transferCancelled"));
       loadAll();
     } catch (e: any) {
       message.error(t(e.response?.data?.message || "common.error"));
@@ -492,6 +528,41 @@ export default function WalletDetailPage() {
           <Tag color="green">{t("wallets.tx.open")}</Tag>
         ),
     },
+    ...(canTransaction || canManage
+      ? [
+          {
+            title: "",
+            key: "reverseAction",
+            width: 120,
+            render: (_: any, record: any) => {
+              const isTransfer =
+                record.type === "TRANSFER_OUT" || record.type === "TRANSFER_IN";
+              const canReverse =
+                !isTransfer &&
+                !record.isClosed &&
+                !record.reversedBy &&
+                !record.reversalOf;
+              if (!canReverse) return null;
+              return (
+                <Popconfirm
+                  title={t("wallets.tx.confirmReverse")}
+                  onConfirm={(e) => { e?.stopPropagation(); handleReverseTx(record.id); }}
+                  okText={t("common.yes")}
+                  cancelText={t("common.no")}
+                >
+                  <Button
+                    size="small"
+                    icon={<RollbackOutlined />}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {t("wallets.tx.reverse")}
+                  </Button>
+                </Popconfirm>
+              );
+            },
+          },
+        ]
+      : []),
     ...(canAudit
       ? [
           {
@@ -644,6 +715,94 @@ export default function WalletDetailPage() {
           </Card>
         </Col>
       </Row>
+
+      {/* Ожидающие входящие переводы */}
+      {pendingTransfers.length > 0 && (
+        <Card
+          title={t("wallets.pendingTransfers")}
+          style={{ marginBottom: 16 }}
+          styles={{ header: { background: "#fffbe6", borderBottom: "1px solid #ffe58f" } }}
+        >
+          <Table
+            dataSource={pendingTransfers}
+            rowKey="id"
+            size="small"
+            pagination={false}
+            columns={[
+              {
+                title: t("wallets.tx.counterpart"),
+                key: "from",
+                render: (_: any, r: any) => {
+                  const w = r.fromWallet;
+                  return w?.name || (w?.trip ? w.trip.name : `#${w?.id?.slice(-6)}`);
+                },
+              },
+              {
+                title: t("wallets.tx.amount"),
+                key: "amount",
+                render: (_: any, r: any) => (
+                  <Text style={{ color: "#52c41a" }}>
+                    +{Number(r.amount).toLocaleString()} {r.currency}
+                  </Text>
+                ),
+              },
+              {
+                title: t("wallets.tx.description"),
+                key: "desc",
+                render: (_: any, r: any) => r.outTx?.description || "—",
+              },
+              {
+                title: t("wallets.tx.createdBy"),
+                key: "by",
+                render: (_: any, r: any) =>
+                  r.outTx?.createdBy
+                    ? `${r.outTx.createdBy.lastName} ${r.outTx.createdBy.firstName}`
+                    : "—",
+              },
+              {
+                title: t("wallets.tx.date"),
+                key: "date",
+                render: (_: any, r: any) =>
+                  r.outTx?.createdAt
+                    ? new Date(r.outTx.createdAt).toLocaleDateString("ru")
+                    : "—",
+              },
+              ...(canTransact
+                ? [
+                    {
+                      title: "",
+                      key: "actions",
+                      render: (_: any, r: any) => (
+                        <Space>
+                          <Popconfirm
+                            title={t("wallets.acceptConfirm")}
+                            onConfirm={() => handleAcceptTransfer(r.id)}
+                            okText={t("common.yes")}
+                            cancelText={t("common.cancel")}
+                          >
+                            <Button type="primary" size="small" icon={<CheckOutlined />}>
+                              {t("wallets.acceptTransfer")}
+                            </Button>
+                          </Popconfirm>
+                          <Popconfirm
+                            title={t("wallets.cancelConfirm")}
+                            onConfirm={() => handleCancelTransfer(r.id)}
+                            okText={t("common.yes")}
+                            cancelText={t("common.cancel")}
+                          >
+                            <Button danger size="small" icon={<CloseOutlined />}>
+                              {t("wallets.cancelTransfer")}
+                            </Button>
+                          </Popconfirm>
+                        </Space>
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </Card>
+      )}
 
       {/* Транзакции */}
       <Card

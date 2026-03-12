@@ -555,7 +555,12 @@
     "noteEdited": "Izoh yangilandi",
     "source": "Kimdan",
     "source_SUPPLIER": "Yetkazib beruvchi",
-    "source_SPV": "SPV"
+    "source_SPV": "SPV",
+    "inTransit": "Yo'lda",
+    "inTransitSuffix": "yo'lda",
+    "reverseTransaction": "Storno",
+    "reverseConfirm": "Storno tranzaksiyasi yaratilsinmi? Bu qoldiqqa ta'sirni bekor qiladi.",
+    "reversalCreated": "Storno yaratildi"
   },
   "common": {
     "yes": "Ha",
@@ -660,7 +665,17 @@
       "CONVERSION": "Konvertatsiya",
       "expense": "Chiqim",
       "expenseTitle": "Chiqim qo'shish",
-      "rate": "Kurs"
-    }
+      "rate": "Kurs",
+      "reverse": "Storno",
+      "confirmReverse": "Storno yaratilsinmi? Bu hamyon balansiga ta'sirni bekor qiladi."
+    },
+    "pendingTransfers": "Kutilayotgan o'tkazmalar",
+    "acceptTransfer": "Qabul qilish",
+    "cancelTransfer": "Rad etish",
+    "acceptConfirm": "O'tkazmani qabul qilib, mablag' kiritilsinmi?",
+    "cancelConfirm": "O'tkazmani rad eting? Mablag' jo'natuvchiga qaytariladi.",
+    "transferAccepted": "O'tkazma qabul qilindi",
+    "transferCancelled": "O'tkazma rad etildi",
+    "reversalCreated": "Storno yaratildi"
   }
 }

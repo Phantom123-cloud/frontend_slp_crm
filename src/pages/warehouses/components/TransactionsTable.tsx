@@ -11,7 +11,7 @@ import {
   Select,
   Form,
 } from "antd";
-import { CheckOutlined, CloseOutlined, EditOutlined } from "@ant-design/icons";
+import { CheckOutlined, CloseOutlined, EditOutlined, RollbackOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../../api/warehouses";
@@ -117,6 +117,16 @@ export default function TransactionsTable({
     try {
       await warehousesApi.cancelTransfer(txId);
       message.success(t("warehouses.transferCancelled"));
+      onRefresh();
+    } catch (e: any) {
+      message.error(t(e?.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleReverse = async (txId: string) => {
+    try {
+      await warehousesApi.reverseTransaction(txId);
+      message.success(t("warehouses.reversalCreated"));
       onRefresh();
     } catch (e: any) {
       message.error(t(e?.response?.data?.message || "common.error"));
@@ -265,19 +275,26 @@ export default function TransactionsTable({
           {
             title: "",
             key: "actions",
-            width: 120,
+            width: 160,
             render: (_: any, record: any) => {
-              if (
-                record.type !== "TRANSFER_OUT" ||
-                record.transferStatus !== "PENDING"
-              )
-                return null;
-
-              const isReceiver = record.toWarehouseId === warehouseId;
-              const isSender = record.fromWarehouseId === warehouseId;
+              const isTransfer =
+                record.type === "TRANSFER_OUT" ||
+                record.type === "TRANSFER_IN";
+              const isPendingTransferOut =
+                record.type === "TRANSFER_OUT" &&
+                record.transferStatus === "PENDING";
+              const isReceiver =
+                isPendingTransferOut && record.toWarehouseId === warehouseId;
+              const isSender =
+                isPendingTransferOut && record.fromWarehouseId === warehouseId;
+              // Сторно: не перевод, не уже сторнированная (reversedBy), не сама сторно (reversalOf)
+              const canReverse =
+                !isTransfer &&
+                !record.reversedBy &&
+                !record.reversalOf;
 
               return (
-                <Space>
+                <Space direction="vertical" size={4}>
                   {isReceiver && (
                     <Popconfirm
                       title={t("warehouses.acceptConfirm")}
@@ -303,6 +320,18 @@ export default function TransactionsTable({
                     >
                       <Button danger size="small" icon={<CloseOutlined />}>
                         {t("warehouses.cancelTransfer")}
+                      </Button>
+                    </Popconfirm>
+                  )}
+                  {canReverse && (
+                    <Popconfirm
+                      title={t("warehouses.reverseConfirm")}
+                      onConfirm={() => handleReverse(record.id)}
+                      okText={t("common.yes")}
+                      cancelText={t("common.cancel")}
+                    >
+                      <Button size="small" icon={<RollbackOutlined />}>
+                        {t("warehouses.reverseTransaction")}
                       </Button>
                     </Popconfirm>
                   )}

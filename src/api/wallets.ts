@@ -59,10 +59,18 @@ export const walletsApi = {
     txId: string,
     data: { description?: string; expenseTypeId?: string | null; images?: string[] },
   ) => api.patch(`/wallets/transactions/${txId}`, data),
+  reverseTransaction: (txId: string) =>
+    api.post(`/wallets/transactions/${txId}/reverse`, {}),
   closeTransaction: (txId: string) =>
     api.post(`/wallets/transactions/${txId}/close`, {}),
   reopenTransaction: (txId: string) =>
     api.post(`/wallets/transactions/${txId}/reopen`, {}),
+  getPendingTransfers: (walletId: string) =>
+    api.get(`/wallets/${walletId}/pending-transfers`),
+  acceptTransfer: (transferId: string) =>
+    api.post(`/wallets/transfers/${transferId}/accept`, {}),
+  cancelTransfer: (transferId: string) =>
+    api.post(`/wallets/transfers/${transferId}/cancel`, {}),
   exportTransactions: (walletId: string, format: 'xlsx' | 'csv') =>
     api.post(`/wallets/${walletId}/transactions/export`, { format }, { responseType: 'blob' }),
 };

@@ -102,6 +102,14 @@ export default function WarehouseDetailPage() {
   if (loading) return <Spin style={{ margin: 40 }} />;
   if (!warehouse) return null;
 
+  // Карта товаров "в пути" (исходящие PENDING transfers)
+  const inTransitMap: Record<string, number> = {};
+  if (warehouse.inTransit) {
+    for (const it of warehouse.inTransit as { productId: string; quantity: number }[]) {
+      inTransitMap[it.productId] = it.quantity;
+    }
+  }
+
   const stockColumns = [
     {
       title: t("warehouses.product"),
@@ -123,6 +131,20 @@ export default function WarehouseDetailPage() {
         const n = Number(v);
         return (
           <Text style={{ color: n < 0 ? "red" : undefined }}>{n}</Text>
+        );
+      },
+    },
+    {
+      title: t("warehouses.inTransit"),
+      key: "inTransit",
+      width: 130,
+      render: (_: any, record: any) => {
+        const qty = inTransitMap[record.productId];
+        if (!qty) return null;
+        return (
+          <Text style={{ color: "#fa8c16" }}>
+            −{qty} {t("warehouses.inTransitSuffix")}
+          </Text>
         );
       },
     },

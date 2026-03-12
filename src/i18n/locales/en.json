@@ -555,7 +555,12 @@
     "noteEdited": "Note updated",
     "source": "From",
     "source_SUPPLIER": "Supplier",
-    "source_SPV": "SPV"
+    "source_SPV": "SPV",
+    "inTransit": "In transit",
+    "inTransitSuffix": "in transit",
+    "reverseTransaction": "Reverse",
+    "reverseConfirm": "Create a reversal transaction? This will undo the effect on stock.",
+    "reversalCreated": "Reversal created"
   },
   "common": {
     "yes": "Yes",
@@ -660,7 +665,17 @@
       "CONVERSION": "Conversion",
       "expense": "Expense",
       "expenseTitle": "Add expense",
-      "rate": "Rate"
-    }
+      "rate": "Rate",
+      "reverse": "Reverse",
+      "confirmReverse": "Create a reversal? This will undo the effect of the transaction on wallet balance."
+    },
+    "pendingTransfers": "Pending transfers",
+    "acceptTransfer": "Accept",
+    "cancelTransfer": "Decline",
+    "acceptConfirm": "Accept the transfer and credit funds?",
+    "cancelConfirm": "Decline the transfer? Funds will be returned to the sender.",
+    "transferAccepted": "Transfer accepted",
+    "transferCancelled": "Transfer declined",
+    "reversalCreated": "Reversal created"
   }
 }

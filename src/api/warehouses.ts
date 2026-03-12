@@ -21,6 +21,7 @@ export const warehousesApi = {
       note?: string;
     },
   ) => api.post(`/warehouses/${id}/transactions`, data),
+  reverseTransaction: (txId: string) => api.post(`/warehouses/transactions/${txId}/reverse`, {}),
   acceptTransfer: (txId: string) => api.post(`/warehouses/transfers/${txId}/accept`, {}),
   cancelTransfer: (txId: string) => api.post(`/warehouses/transfers/${txId}/cancel`, {}),
   // Редактирование примечания/источника транзакции

@@ -558,7 +558,12 @@
     "noteEdited": "Примечание обновлено",
     "source": "От кого",
     "source_SUPPLIER": "Поставщик",
-    "source_SPV": "СПВ"
+    "source_SPV": "СПВ",
+    "inTransit": "В пути",
+    "inTransitSuffix": "в пути",
+    "reverseTransaction": "Сторно",
+    "reverseConfirm": "Создать сторно-транзакцию? Это обратит эффект этой операции на остатки.",
+    "reversalCreated": "Сторно создано"
   },
   "common": {
     "yes": "Да",
@@ -663,7 +668,17 @@
       "CONVERSION": "Конвертация",
       "expense": "Расход",
       "expenseTitle": "Внести расход",
-      "rate": "Курс"
-    }
+      "rate": "Курс",
+      "reverse": "Сторно",
+      "confirmReverse": "Создать сторно? Это обратит эффект транзакции на баланс кошелька."
+    },
+    "pendingTransfers": "Ожидающие переводы",
+    "acceptTransfer": "Принять",
+    "cancelTransfer": "Отклонить",
+    "acceptConfirm": "Принять перевод и зачислить средства?",
+    "cancelConfirm": "Отклонить перевод? Средства вернутся отправителю.",
+    "transferAccepted": "Перевод принят",
+    "transferCancelled": "Перевод отклонён",
+    "reversalCreated": "Сторно создано"
   }
 }
