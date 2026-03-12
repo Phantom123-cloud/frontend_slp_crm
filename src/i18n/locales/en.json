@@ -391,7 +391,8 @@
     "crewNeedsMvGa": "At least one role must be assigned: MV, GA or MV/GA",
     "crewDuplicateUser": "One employee cannot have multiple roles in the crew",
     "tripIsClosed": "Trip is closed — changes are not allowed",
-    "tripNoCrewForPresentation": "Cannot create presentation: assign a crew to the trip first"
+    "tripNoCrewForPresentation": "Cannot create presentation: assign a crew to the trip first",
+    "insufficientBalance": "Insufficient balance"
   },
   "trips": {
     "title": "Trips",

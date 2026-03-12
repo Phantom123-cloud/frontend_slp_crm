@@ -391,7 +391,8 @@
     "crewNeedsMvGa": "Kamida bitta rol tayinlanishi kerak: MV, GA yoki MV/GA",
     "crewDuplicateUser": "Bir xodim tarkibda bir nechta rolni egallay olmaydi",
     "tripIsClosed": "Safar yopiq — o'zgartirishlar taqiqlangan",
-    "tripNoCrewForPresentation": "Prezentatsiya yaratib bo'lmaydi: avval jamoani belgilang"
+    "tripNoCrewForPresentation": "Prezentatsiya yaratib bo'lmaydi: avval jamoani belgilang",
+    "insufficientBalance": "Balansda mablag' yetarli emas"
   },
   "trips": {
     "title": "Sayohatlar",
