@@ -392,7 +392,9 @@
     "crewDuplicateUser": "One employee cannot have multiple roles in the crew",
     "tripIsClosed": "Trip is closed — changes are not allowed",
     "tripNoCrewForPresentation": "Cannot create presentation: assign a crew to the trip first",
-    "insufficientBalance": "Insufficient balance"
+    "insufficientBalance": "Insufficient balance",
+    "tooManyPendingOutgoing": "Limit exceeded: you already have 5 pending outgoing transfers",
+    "tooManyPendingIncoming": "Limit exceeded: the recipient already has 5 pending incoming transfers"
   },
   "trips": {
     "title": "Trips",
@@ -561,7 +563,12 @@
     "inTransitSuffix": "in transit",
     "reverseTransaction": "Reverse",
     "reverseConfirm": "Create a reversal transaction? This will undo the effect on stock.",
-    "reversalCreated": "Reversal created"
+    "reversalCreated": "Reversal created",
+    "inTransitSection": "In transit",
+    "pendingOutgoing": "Outgoing — awaiting acceptance",
+    "pendingIncoming": "Incoming — awaiting your confirmation",
+    "revokeTransfer": "Revoke",
+    "revokeConfirm": "Revoke transfer? Goods will be returned to the warehouse."
   },
   "common": {
     "yes": "Yes",
@@ -672,6 +679,11 @@
       "confirmReverse": "Create a reversal? This will undo the effect of the transaction on wallet balance."
     },
     "pendingTransfers": "Pending transfers",
+    "inTransitSection": "In transit",
+    "pendingOutgoing": "Outgoing — awaiting acceptance",
+    "pendingIncoming": "Incoming — awaiting your confirmation",
+    "revokeTransfer": "Revoke",
+    "revokeConfirm": "Revoke transfer? Funds will be returned to your balance.",
     "acceptTransfer": "Accept",
     "cancelTransfer": "Decline",
     "acceptConfirm": "Accept the transfer and credit funds?",

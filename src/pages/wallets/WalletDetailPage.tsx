@@ -737,93 +737,183 @@ export default function WalletDetailPage() {
         </Col>
       </Row>
 
-      {/* Ожидающие входящие переводы */}
-      {pendingTransfers.length > 0 && (
-        <Card
-          title={t("wallets.pendingTransfers")}
-          style={{ marginBottom: 16 }}
-          styles={{ header: { background: "#fffbe6", borderBottom: "1px solid #ffe58f" } }}
-        >
-          <Table
-            dataSource={pendingTransfers}
-            rowKey="id"
-            size="small"
-            pagination={false}
-            columns={[
-              {
-                title: t("wallets.tx.counterpart"),
-                key: "from",
-                render: (_: any, r: any) => {
-                  const w = r.fromWallet;
-                  return w?.name || (w?.trip ? w.trip.name : `#${w?.id?.slice(-6)}`);
-                },
-              },
-              {
-                title: t("wallets.tx.amount"),
-                key: "amount",
-                render: (_: any, r: any) => (
-                  <Text style={{ color: "#52c41a" }}>
-                    +{Number(r.amount).toLocaleString()} {r.currency}
-                  </Text>
-                ),
-              },
-              {
-                title: t("wallets.tx.description"),
-                key: "desc",
-                render: (_: any, r: any) => r.outTx?.description || "—",
-              },
-              {
-                title: t("wallets.tx.createdBy"),
-                key: "by",
-                render: (_: any, r: any) =>
-                  r.outTx?.createdBy
-                    ? `${r.outTx.createdBy.lastName} ${r.outTx.createdBy.firstName}`
-                    : "—",
-              },
-              {
-                title: t("wallets.tx.date"),
-                key: "date",
-                render: (_: any, r: any) =>
-                  r.outTx?.createdAt
-                    ? new Date(r.outTx.createdAt).toLocaleDateString("ru")
-                    : "—",
-              },
-              ...(canTransact
-                ? [
+      {/* Блок "В пути": исходящие и входящие ожидающие переводы */}
+      {(() => {
+        // Исходящие PENDING: мы отправили, получатель ещё не принял
+        const pendingOutgoing = transactions.filter(
+          (tx: any) => tx.type === "TRANSFER_OUT" && tx.transferOut?.status === "PENDING"
+        );
+        if (pendingOutgoing.length === 0 && pendingTransfers.length === 0) return null;
+        return (
+          <Card
+            title={t("wallets.inTransitSection")}
+            style={{ marginBottom: 16 }}
+            styles={{ header: { background: "#fff7e6", borderBottom: "1px solid #ffd591" } }}
+          >
+            {/* Исходящие */}
+            {pendingOutgoing.length > 0 && (
+              <>
+                <Text strong style={{ display: "block", marginBottom: 8 }}>
+                  {t("wallets.pendingOutgoing")}
+                </Text>
+                <Table
+                  size="small"
+                  rowKey="id"
+                  dataSource={pendingOutgoing}
+                  pagination={false}
+                  columns={[
                     {
-                      title: "",
-                      key: "actions",
+                      title: t("wallets.tx.counterpart"),
+                      key: "to",
+                      render: (_: any, r: any) => {
+                        const w = r.transferOut?.toWallet;
+                        return w?.name || (w?.trip ? w.trip.name : "—");
+                      },
+                    },
+                    {
+                      title: t("wallets.tx.amount"),
+                      key: "amount",
                       render: (_: any, r: any) => (
-                        <Space>
-                          <Popconfirm
-                            title={t("wallets.acceptConfirm")}
-                            onConfirm={() => handleAcceptTransfer(r.id)}
-                            okText={t("common.yes")}
-                            cancelText={t("common.cancel")}
-                          >
-                            <Button type="primary" size="small" icon={<CheckOutlined />}>
-                              {t("wallets.acceptTransfer")}
-                            </Button>
-                          </Popconfirm>
-                          <Popconfirm
-                            title={t("wallets.cancelConfirm")}
-                            onConfirm={() => handleCancelTransfer(r.id)}
-                            okText={t("common.yes")}
-                            cancelText={t("common.cancel")}
-                          >
-                            <Button danger size="small" icon={<CloseOutlined />}>
-                              {t("wallets.cancelTransfer")}
-                            </Button>
-                          </Popconfirm>
-                        </Space>
+                        <Text style={{ color: "#f5222d" }}>
+                          −{Number(r.amount).toLocaleString()} {r.currency}
+                        </Text>
                       ),
                     },
-                  ]
-                : []),
-            ]}
-          />
-        </Card>
-      )}
+                    {
+                      title: t("wallets.tx.description"),
+                      key: "desc",
+                      render: (_: any, r: any) => r.description || "—",
+                    },
+                    {
+                      title: t("wallets.tx.date"),
+                      key: "date",
+                      render: (_: any, r: any) =>
+                        new Date(r.createdAt).toLocaleString("ru-RU", {
+                          day: "2-digit", month: "2-digit", year: "numeric",
+                          hour: "2-digit", minute: "2-digit",
+                        }),
+                    },
+                    ...(canTransaction
+                      ? [
+                          {
+                            title: "",
+                            key: "actions",
+                            render: (_: any, r: any) => (
+                              <Popconfirm
+                                title={t("wallets.revokeConfirm")}
+                                onConfirm={() => handleCancelTransfer(r.transferOut?.id)}
+                                okText={t("common.yes")}
+                                cancelText={t("common.cancel")}
+                              >
+                                <Button danger size="small" icon={<CloseOutlined />}>
+                                  {t("wallets.revokeTransfer")}
+                                </Button>
+                              </Popconfirm>
+                            ),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              </>
+            )}
+
+            {pendingOutgoing.length > 0 && pendingTransfers.length > 0 && (
+              <Divider style={{ margin: "16px 0" }} />
+            )}
+
+            {/* Входящие: нам отправили, ждём нашего решения */}
+            {pendingTransfers.length > 0 && (
+              <>
+                <Text strong style={{ display: "block", marginBottom: 8 }}>
+                  {t("wallets.pendingIncoming")}
+                </Text>
+                <Table
+                  dataSource={pendingTransfers}
+                  rowKey="id"
+                  size="small"
+                  pagination={false}
+                  columns={[
+                    {
+                      title: t("wallets.tx.counterpart"),
+                      key: "from",
+                      render: (_: any, r: any) => {
+                        const w = r.fromWallet;
+                        return w?.name || (w?.trip ? w.trip.name : `#${w?.id?.slice(-6)}`);
+                      },
+                    },
+                    {
+                      title: t("wallets.tx.amount"),
+                      key: "amount",
+                      render: (_: any, r: any) => (
+                        <Text style={{ color: "#52c41a" }}>
+                          +{Number(r.amount).toLocaleString()} {r.currency}
+                        </Text>
+                      ),
+                    },
+                    {
+                      title: t("wallets.tx.description"),
+                      key: "desc",
+                      render: (_: any, r: any) => r.outTx?.description || "—",
+                    },
+                    {
+                      title: t("wallets.tx.createdBy"),
+                      key: "by",
+                      render: (_: any, r: any) =>
+                        r.outTx?.createdBy
+                          ? `${r.outTx.createdBy.lastName} ${r.outTx.createdBy.firstName}`
+                          : "—",
+                    },
+                    {
+                      title: t("wallets.tx.date"),
+                      key: "date",
+                      render: (_: any, r: any) =>
+                        r.outTx?.createdAt
+                          ? new Date(r.outTx.createdAt).toLocaleString("ru-RU", {
+                              day: "2-digit", month: "2-digit", year: "numeric",
+                              hour: "2-digit", minute: "2-digit",
+                            })
+                          : "—",
+                    },
+                    ...(canTransaction
+                      ? [
+                          {
+                            title: "",
+                            key: "actions",
+                            render: (_: any, r: any) => (
+                              <Space>
+                                <Popconfirm
+                                  title={t("wallets.acceptConfirm")}
+                                  onConfirm={() => handleAcceptTransfer(r.id)}
+                                  okText={t("common.yes")}
+                                  cancelText={t("common.cancel")}
+                                >
+                                  <Button type="primary" size="small" icon={<CheckOutlined />}>
+                                    {t("wallets.acceptTransfer")}
+                                  </Button>
+                                </Popconfirm>
+                                <Popconfirm
+                                  title={t("wallets.cancelConfirm")}
+                                  onConfirm={() => handleCancelTransfer(r.id)}
+                                  okText={t("common.yes")}
+                                  cancelText={t("common.cancel")}
+                                >
+                                  <Button danger size="small" icon={<CloseOutlined />}>
+                                    {t("wallets.cancelTransfer")}
+                                  </Button>
+                                </Popconfirm>
+                              </Space>
+                            ),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              </>
+            )}
+          </Card>
+        );
+      })()}
 
       {/* Транзакции */}
       <Card

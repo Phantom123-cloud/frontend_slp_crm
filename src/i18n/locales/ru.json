@@ -395,7 +395,9 @@
     "crewDuplicateUser": "Один сотрудник не может занимать несколько ролей в составе",
     "tripIsClosed": "Выезд закрыт — изменения запрещены",
     "tripNoCrewForPresentation": "Нельзя создать презентацию: сначала внесите состав команды",
-    "insufficientBalance": "Недостаточно средств на балансе"
+    "insufficientBalance": "Недостаточно средств на балансе",
+    "tooManyPendingOutgoing": "Превышен лимит: у вас уже 5 незавершённых исходящих переводов",
+    "tooManyPendingIncoming": "Превышен лимит: у получателя уже 5 незавершённых входящих переводов"
   },
   "trips": {
     "title": "Поездки",
@@ -564,7 +566,12 @@
     "inTransitSuffix": "в пути",
     "reverseTransaction": "Сторно",
     "reverseConfirm": "Создать сторно-транзакцию? Это обратит эффект этой операции на остатки.",
-    "reversalCreated": "Сторно создано"
+    "reversalCreated": "Сторно создано",
+    "inTransitSection": "В пути",
+    "pendingOutgoing": "Исходящие — ожидают принятия",
+    "pendingIncoming": "Входящие — ожидают вашего подтверждения",
+    "revokeTransfer": "Отозвать",
+    "revokeConfirm": "Отозвать перемещение? Товары вернутся на склад."
   },
   "common": {
     "yes": "Да",
@@ -675,6 +682,11 @@
       "confirmReverse": "Создать сторно? Это обратит эффект транзакции на баланс кошелька."
     },
     "pendingTransfers": "Ожидающие переводы",
+    "inTransitSection": "В пути",
+    "pendingOutgoing": "Исходящие — ожидают принятия",
+    "pendingIncoming": "Входящие — ожидают вашего подтверждения",
+    "revokeTransfer": "Отозвать",
+    "revokeConfirm": "Отозвать перевод? Средства вернутся на ваш баланс.",
     "acceptTransfer": "Принять",
     "cancelTransfer": "Отклонить",
     "acceptConfirm": "Принять перевод и зачислить средства?",

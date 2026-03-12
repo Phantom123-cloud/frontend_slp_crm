@@ -14,8 +14,10 @@ import {
   Input,
   Select,
   Descriptions,
+  Popconfirm,
+  Divider,
 } from "antd";
-import { PlusOutlined, EditOutlined } from "@ant-design/icons";
+import { PlusOutlined, EditOutlined, CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../api/warehouses";
@@ -78,6 +80,26 @@ export default function WarehouseDetailPage() {
     setEditModalOpen(true);
   };
 
+  const handleAcceptTransfer = async (txId: string) => {
+    try {
+      await warehousesApi.acceptTransfer(txId);
+      message.success(t("warehouses.transferAccepted"));
+      loadAll();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleCancelTransfer = async (txId: string) => {
+    try {
+      await warehousesApi.cancelTransfer(txId);
+      message.success(t("warehouses.transferCancelled"));
+      loadAll();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
   const handleEdit = async (values: any) => {
     try {
       const payload: any = { ownerId: values.ownerId };
@@ -101,6 +123,15 @@ export default function WarehouseDetailPage() {
 
   if (loading) return <Spin style={{ margin: 40 }} />;
   if (!warehouse) return null;
+
+  // Исходящие PENDING: мы отправили, получатель ещё не принял
+  const pendingOutgoing = transactions.filter(
+    (tx: any) => tx.type === "TRANSFER_OUT" && tx.fromWarehouseId === id && tx.transferStatus === "PENDING"
+  );
+  // Входящие PENDING: нам отправили, мы ещё не приняли
+  const pendingIncoming = transactions.filter(
+    (tx: any) => tx.type === "TRANSFER_OUT" && tx.toWarehouseId === id && tx.transferStatus === "PENDING"
+  );
 
   // Карта товаров "в пути" (исходящие PENDING transfers)
   const inTransitMap: Record<string, number> = {};
@@ -205,6 +236,139 @@ export default function WarehouseDetailPage() {
           locale={{ emptyText: t("warehouses.noStock") }}
         />
       </Card>
+
+      {/* Блок "В пути": исходящие и входящие ожидающие перемещения */}
+      {(pendingOutgoing.length > 0 || pendingIncoming.length > 0) && (
+        <Card
+          title={t("warehouses.inTransitSection")}
+          style={{ marginBottom: 24 }}
+          styles={{ header: { background: "#fff7e6", borderBottom: "1px solid #ffd591" } }}
+        >
+          {/* Исходящие: мы отправили, ждём принятия */}
+          {pendingOutgoing.length > 0 && (
+            <>
+              <Text strong style={{ display: "block", marginBottom: 8 }}>
+                {t("warehouses.pendingOutgoing")}
+              </Text>
+              <Table
+                size="small"
+                rowKey="id"
+                dataSource={pendingOutgoing}
+                pagination={false}
+                columns={[
+                  {
+                    title: t("warehouses.destination"),
+                    render: (_: any, r: any) => r.toWarehouse?.name || "—",
+                  },
+                  {
+                    title: t("warehouses.product"),
+                    render: (_: any, r: any) =>
+                      r.items?.map((i: any) => `${i.product.name} × ${Number(i.quantity)}`).join(", ") || "—",
+                  },
+                  {
+                    title: t("common.date"),
+                    render: (_: any, r: any) =>
+                      new Date(r.createdAt).toLocaleString("ru-RU", {
+                        day: "2-digit", month: "2-digit", year: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                      }),
+                  },
+                  ...(canTransact
+                    ? [
+                        {
+                          title: "",
+                          key: "actions",
+                          render: (_: any, r: any) => (
+                            <Popconfirm
+                              title={t("warehouses.revokeConfirm")}
+                              onConfirm={() => handleCancelTransfer(r.id)}
+                              okText={t("common.yes")}
+                              cancelText={t("common.cancel")}
+                            >
+                              <Button danger size="small" icon={<CloseOutlined />}>
+                                {t("warehouses.revokeTransfer")}
+                              </Button>
+                            </Popconfirm>
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            </>
+          )}
+
+          {pendingOutgoing.length > 0 && pendingIncoming.length > 0 && (
+            <Divider style={{ margin: "16px 0" }} />
+          )}
+
+          {/* Входящие: нам отправили, ждём нашего решения */}
+          {pendingIncoming.length > 0 && (
+            <>
+              <Text strong style={{ display: "block", marginBottom: 8 }}>
+                {t("warehouses.pendingIncoming")}
+              </Text>
+              <Table
+                size="small"
+                rowKey="id"
+                dataSource={pendingIncoming}
+                pagination={false}
+                columns={[
+                  {
+                    title: t("warehouses.source"),
+                    render: (_: any, r: any) => r.fromWarehouse?.name || "—",
+                  },
+                  {
+                    title: t("warehouses.product"),
+                    render: (_: any, r: any) =>
+                      r.items?.map((i: any) => `${i.product.name} × ${Number(i.quantity)}`).join(", ") || "—",
+                  },
+                  {
+                    title: t("common.date"),
+                    render: (_: any, r: any) =>
+                      new Date(r.createdAt).toLocaleString("ru-RU", {
+                        day: "2-digit", month: "2-digit", year: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                      }),
+                  },
+                  ...(canTransact
+                    ? [
+                        {
+                          title: "",
+                          key: "actions",
+                          render: (_: any, r: any) => (
+                            <Space>
+                              <Popconfirm
+                                title={t("warehouses.acceptConfirm")}
+                                onConfirm={() => handleAcceptTransfer(r.id)}
+                                okText={t("common.yes")}
+                                cancelText={t("common.cancel")}
+                              >
+                                <Button type="primary" size="small" icon={<CheckOutlined />}>
+                                  {t("warehouses.acceptTransfer")}
+                                </Button>
+                              </Popconfirm>
+                              <Popconfirm
+                                title={t("warehouses.cancelConfirm")}
+                                onConfirm={() => handleCancelTransfer(r.id)}
+                                okText={t("common.yes")}
+                                cancelText={t("common.cancel")}
+                              >
+                                <Button danger size="small" icon={<CloseOutlined />}>
+                                  {t("warehouses.cancelTransfer")}
+                                </Button>
+                              </Popconfirm>
+                            </Space>
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            </>
+          )}
+        </Card>
+      )}
 
       <Card title={t("warehouses.transactions")}>
         <TransactionsTable

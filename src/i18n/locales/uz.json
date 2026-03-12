@@ -392,7 +392,9 @@
     "crewDuplicateUser": "Bir xodim tarkibda bir nechta rolni egallay olmaydi",
     "tripIsClosed": "Safar yopiq — o'zgartirishlar taqiqlangan",
     "tripNoCrewForPresentation": "Prezentatsiya yaratib bo'lmaydi: avval jamoani belgilang",
-    "insufficientBalance": "Balansda mablag' yetarli emas"
+    "insufficientBalance": "Balansda mablag' yetarli emas",
+    "tooManyPendingOutgoing": "Limit oshib ketdi: sizda allaqachon 5 ta kutilayotgan chiquvchi o'tkazma bor",
+    "tooManyPendingIncoming": "Limit oshib ketdi: qabul qiluvchida allaqachon 5 ta kutilayotgan kiruvchi o'tkazma bor"
   },
   "trips": {
     "title": "Sayohatlar",
@@ -561,7 +563,12 @@
     "inTransitSuffix": "yo'lda",
     "reverseTransaction": "Storno",
     "reverseConfirm": "Storno tranzaksiyasi yaratilsinmi? Bu qoldiqqa ta'sirni bekor qiladi.",
-    "reversalCreated": "Storno yaratildi"
+    "reversalCreated": "Storno yaratildi",
+    "inTransitSection": "Yo'lda",
+    "pendingOutgoing": "Chiquvchi — qabul kutilmoqda",
+    "pendingIncoming": "Kiruvchi — tasdiqlash kutilmoqda",
+    "revokeTransfer": "Bekor qilish",
+    "revokeConfirm": "Ko'chirishni bekor qilish? Tovarlar omborga qaytariladi."
   },
   "common": {
     "yes": "Ha",
@@ -672,6 +679,11 @@
       "confirmReverse": "Storno yaratilsinmi? Bu hamyon balansiga ta'sirni bekor qiladi."
     },
     "pendingTransfers": "Kutilayotgan o'tkazmalar",
+    "inTransitSection": "Yo'lda",
+    "pendingOutgoing": "Chiquvchi — qabul kutilmoqda",
+    "pendingIncoming": "Kiruvchi — tasdiqlash kutilmoqda",
+    "revokeTransfer": "Bekor qilish",
+    "revokeConfirm": "O'tkazmani bekor qilish? Mablag' balansingizga qaytariladi.",
     "acceptTransfer": "Qabul qilish",
     "cancelTransfer": "Rad etish",
     "acceptConfirm": "O'tkazmani qabul qilib, mablag' kiritilsinmi?",
