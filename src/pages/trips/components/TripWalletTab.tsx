@@ -502,7 +502,7 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
           <Form.Item name="amount" label={t("wallets.amount")} rules={[{ required: true }]}>
             <InputNumber style={{ width: "100%" }} min={0.0001} precision={4} />
           </Form.Item>
-          <Form.Item name="expenseTypeId" label={t("wallets.expenseType")}>
+          <Form.Item name="expenseTypeId" label={t("wallets.expenseType")} rules={[{ required: true }]}>
             <Select allowClear options={expenseTypes.map((et) => ({ label: et.name, value: et.id }))} />
           </Form.Item>
           <Form.Item name="description" label={t("wallets.description")}>
@@ -771,8 +771,8 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
                   <Form.Item name="description" label={t("wallets.description")}>
                     <Input.TextArea rows={2} />
                   </Form.Item>
-                  {(selectedTx.type === "INCOME" || selectedTx.type === "EXPENSE") && (
-                    <Form.Item name="expenseTypeId" label={t("wallets.expenseType")}>
+                  {selectedTx.type === "EXPENSE" && (
+                    <Form.Item name="expenseTypeId" label={t("wallets.expenseType")} rules={[{ required: true }]}>
                       <Select
                         allowClear
                         placeholder={t("wallets.selectExpenseType")}
