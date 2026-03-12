@@ -185,6 +185,10 @@ export default function TransactionCreateModal({
               options={products.map((p) => ({
                 value: p.id,
                 label: `${p.name} (${p.unit})`,
+                // Отключаем товар если он уже выбран в другой строке
+                disabled: items.some(
+                  (it, idx) => idx !== i && it.productId === p.id,
+                ),
               }))}
               placeholder={t("warehouses.product")}
               showSearch
