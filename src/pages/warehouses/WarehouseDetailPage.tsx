@@ -242,7 +242,6 @@ export default function WarehouseDetailPage() {
         <Card
           title={t("warehouses.inTransitSection")}
           style={{ marginBottom: 24 }}
-          styles={{ header: { background: "#fff7e6", borderBottom: "1px solid #ffd591" } }}
         >
           {/* Исходящие: мы отправили, ждём принятия */}
           {pendingOutgoing.length > 0 && (
@@ -372,7 +371,9 @@ export default function WarehouseDetailPage() {
 
       <Card title={t("warehouses.transactions")}>
         <TransactionsTable
-          transactions={transactions}
+          transactions={transactions.filter(
+            (tx: any) => !(tx.type === "TRANSFER_OUT" && tx.transferStatus === "PENDING")
+          )}
           warehouseId={id!}
           canTransact={canTransact}
           canEdit={canEdit}

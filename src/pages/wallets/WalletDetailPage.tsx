@@ -748,7 +748,6 @@ export default function WalletDetailPage() {
           <Card
             title={t("wallets.inTransitSection")}
             style={{ marginBottom: 16 }}
-            styles={{ header: { background: "#fff7e6", borderBottom: "1px solid #ffd591" } }}
           >
             {/* Исходящие */}
             {pendingOutgoing.length > 0 && (
@@ -936,7 +935,9 @@ export default function WalletDetailPage() {
       >
         <Table
           columns={txColumns}
-          dataSource={transactions}
+          dataSource={transactions.filter(
+            (tx: any) => !(tx.type === "TRANSFER_OUT" && tx.transferOut?.status === "PENDING")
+          )}
           rowKey="id"
           onRow={(record) => ({
             onClick: () => openTxView(record),
