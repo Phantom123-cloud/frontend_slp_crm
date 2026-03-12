@@ -399,6 +399,7 @@ export default function WalletDetailPage() {
           { text: t("wallets.tx.TRANSFER_OUT"), value: "TRANSFER_OUT" },
           { text: t("wallets.tx.TRANSFER_IN"), value: "TRANSFER_IN" },
           { text: t("wallets.tx.CONVERSION"), value: "CONVERSION" },
+          { text: t("wallets.tx.REVERSAL"), value: "REVERSAL" },
         ],
         (v, r: any) => r.type === v,
       ),
@@ -425,6 +426,25 @@ export default function WalletDetailPage() {
                   {t("wallets.customRate")}
                 </Tag>
               )}
+            </span>
+          );
+        }
+        if (record.type === "REVERSAL" && record.reversalOf) {
+          // Определяем знак оригинальной транзакции
+          const origType = record.reversalOf.type;
+          const origWasPositive = origType === "INCOME" || origType === "TRANSFER_IN";
+          const origSign = origWasPositive ? "+" : "-";
+          const revSign = origWasPositive ? "-" : "+";
+          const revColor = origWasPositive ? "#ff4d4f" : "#52c41a";
+          return (
+            <span>
+              <Text delete style={{ color: origWasPositive ? "#52c41a" : "#ff4d4f" }}>
+                {origSign}{Number(record.amount).toLocaleString()} {record.currency}
+              </Text>{" "}
+              →{" "}
+              <Text style={{ color: revColor }}>
+                {revSign}{Number(record.amount).toLocaleString()} {record.currency}
+              </Text>
             </span>
           );
         }
