@@ -8,6 +8,7 @@ import {
   Collapse,
   Modal,
   Input,
+  Select,
   Form,
 } from "antd";
 import { CheckOutlined, CloseOutlined, EditOutlined } from "@ant-design/icons";
@@ -79,15 +80,18 @@ export default function TransactionsTable({
 
   const openNoteEdit = (record: any) => {
     setEditTx(record);
-    noteForm.setFieldsValue({ note: record.note || "" });
+    noteForm.setFieldsValue({ note: record.note || "", source: record.source || undefined });
     setEditNoteOpen(true);
   };
 
-  const handleNoteSubmit = async (values: { note: string }) => {
+  const handleNoteSubmit = async (values: { note: string; source?: string }) => {
     if (!editTx) return;
     setEditNoteLoading(true);
     try {
-      await warehousesApi.updateTransaction(editTx.id, { note: values.note || undefined });
+      await warehousesApi.updateTransaction(editTx.id, {
+        note: values.note || undefined,
+        source: editTx.type === "INCOMING" ? (values.source || undefined) : undefined,
+      });
       message.success(t("warehouses.noteEdited"));
       setEditNoteOpen(false);
       setEditTx(null);
@@ -180,6 +184,22 @@ export default function TransactionsTable({
         }
         return null;
       },
+    },
+    {
+      title: t("warehouses.source"),
+      key: "source",
+      width: 120,
+      ...colEnum(
+        [
+          { text: t("warehouses.source_SUPPLIER"), value: "SUPPLIER" },
+          { text: t("warehouses.source_SPV"), value: "SPV" },
+        ],
+        (v, r: any) => r.source === v,
+      ),
+      render: (_: any, record: any) =>
+        record.type === "INCOMING" && record.source
+          ? <Tag>{t(`warehouses.source_${record.source}`)}</Tag>
+          : null,
     },
     {
       title: t("warehouses.product"),
@@ -338,6 +358,17 @@ export default function TransactionsTable({
         destroyOnClose
       >
         <Form form={noteForm} onFinish={handleNoteSubmit} layout="vertical">
+          {editTx?.type === "INCOMING" && (
+            <Form.Item name="source" label={t("warehouses.source")} rules={[{ required: true }]}>
+              <Select
+                options={[
+                  { value: "SUPPLIER", label: t("warehouses.source_SUPPLIER") },
+                  { value: "SPV", label: t("warehouses.source_SPV") },
+                ]}
+                placeholder={t("warehouses.source")}
+              />
+            </Form.Item>
+          )}
           <Form.Item name="note" label={t("warehouses.note")}>
             <Input.TextArea rows={3} maxLength={500} showCount />
           </Form.Item>

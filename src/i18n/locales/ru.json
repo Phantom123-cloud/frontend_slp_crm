@@ -555,7 +555,10 @@
     "type_TRIP": "Выездной",
     "blocked": "Заблокирован",
     "editNote": "Редактировать примечание",
-    "noteEdited": "Примечание обновлено"
+    "noteEdited": "Примечание обновлено",
+    "source": "От кого",
+    "source_SUPPLIER": "Поставщик",
+    "source_SPV": "СПВ"
   },
   "common": {
     "yes": "Да",

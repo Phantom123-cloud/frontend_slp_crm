@@ -552,7 +552,10 @@
     "type_TRIP": "Trip",
     "blocked": "Blocked",
     "editNote": "Edit note",
-    "noteEdited": "Note updated"
+    "noteEdited": "Note updated",
+    "source": "From",
+    "source_SUPPLIER": "Supplier",
+    "source_SPV": "SPV"
   },
   "common": {
     "yes": "Yes",

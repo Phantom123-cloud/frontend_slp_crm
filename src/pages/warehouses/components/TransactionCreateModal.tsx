@@ -88,6 +88,7 @@ export default function TransactionCreateModal({
         type: txType,
         items: validItems,
         toWarehouseId: txType === "TRANSFER" ? values.toWarehouseId : undefined,
+        source: txType === "INCOMING" ? values.source : undefined,
         note: values.note,
       });
       message.success(t("common.success"));
@@ -137,6 +138,22 @@ export default function TransactionCreateModal({
             }))}
           />
         </Form.Item>
+
+        {txType === "INCOMING" && (
+          <Form.Item
+            name="source"
+            label={t("warehouses.source")}
+            rules={[{ required: true }]}
+          >
+            <Select
+              options={[
+                { value: "SUPPLIER", label: t("warehouses.source_SUPPLIER") },
+                { value: "SPV", label: t("warehouses.source_SPV") },
+              ]}
+              placeholder={t("warehouses.source")}
+            />
+          </Form.Item>
+        )}
 
         {txType === "TRANSFER" && (
           <Form.Item

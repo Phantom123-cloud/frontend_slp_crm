@@ -17,12 +17,13 @@ export const warehousesApi = {
       type: string;
       items: { productId: string; quantity: number }[];
       toWarehouseId?: string;
+      source?: string;
       note?: string;
     },
   ) => api.post(`/warehouses/${id}/transactions`, data),
   acceptTransfer: (txId: string) => api.post(`/warehouses/transfers/${txId}/accept`, {}),
   cancelTransfer: (txId: string) => api.post(`/warehouses/transfers/${txId}/cancel`, {}),
-  // Редактирование примечания транзакции (warehouses.edit / warehouses.transaction / warehouses.manage)
-  updateTransaction: (txId: string, data: { note?: string }) =>
+  // Редактирование примечания/источника транзакции
+  updateTransaction: (txId: string, data: { note?: string; source?: string }) =>
     api.patch(`/warehouses/transactions/${txId}`, data),
 };

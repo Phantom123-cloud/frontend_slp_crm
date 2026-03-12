@@ -552,7 +552,10 @@
     "type_TRIP": "Sayohat",
     "blocked": "Bloklangan",
     "editNote": "Izohni tahrirlash",
-    "noteEdited": "Izoh yangilandi"
+    "noteEdited": "Izoh yangilandi",
+    "source": "Kimdan",
+    "source_SUPPLIER": "Yetkazib beruvchi",
+    "source_SPV": "SPV"
   },
   "common": {
     "yes": "Ha",
