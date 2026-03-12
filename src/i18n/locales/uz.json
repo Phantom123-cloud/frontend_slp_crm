@@ -669,6 +669,7 @@
       "INCOME": "Kirim",
       "EXPENSE": "Chiqim",
       "TRANSFER_OUT": "O'tkazma (chiq.)",
+      "TRANSFER_OUT_CANCELLED": "O'tkazma bekor qilindi",
       "TRANSFER_IN": "O'tkazma (kir.)",
       "CONVERSION": "Konvertatsiya",
       "REVERSAL": "Storno",

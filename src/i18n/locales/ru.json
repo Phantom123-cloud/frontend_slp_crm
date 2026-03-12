@@ -672,6 +672,7 @@
       "INCOME": "Приход",
       "EXPENSE": "Расход",
       "TRANSFER_OUT": "Перевод (исх.)",
+      "TRANSFER_OUT_CANCELLED": "Перевод отменён",
       "TRANSFER_IN": "Перевод (вх.)",
       "CONVERSION": "Конвертация",
       "REVERSAL": "Сторно",

@@ -669,6 +669,7 @@
       "INCOME": "Income",
       "EXPENSE": "Expense",
       "TRANSFER_OUT": "Transfer (out)",
+      "TRANSFER_OUT_CANCELLED": "Transfer cancelled",
       "TRANSFER_IN": "Transfer (in)",
       "CONVERSION": "Conversion",
       "REVERSAL": "Reversal",

@@ -403,14 +403,29 @@ export default function WalletDetailPage() {
         ],
         (v, r: any) => r.type === v,
       ),
-      render: (type: string) => (
-        <Tag color={TX_TYPE_COLORS[type] || "default"}>{t(`wallets.tx.${type}`)}</Tag>
-      ),
+      render: (_: any, record: any) => {
+        const type = record.type;
+        // Отменённый исходящий перевод — особый тег
+        if (type === "TRANSFER_OUT" && record.transferOut?.status === "CANCELLED") {
+          return <Tag color="default">{t("wallets.tx.TRANSFER_OUT_CANCELLED")}</Tag>;
+        }
+        return <Tag color={TX_TYPE_COLORS[type] || "default"}>{t(`wallets.tx.${type}`)}</Tag>;
+      },
     },
     {
       title: t("wallets.tx.amount"),
       key: "amount",
       render: (_: any, record: any) => {
+        // Отменённый исходящий перевод — зачёркнутая сумма
+        if (record.type === "TRANSFER_OUT" && record.transferOut?.status === "CANCELLED") {
+          return (
+            <span>
+              <Text delete style={{ color: "#8c8c8c" }}>
+                -{Number(record.amount).toLocaleString()} {record.currency}
+              </Text>
+            </span>
+          );
+        }
         if (record.type === "CONVERSION") {
           return (
             <span>
