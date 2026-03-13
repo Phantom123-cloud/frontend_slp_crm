@@ -16,6 +16,7 @@ import {
   Divider,
   message,
   Tooltip,
+  Dropdown,
 } from "antd";
 import {
   UploadOutlined,
@@ -25,6 +26,7 @@ import {
   HistoryOutlined,
   ArrowRightOutlined,
 } from "@ant-design/icons";
+import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { guestListsApi } from "../../../api/guestLists";
@@ -46,6 +48,36 @@ function downloadTextFile(content: string, filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/** Заголовки и маппинг полей гостя */
+const GUEST_HEADERS = [
+  "ФИО", "№ купона", "Телефон", "Тел. 2", "Тел. 3",
+  "Гости", "Пары", "Паспорт", "Возраст", "Вместо",
+  "ФИО Гостя", "Тел. Гостя", "Статус", "Причина", "Заметки",
+  "През. №", "Время",
+];
+function guestToRow(g: any): (string | number)[] {
+  return [
+    g.fullName ?? "", g.couponNumber ?? "", g.phone ?? "",
+    g.phone2 ?? "", g.phone3 ?? "",
+    g.guestsCount ?? "", g.pairsCount ?? "", g.passportCount ?? "",
+    g.age ?? "", g.insteadOf ?? "",
+    g.guestFullName ?? "", g.guestPhone ?? "",
+    g.leftStatus ?? "", g.leftReason ?? "", g.notes ?? "",
+    g.presentationNumber ?? "", g.time ?? "",
+  ];
+}
+
+/** Скачивает гостей как Excel .xlsx */
+function downloadExcel(guests: any[], baseName: string) {
+  const data = [GUEST_HEADERS, ...guests.map(guestToRow)];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  // Ширина колонок
+  ws["!cols"] = [20,12,14,12,12,7,7,8,7,10,20,14,10,16,20,8,8].map((w) => ({ wch: w }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Гости");
+  XLSX.writeFile(wb, `${baseName}.xlsx`);
 }
 
 /** Форматирует заголовок списка: адрес + дата + имя файла */
@@ -158,32 +190,33 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
     setImportResult(null);
   };
 
-  // ── Скачивание данных списка в CSV ────────────────────────────────────────
-  const handleDownloadList = async (r: any) => {
+  // ── Скачивание данных списка ─────────────────────────────────────────────
+  const getBaseName = (r: any) => {
+    const datePresentations: any[] = r.datePresentations ?? [];
+    const venue = datePresentations[0]?.venue;
+    const venuePart = venue?.venueName || venue?.address || "список";
+    const dateStr = dayjs(r.date).format("DD.MM.YYYY");
+    return `${venuePart}_${dateStr}`;
+  };
+
+  const handleDownloadCsv = async (r: any) => {
     try {
       const detail = await guestListsApi.getById(r.id);
       const guests: any[] = detail.guests ?? [];
-      const headers = [
-        "ФИО", "№ купона", "Телефон", "Тел. 2", "Тел. 3",
-        "Гости", "Пары", "Паспорт", "Возраст", "Вместо",
-        "ФИО Гостя", "Тел. Гостя", "Статус", "Причина", "Заметки",
-        "През. №", "Время",
-      ];
-      const rows = guests.map((g: any) => [
-        g.fullName ?? "", g.couponNumber ?? "", g.phone ?? "",
-        g.phone2 ?? "", g.phone3 ?? "",
-        g.guestsCount ?? "", g.pairsCount ?? "", g.passportCount ?? "",
-        g.age ?? "", g.insteadOf ?? "",
-        g.guestFullName ?? "", g.guestPhone ?? "",
-        g.leftStatus ?? "", g.leftReason ?? "", g.notes ?? "",
-        g.presentationNumber ?? "", g.time ?? "",
-      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"));
-      const csv = [headers.join(";"), ...rows].join("\n");
-      const datePresentations: any[] = r.datePresentations ?? [];
-      const venue = datePresentations[0]?.venue;
-      const venuePart = venue?.venueName || venue?.address || "список";
-      const dateStr = dayjs(r.date).format("DD.MM.YYYY");
-      downloadTextFile(csv, `${venuePart}_${dateStr}.csv`);
+      const rows = guests.map((g: any) =>
+        guestToRow(g).map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")
+      );
+      const csv = [GUEST_HEADERS.join(";"), ...rows].join("\n");
+      downloadTextFile(csv, `${getBaseName(r)}.csv`);
+    } catch {
+      message.error("Ошибка скачивания");
+    }
+  };
+
+  const handleDownloadXlsx = async (r: any) => {
+    try {
+      const detail = await guestListsApi.getById(r.id);
+      downloadExcel(detail.guests ?? [], getBaseName(r));
     } catch {
       message.error("Ошибка скачивания");
     }
@@ -263,16 +296,30 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
     {
       title: "",
       key: "actions",
-      width: 130,
+      width: 150,
       render: (_: any, r: any) => (
         <Space size={4}>
-          <Tooltip title="Скачать CSV">
-            <Button
-              size="small"
-              icon={<DownloadOutlined />}
-              onClick={() => handleDownloadList(r)}
-            />
-          </Tooltip>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: "csv",
+                  icon: <DownloadOutlined />,
+                  label: "Скачать CSV",
+                  onClick: () => handleDownloadCsv(r),
+                },
+                {
+                  key: "xlsx",
+                  icon: <DownloadOutlined />,
+                  label: "Скачать Excel",
+                  onClick: () => handleDownloadXlsx(r),
+                },
+              ],
+            }}
+            trigger={["click"]}
+          >
+            <Button size="small" icon={<DownloadOutlined />} />
+          </Dropdown>
           <Button
             size="small"
             icon={<ArrowRightOutlined />}
