@@ -111,6 +111,28 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Удаление по файлу из таблицы списков
+  const deleteByFileRef = useRef<HTMLInputElement>(null);
+  const [deleteByFileRowId, setDeleteByFileRowId] = useState<string | null>(null);
+  const [deleteByFileLoading, setDeleteByFileLoading] = useState(false);
+
+  const handleDeleteByFileRow = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !deleteByFileRowId) return;
+    setDeleteByFileLoading(true);
+    try {
+      const result = await guestListsApi.deleteByFile(deleteByFileRowId, file);
+      message.success(`Удалено ${result.deletedCount} из ${result.totalInFile} номеров`);
+      loadAll();
+    } catch {
+      message.error("Ошибка при удалении по файлу");
+    } finally {
+      setDeleteByFileLoading(false);
+      setDeleteByFileRowId(null);
+      if (deleteByFileRef.current) deleteByFileRef.current.value = "";
+    }
+  };
+
   // Импорт
   const [importOpen, setImportOpen] = useState(false);
   const [importDate, setImportDate] = useState<string | undefined>();
@@ -265,7 +287,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
     {
       title: "",
       key: "actions",
-      width: 150,
+      width: 185,
       render: (_: any, r: any) => (
         <Space size={4}>
           <Dropdown
@@ -289,6 +311,20 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
           >
             <Button size="small" icon={<DownloadOutlined />} />
           </Dropdown>
+          <Tooltip title="Загрузите файл с номерами — найденные записи будут удалены">
+            <Button
+              size="small"
+              icon={<DeleteOutlined />}
+              danger
+              loading={deleteByFileLoading && deleteByFileRowId === r.id}
+              onClick={() => {
+                setDeleteByFileRowId(r.id);
+                deleteByFileRef.current?.click();
+              }}
+            >
+              Удалить файлом
+            </Button>
+          </Tooltip>
           <Button
             size="small"
             icon={<ArrowRightOutlined />}
@@ -387,6 +423,14 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
+      {/* Скрытый input для удаления по файлу из таблицы списков */}
+      <input
+        ref={deleteByFileRef}
+        type="file"
+        accept=".txt,.csv"
+        style={{ display: "none" }}
+        onChange={handleDeleteByFileRow}
+      />
       <Tabs
         activeKey={activeSubTab}
         onChange={setActiveSubTab}
