@@ -591,7 +591,25 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
               </Text>
             </div>
 
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>CSV файл *</div>
+            <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontWeight: 500 }}>CSV файл *</span>
+              <Button
+                type="link"
+                size="small"
+                icon={<DownloadOutlined />}
+                style={{ padding: 0 }}
+                onClick={() => {
+                  const sample = [
+                    "ФИО;Телефон;Дата;Время",
+                    "Иванов Иван Иванович;998901234567;13.03.2026;14:30",
+                    "Петрова Мария Алексеевна;998909876543;13.03.2026;18:30",
+                  ].join("\n");
+                  downloadTextFile(sample, "пример_импорта.csv");
+                }}
+              >
+                Скачать пример
+              </Button>
+            </div>
             <Upload
               beforeUpload={(file) => {
                 setImportFile(file);
