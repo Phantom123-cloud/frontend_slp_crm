@@ -599,12 +599,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
                 icon={<DownloadOutlined />}
                 style={{ padding: 0 }}
                 onClick={() => {
-                  const sample = [
-                    "ФИО;Телефон;Дата;Время",
-                    "Иванов Иван Иванович;998901234567;13.03.2026;14:30",
-                    "Петрова Мария Алексеевна;998909876543;13.03.2026;18:30",
-                  ].join("\n");
-                  downloadTextFile(sample, "пример_импорта.csv");
+                  downloadTextFile("ФИО;Телефон;Дата;Время", "пример_импорта.csv");
                 }}
               >
                 Скачать пример
