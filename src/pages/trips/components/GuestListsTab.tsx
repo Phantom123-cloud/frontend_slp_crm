@@ -249,37 +249,6 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
       },
     },
     {
-      title: "Всего",
-      dataIndex: "totalCount",
-      key: "totalCount",
-      width: 70,
-    },
-    {
-      title: "Имп.",
-      dataIndex: "importedCount",
-      key: "importedCount",
-      width: 70,
-      render: (v: number) => <Text style={{ color: "#52c41a" }}>{v}</Text>,
-    },
-    {
-      title: "Откл.",
-      dataIndex: "failedCount",
-      key: "failedCount",
-      width: 70,
-      render: (v: number) => (
-        <Text style={{ color: v ? "#ff4d4f" : undefined }}>{v}</Text>
-      ),
-    },
-    {
-      title: "Дубл.",
-      dataIndex: "duplicatesCount",
-      key: "duplicatesCount",
-      width: 70,
-      render: (v: number) => (
-        <Text style={{ color: v ? "#faad14" : undefined }}>{v || 0}</Text>
-      ),
-    },
-    {
       title: "Дата импорта",
       dataIndex: "createdAt",
       key: "createdAt",
