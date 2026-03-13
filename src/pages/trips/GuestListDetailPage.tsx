@@ -387,10 +387,17 @@ const GuestListDetailPage: React.FC = () => {
     const datePresentations: any[] = guestList.datePresentations ?? [];
     const venue = datePresentations[0]?.venue;
     const dateStr = dayjs(guestList.date).format("DD.MM.YYYY");
+    // Все времена презентаций через запятую
+    const times = datePresentations
+      .map((p: any) => p.time)
+      .filter(Boolean)
+      .join(", ");
     const parts: string[] = [];
-    if (venue?.address) parts.push(venue.address);
+    // Приоритет: venueName > address
     if (venue?.venueName) parts.push(venue.venueName);
+    else if (venue?.address) parts.push(venue.address);
     parts.push(dateStr);
+    if (times) parts.push(times);
     return parts.join(" • ");
   }, [guestList]);
 
@@ -677,7 +684,7 @@ const GuestListDetailPage: React.FC = () => {
               {presStats.map((row) => (
                 <tr key={row.key}>
                   <td style={{ ...tdLabelStyle, background: row.color }}>
-                    {row.number ? `ПРИХОД Презентация №${row.number}` : "Без презентации"}
+                    {row.number ? `Презентация №${row.number}` : "Без презентации"}
                     {row.time ? ` (${row.time})` : ""}
                   </td>
                   <td style={tdStyle}>{row.arrivals}</td>

@@ -74,8 +74,8 @@ export default function PresentationCreateModal({
       await tripsApi.createPresentation(tripId, {
         date: values.date,
         time: values.time.format("HH:mm"),
-        typeId: values.typeId || undefined,
-        venueId: values.venueId || undefined,
+        typeId: values.typeId,
+        venueId: values.venueId,
       });
       message.success(t("common.success"));
       form.resetFields();
@@ -122,16 +122,22 @@ export default function PresentationCreateModal({
         >
           <TimePicker format="HH:mm" style={{ width: "100%" }} />
         </Form.Item>
-        <Form.Item name="typeId" label={t("trips.presentationType")}>
+        <Form.Item
+          name="typeId"
+          label={t("trips.presentationType")}
+          rules={[{ required: true, message: "Выберите тип презентации" }]}
+        >
           <Select
-            allowClear
             placeholder={t("trips.selectType")}
             options={types.map((t) => ({ value: t.id, label: t.name }))}
           />
         </Form.Item>
-        <Form.Item name="venueId" label={t("trips.venue")}>
+        <Form.Item
+          name="venueId"
+          label={t("trips.venue")}
+          rules={[{ required: true, message: "Выберите место проведения" }]}
+        >
           <Select
-            allowClear
             showSearch
             optionFilterProp="label"
             placeholder={t("trips.selectVenue")}
