@@ -1,6 +1,10 @@
 import api from './client';
 
 export const guestListsApi = {
+  /** Все списки гостей глобально */
+  getGlobal: () =>
+    api.get('/guest-lists').then((r) => r.data),
+
   /** Уникальные даты выезда с презентациями (для дропдауна импорта) */
   getDates: (tripId: string) =>
     api.get(`/trips/${tripId}/guest-lists/dates`).then((r) => r.data),

@@ -23,6 +23,7 @@ import GuestListDetailPage from "./pages/trips/GuestListDetailPage";
 import PresentationDetailPage from "./pages/trips/PresentationDetailPage";
 import DirectoriesPage from "./pages/directories/DirectoriesPage";
 import PresentationsListPage from "./pages/presentations/PresentationsListPage";
+import GuestListsListPage from "./pages/guestLists/GuestListsListPage";
 import WarehousesListPage from "./pages/warehouses/WarehousesListPage";
 import WarehouseDetailPage from "./pages/warehouses/WarehouseDetailPage";
 import WalletsListPage from "./pages/wallets/WalletsListPage";
@@ -261,6 +262,16 @@ export default function App() {
               <Route
                 path="presentations/:id"
                 element={<PresentationDetailPage />}
+              />
+              <Route
+                path="guest-lists"
+                element={
+                  <PermissionRoute
+                    permission={["trips.view-all", "trips.view-person"]}
+                  >
+                    <GuestListsListPage />
+                  </PermissionRoute>
+                }
               />
               <Route
                 path="directories"

@@ -112,6 +112,10 @@ export default function MainLayout() {
       key: "/presentations",
       label: t("menu.presentations"),
     },
+    canViewTrips && {
+      key: "/guest-lists",
+      label: t("menu.guestLists"),
+    },
   ].filter(Boolean);
 
   const menuItems = [
