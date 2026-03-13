@@ -158,6 +158,37 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
     setImportResult(null);
   };
 
+  // ── Скачивание данных списка в CSV ────────────────────────────────────────
+  const handleDownloadList = async (r: any) => {
+    try {
+      const detail = await guestListsApi.getById(r.id);
+      const guests: any[] = detail.guests ?? [];
+      const headers = [
+        "ФИО", "№ купона", "Телефон", "Тел. 2", "Тел. 3",
+        "Гости", "Пары", "Паспорт", "Возраст", "Вместо",
+        "ФИО Гостя", "Тел. Гостя", "Статус", "Причина", "Заметки",
+        "През. №", "Время",
+      ];
+      const rows = guests.map((g: any) => [
+        g.fullName ?? "", g.couponNumber ?? "", g.phone ?? "",
+        g.phone2 ?? "", g.phone3 ?? "",
+        g.guestsCount ?? "", g.pairsCount ?? "", g.passportCount ?? "",
+        g.age ?? "", g.insteadOf ?? "",
+        g.guestFullName ?? "", g.guestPhone ?? "",
+        g.leftStatus ?? "", g.leftReason ?? "", g.notes ?? "",
+        g.presentationNumber ?? "", g.time ?? "",
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"));
+      const csv = [headers.join(";"), ...rows].join("\n");
+      const datePresentations: any[] = r.datePresentations ?? [];
+      const venue = datePresentations[0]?.venue;
+      const venuePart = venue?.venueName || venue?.address || "список";
+      const dateStr = dayjs(r.date).format("DD.MM.YYYY");
+      downloadTextFile(csv, `${venuePart}_${dateStr}.csv`);
+    } catch {
+      message.error("Ошибка скачивания");
+    }
+  };
+
   // ── Колонки таблицы списков ───────────────────────────────────────────────
   const listsColumns = [
     {
@@ -167,20 +198,19 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
         const datePresentations: any[] = r.datePresentations ?? [];
         const venue = datePresentations[0]?.venue;
         const dateStr = dayjs(r.date).format("DD.MM.YYYY");
-        const venuePart = venue
-          ? `${venue.address ? venue.address + ", " : ""}${venue.venueName || ""}`.trim().replace(/,\s*$/, "")
-          : "";
-        const presNames = datePresentations.map((p: any) => p.name).join(", ");
+        // Приоритет: venueName > address
+        const venuePart = venue?.venueName || venue?.address || "";
+        // Все времена презентаций
+        const times = datePresentations
+          .map((p: any) => p.time)
+          .filter(Boolean)
+          .join(", ");
 
         return (
           <div>
             <div style={{ fontWeight: 500 }}>
-              {[venuePart, dateStr].filter(Boolean).join(" • ")}
+              {[venuePart, dateStr, times].filter(Boolean).join(" • ")}
             </div>
-            {presNames && (
-              <div style={{ fontSize: 12, color: "#8c8c8c" }}>{presNames}</div>
-            )}
-            <div style={{ fontSize: 12, color: "#595959" }}>{r.fileName}</div>
           </div>
         );
       },
@@ -233,17 +263,26 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
     {
       title: "",
       key: "actions",
-      width: 90,
+      width: 130,
       render: (_: any, r: any) => (
-        <Button
-          size="small"
-          icon={<ArrowRightOutlined />}
-          type="primary"
-          ghost
-          onClick={() => navigate(`/trips/${tripId}/guest-lists/${r.id}`)}
-        >
-          Открыть
-        </Button>
+        <Space size={4}>
+          <Tooltip title="Скачать CSV">
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              onClick={() => handleDownloadList(r)}
+            />
+          </Tooltip>
+          <Button
+            size="small"
+            icon={<ArrowRightOutlined />}
+            type="primary"
+            ghost
+            onClick={() => navigate(`/trips/${tripId}/guest-lists/${r.id}`)}
+          >
+            Открыть
+          </Button>
+        </Space>
       ),
     },
   ];
