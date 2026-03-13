@@ -13,11 +13,6 @@ import {
   message,
   Tag,
   Tooltip,
-  Row,
-  Col,
-  Statistic,
-  Divider,
-  Breadcrumb,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -264,6 +259,34 @@ const EditModal: React.FC<EditModalProps> = ({ record, isNew, datePresentations,
 };
 
 // ────────────────────────────────────────────────────────────────────────────
+// Стили статистической таблицы
+// ────────────────────────────────────────────────────────────────────────────
+
+const thStyle: React.CSSProperties = {
+  padding: "4px 10px",
+  border: "1px solid #d9d9d9",
+  background: "#f5f5f5",
+  fontWeight: 600,
+  textAlign: "center",
+  whiteSpace: "nowrap",
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: "4px 10px",
+  border: "1px solid #d9d9d9",
+  textAlign: "center",
+  whiteSpace: "nowrap",
+};
+
+const tdLabelStyle: React.CSSProperties = {
+  padding: "4px 12px",
+  border: "1px solid rgba(0,0,0,0.15)",
+  color: "#fff",
+  fontWeight: 600,
+  whiteSpace: "nowrap",
+};
+
+// ────────────────────────────────────────────────────────────────────────────
 // Основная страница
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -369,6 +392,72 @@ const GuestListDetailPage: React.FC = () => {
     if (venue?.venueName) parts.push(venue.venueName);
     parts.push(dateStr);
     return parts.join(" • ");
+  }, [guestList]);
+
+  // ── Статистика по презентациям ───────────────────────────────────────────
+  const presStats = useMemo(() => {
+    if (!guestList?.guests || !guestList?.datePresentations) return [];
+
+    const guests: any[] = guestList.guests;
+    const total = guests.length;
+
+    // Цвета для презентаций по номеру
+    const presColors: Record<number, string> = { 1: "#c0392b", 2: "#b7791f", 3: "#276749" };
+
+    const rows = guestList.datePresentations.map((pres: any) => {
+      const records = guests.filter((g) => g.presentationNumber === pres.number);
+      const arrivals = records.length;
+      const pairsTotal = records.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0);
+
+      const leftRecs = records.filter((g: any) => g.leftStatus === "ушел");
+      const notRecs  = records.filter((g: any) => g.leftStatus === "не пустили");
+
+      const leftCount = leftRecs.length;
+      const leftPairs = leftRecs.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0);
+      const notCount  = notRecs.length;
+      const notPairs  = notRecs.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0);
+
+      const inHall      = arrivals - leftCount - notCount;
+      const inHallPairs = pairsTotal - leftPairs - notPairs;
+      const pct = total > 0 ? Math.round((arrivals / total) * 100) : 0;
+
+      return {
+        key: pres.number,
+        number: pres.number,
+        name: pres.name,
+        time: pres.time,
+        color: presColors[pres.number] ?? "#595959",
+        arrivals,
+        pairsTotal,
+        pct,
+        leftCount,
+        leftPairs,
+        notCount,
+        notPairs,
+        inHall,
+        inHallPairs,
+      };
+    });
+
+    // Строка «без презентации» — записи с null presentationNumber
+    const noPresRecs = guests.filter((g: any) => g.presentationNumber == null);
+    if (noPresRecs.length > 0) {
+      rows.push({
+        key: 0,
+        number: 0,
+        name: "—",
+        time: "",
+        color: "#8c8c8c",
+        arrivals: noPresRecs.length,
+        pairsTotal: noPresRecs.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0),
+        pct: total > 0 ? Math.round((noPresRecs.length / total) * 100) : 0,
+        leftCount: 0, leftPairs: 0, notCount: 0, notPairs: 0,
+        inHall: noPresRecs.length,
+        inHallPairs: noPresRecs.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0),
+      });
+    }
+
+    return rows;
   }, [guestList]);
 
   // ── Колонки таблицы ──────────────────────────────────────────────────────
@@ -569,39 +658,45 @@ const GuestListDetailPage: React.FC = () => {
         )}
       </div>
 
-      {/* ── Статистика ───────────────────────────────────────────────────── */}
-      {guestList && (
-        <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col>
-              <Statistic title="Всего в файле" value={guestList.totalCount} />
-            </Col>
-            <Col>
-              <Statistic
-                title="В списке сейчас"
-                value={guestList.importedCount}
-                valueStyle={{ color: "#52c41a" }}
-              />
-            </Col>
-            <Col>
-              <Statistic
-                title="Отклонено"
-                value={guestList.failedCount}
-                valueStyle={{ color: guestList.failedCount ? "#ff4d4f" : undefined }}
-              />
-            </Col>
-            {(guestList.duplicatesCount ?? 0) > 0 && (
-              <Col>
-                <Statistic
-                  title="Дублей пропущено"
-                  value={guestList.duplicatesCount}
-                  valueStyle={{ color: "#faad14" }}
-                />
-              </Col>
-            )}
-          </Row>
-          <Divider style={{ margin: "0 0 12px" }} />
-        </>
+      {/* ── Статистика по презентациям ───────────────────────────────────── */}
+      {guestList && presStats.length > 0 && (
+        <div style={{ marginBottom: 16, overflowX: "auto" }}>
+          <table style={{ borderCollapse: "collapse", fontSize: 13, minWidth: 560 }}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Презентация</th>
+                <th style={thStyle}>Приход</th>
+                <th style={thStyle}>Пары</th>
+                <th style={thStyle}>%.пр.</th>
+                <th style={thStyle}>у/Пар</th>
+                <th style={thStyle}>н/Пар</th>
+                <th style={thStyle}>В зале г/п</th>
+              </tr>
+            </thead>
+            <tbody>
+              {presStats.map((row) => (
+                <tr key={row.key}>
+                  <td style={{ ...tdLabelStyle, background: row.color }}>
+                    {row.number ? `ПРИХОД Презентация №${row.number}` : "Без презентации"}
+                    {row.time ? ` (${row.time})` : ""}
+                  </td>
+                  <td style={tdStyle}>{row.arrivals}</td>
+                  <td style={tdStyle}>{row.pairsTotal}</td>
+                  <td style={tdStyle}>{row.pct}%</td>
+                  <td style={{ ...tdStyle, color: row.leftCount ? "#ff4d4f" : undefined }}>
+                    {row.leftCount}/{row.leftPairs}
+                  </td>
+                  <td style={{ ...tdStyle, color: row.notCount ? "#fa8c16" : undefined }}>
+                    {row.notCount}/{row.notPairs}
+                  </td>
+                  <td style={{ ...tdStyle, fontWeight: 600, color: "#52c41a" }}>
+                    {row.inHall}/{row.inHallPairs}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* ── Тулбар ───────────────────────────────────────────────────────── */}
