@@ -426,7 +426,8 @@ const GuestListDetailPage: React.FC = () => {
 
       const inHall      = arrivals - leftCount - notCount;
       const inHallPairs = pairsTotal - leftPairs - notPairs;
-      const pct = total > 0 ? Math.round((arrivals / total) * 100) : 0;
+      // % = Приход / Приглашено (сколько из списка реально зашли)
+      const pct = arrivals > 0 ? Math.round(((arrivals - notCount) / arrivals) * 100) : 0;
 
       return {
         key: pres.number,
@@ -721,7 +722,9 @@ const GuestListDetailPage: React.FC = () => {
                     <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivals}</td>
                     <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivals - tot.notCount}</td>
                     <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.pairsTotal}</td>
-                    <td style={{ ...tdStyle, fontWeight: 700 }}>100%</td>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>
+                      {tot.arrivals > 0 ? Math.round(((tot.arrivals - tot.notCount) / tot.arrivals) * 100) : 0}%
+                    </td>
                     <td style={{ ...tdStyle, fontWeight: 700, color: tot.leftCount ? "#ff4d4f" : undefined }}>
                       {tot.leftCount}/{tot.leftPairs}
                     </td>
