@@ -39,6 +39,7 @@ import PresentationSummaryModal from "./components/PresentationSummaryModal";
 import PresentationCrewModal from "./components/PresentationCrewModal";
 import TripWarehouseTab from "./components/TripWarehouseTab";
 import TripWalletTab from "./components/TripWalletTab";
+import GuestListsTab from "./components/GuestListsTab";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -735,6 +736,16 @@ export default function TripDetailPage() {
                 >
                   {t("trips.tabPlaceholder")}
                 </div>
+              ),
+            },
+            {
+              key: "guestLists",
+              label: t("trips.guestLists"),
+              children: (
+                <GuestListsTab
+                  tripId={id!}
+                  presentations={trip.presentations || []}
+                />
               ),
             },
           ].filter(Boolean) as any[]}
