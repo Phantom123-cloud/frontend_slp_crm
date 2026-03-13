@@ -29,6 +29,10 @@ export const guestListsApi = {
   getById: (id: string) =>
     api.get(`/guest-lists/${id}`).then((r) => r.data),
 
+  /** Создать запись гостя вручную */
+  createRecord: (guestListId: string, data: Record<string, any>) =>
+    api.post(`/guest-lists/${guestListId}/records`, data).then((r) => r.data),
+
   /** Обновить запись гостя */
   updateRecord: (guestListId: string, recordId: string, data: Record<string, any>) =>
     api.patch(`/guest-lists/${guestListId}/records/${recordId}`, data).then((r) => r.data),

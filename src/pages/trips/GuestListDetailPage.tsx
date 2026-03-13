@@ -24,6 +24,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { guestListsApi } from "../../api/guestLists";
@@ -61,13 +62,14 @@ const LEFT_REASON_OPTIONS = [
 // ────────────────────────────────────────────────────────────────────────────
 
 interface EditModalProps {
-  record: any;
+  record: any;       // пустой объект {} при создании
+  isNew?: boolean;   // true — режим ручного добавления
   datePresentations: any[];
   onSave: (values: any) => Promise<void>;
   onClose: () => void;
 }
 
-const EditModal: React.FC<EditModalProps> = ({ record, datePresentations, onSave, onClose }) => {
+const EditModal: React.FC<EditModalProps> = ({ record, isNew, datePresentations, onSave, onClose }) => {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const [presNumber, setPresNumber] = useState<number | null>(record.presentationNumber ?? null);
@@ -98,7 +100,7 @@ const EditModal: React.FC<EditModalProps> = ({ record, datePresentations, onSave
   return (
     <Modal
       open
-      title={`Редактировать: ${record.fullName || record.phone}`}
+      title={isNew ? "Внести гостя вручную" : `Редактировать: ${record.fullName || record.phone}`}
       onCancel={onClose}
       width={700}
       footer={
@@ -272,6 +274,7 @@ const GuestListDetailPage: React.FC = () => {
   const [guestList, setGuestList] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editRecord, setEditRecord] = useState<any | null>(null);
+  const [addManualOpen, setAddManualOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const deleteFileRef = useRef<HTMLInputElement>(null);
   const [deleteByFileLoading, setDeleteByFileLoading] = useState(false);
@@ -310,6 +313,19 @@ const GuestListDetailPage: React.FC = () => {
       load();
     } catch (e: any) {
       message.error(e?.response?.data?.message || "Ошибка сохранения");
+      throw e;
+    }
+  };
+
+  // ── Ручное добавление гостя ──────────────────────────────────────────────
+  const handleCreateRecord = async (values: any) => {
+    try {
+      await guestListsApi.createRecord(glId!, values);
+      message.success("Гость добавлен");
+      setAddManualOpen(false);
+      load();
+    } catch (e: any) {
+      message.error(e?.response?.data?.message || "Ошибка при добавлении");
       throw e;
     }
   };
@@ -598,6 +614,13 @@ const GuestListDetailPage: React.FC = () => {
           allowClear
           style={{ width: 300 }}
         />
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setAddManualOpen(true)}
+        >
+          Внести вручную
+        </Button>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <Tooltip title="Загрузите файл с номерами (одна строка — один номер). Найденные записи будут удалены.">
             <Button
@@ -639,6 +662,17 @@ const GuestListDetailPage: React.FC = () => {
           datePresentations={guestList?.datePresentations ?? []}
           onSave={handleSaveRecord}
           onClose={() => setEditRecord(null)}
+        />
+      )}
+
+      {/* ── Модалка ручного добавления ────────────────────────────────────── */}
+      {addManualOpen && (
+        <EditModal
+          record={{}}
+          isNew
+          datePresentations={guestList?.datePresentations ?? []}
+          onSave={handleCreateRecord}
+          onClose={() => setAddManualOpen(false)}
         />
       )}
     </div>
