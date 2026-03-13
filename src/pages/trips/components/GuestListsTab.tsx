@@ -571,8 +571,11 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
                 value={importDate}
                 onChange={setImportDate}
               >
-                {availableDates.map((d: any) => {
+                {[...availableDates]
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((d: any) => {
                   const presNums = d.presentations
+                    .sort((a: any, b: any) => a.number - b.number)
                     .map((p: any) => `#${p.number} ${p.time}`)
                     .join(", ");
                   return (
