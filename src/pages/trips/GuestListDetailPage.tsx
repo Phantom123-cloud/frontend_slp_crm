@@ -660,9 +660,6 @@ const GuestListDetailPage: React.FC = () => {
         <Title level={4} style={{ margin: 0 }}>
           {listTitle}
         </Title>
-        {guestList && (
-          <Text type="secondary">{guestList.fileName}</Text>
-        )}
       </div>
 
       {/* ── Статистика по презентациям ───────────────────────────────────── */}
@@ -701,6 +698,39 @@ const GuestListDetailPage: React.FC = () => {
                   </td>
                 </tr>
               ))}
+              {/* Строка итогов */}
+              {presStats.length > 1 && (() => {
+                const tot = presStats.reduce(
+                  (acc, r) => ({
+                    arrivals:   acc.arrivals   + r.arrivals,
+                    pairsTotal: acc.pairsTotal + r.pairsTotal,
+                    leftCount:  acc.leftCount  + r.leftCount,
+                    leftPairs:  acc.leftPairs  + r.leftPairs,
+                    notCount:   acc.notCount   + r.notCount,
+                    notPairs:   acc.notPairs   + r.notPairs,
+                    inHall:     acc.inHall     + r.inHall,
+                    inHallPairs:acc.inHallPairs+ r.inHallPairs,
+                  }),
+                  { arrivals:0, pairsTotal:0, leftCount:0, leftPairs:0, notCount:0, notPairs:0, inHall:0, inHallPairs:0 }
+                );
+                return (
+                  <tr>
+                    <td style={{ ...tdLabelStyle, background: "#434343" }}>Итого</td>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivals}</td>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.pairsTotal}</td>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>100%</td>
+                    <td style={{ ...tdStyle, fontWeight: 700, color: tot.leftCount ? "#ff4d4f" : undefined }}>
+                      {tot.leftCount}/{tot.leftPairs}
+                    </td>
+                    <td style={{ ...tdStyle, fontWeight: 700, color: tot.notCount ? "#fa8c16" : undefined }}>
+                      {tot.notCount}/{tot.notPairs}
+                    </td>
+                    <td style={{ ...tdStyle, fontWeight: 700, color: "#52c41a" }}>
+                      {tot.inHall}/{tot.inHallPairs}
+                    </td>
+                  </tr>
+                );
+              })()}
             </tbody>
           </table>
         </div>
