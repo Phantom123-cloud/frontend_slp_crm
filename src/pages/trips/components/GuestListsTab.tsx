@@ -8,7 +8,6 @@ import {
   Tabs,
   Tag,
   Space,
-  Popconfirm,
   Typography,
   Alert,
   Statistic,
@@ -17,21 +16,21 @@ import {
   Divider,
   message,
   Tooltip,
-  Radio,
 } from "antd";
 import {
   UploadOutlined,
   ImportOutlined,
   DeleteOutlined,
   DownloadOutlined,
-  UserOutlined,
   HistoryOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { guestListsApi } from "../../../api/guestLists";
 import dayjs from "dayjs";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -49,212 +48,45 @@ function downloadTextFile(content: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-/** Эффективный статус презентации по её дате */
-function getPresEffectiveStatus(pres: any): "ACTIVE" | "PLANNED" | "COMPLETED" | "CANCELLED" {
-  if (pres.status === "CANCELLED") return "CANCELLED";
-  const today = dayjs().startOf("day");
-  const presDate = dayjs(pres.date).startOf("day");
-  if (presDate.isSame(today)) return "ACTIVE";
-  if (presDate.isAfter(today)) return "PLANNED";
-  return "COMPLETED";
+/** Форматирует заголовок списка: адрес + дата + имя файла */
+function formatListTitle(gl: any): string {
+  const datePresentations: any[] = gl.datePresentations ?? [];
+  const venue = datePresentations[0]?.venue;
+  const dateStr = dayjs(gl.date).format("DD.MM.YYYY");
+  const parts: string[] = [];
+  if (venue?.address) parts.push(venue.address);
+  if (venue?.venueName) parts.push(venue.venueName);
+  parts.push(dateStr);
+  parts.push(gl.fileName);
+  return parts.join(" • ");
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  ACTIVE: "green",
-  PLANNED: "blue",
-  COMPLETED: "default",
-  CANCELLED: "red",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  ACTIVE: "Активна",
-  PLANNED: "Запланирована",
-  COMPLETED: "Завершена",
-  CANCELLED: "Отменена",
-};
-
 // ────────────────────────────────────────────────────────────────────────────
-// Компонент детали списка (гости внутри)
-// ────────────────────────────────────────────────────────────────────────────
-
-interface GuestListDetailProps {
-  guestListId: string;
-  onClose: () => void;
-  onChanged: () => void;
-}
-
-const GuestListDetail: React.FC<GuestListDetailProps> = ({ guestListId, onClose, onChanged }) => {
-  const { t } = useTranslation();
-  const [list, setList] = React.useState<any>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [deleteByFileLoading, setDeleteByFileLoading] = React.useState(false);
-  const deleteFileRef = useRef<HTMLInputElement>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await guestListsApi.getById(guestListId);
-      setList(data);
-    } finally {
-      setLoading(false);
-    }
-  }, [guestListId]);
-
-  React.useEffect(() => { load(); }, [load]);
-
-  const handleDeleteRecord = async (recordId: string) => {
-    try {
-      await guestListsApi.deleteRecord(guestListId, recordId);
-      message.success("Запись удалена");
-      load();
-      onChanged();
-    } catch {
-      message.error("Ошибка удаления");
-    }
-  };
-
-  const handleDeleteByFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setDeleteByFileLoading(true);
-    try {
-      const result = await guestListsApi.deleteByFile(guestListId, file);
-      message.success(`Удалено ${result.deletedCount} из ${result.totalInFile} номеров`);
-      load();
-      onChanged();
-    } catch {
-      message.error("Ошибка при удалении по файлу");
-    } finally {
-      setDeleteByFileLoading(false);
-      if (deleteFileRef.current) deleteFileRef.current.value = "";
-    }
-  };
-
-  const columns = [
-    {
-      title: "ФИО",
-      dataIndex: "fullName",
-      key: "fullName",
-      render: (v: string) => v || <Text type="secondary">—</Text>,
-    },
-    {
-      title: "Номер",
-      dataIndex: "phone",
-      key: "phone",
-    },
-    {
-      title: "Презентация",
-      key: "presentation",
-      render: (_: any, r: any) =>
-        r.presentation
-          ? `${dayjs(r.presentation.date).format("DD.MM.YYYY")} ${r.presentation.time}`
-          : "—",
-    },
-    {
-      title: "",
-      key: "actions",
-      width: 50,
-      render: (_: any, r: any) => (
-        <Popconfirm
-          title="Удалить запись?"
-          onConfirm={() => handleDeleteRecord(r.id)}
-          okText="Да"
-          cancelText="Нет"
-        >
-          <Button size="small" icon={<DeleteOutlined />} danger type="text" />
-        </Popconfirm>
-      ),
-    },
-  ];
-
-  return (
-    <Modal
-      open
-      onCancel={onClose}
-      footer={null}
-      width={720}
-      title={list ? `${list.fileName} — гости` : "Список гостей"}
-    >
-      {list && (
-        <>
-          {/* Статистика */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={8}>
-              <Statistic title="Всего в файле" value={list.totalCount} />
-            </Col>
-            <Col span={8}>
-              <Statistic title="Импортировано" value={list.importedCount} valueStyle={{ color: "#52c41a" }} />
-            </Col>
-            <Col span={8}>
-              <Statistic title="Отклонено" value={list.failedCount} valueStyle={{ color: list.failedCount ? "#ff4d4f" : undefined }} />
-            </Col>
-          </Row>
-          <Divider style={{ margin: "8px 0 16px" }} />
-
-          {/* Кнопка удаления по файлу */}
-          <div style={{ marginBottom: 12, display: "flex", justifyContent: "flex-end" }}>
-            <Tooltip title="Загрузите файл с номерами (одна строка — один номер). Найденные записи будут удалены.">
-              <Button
-                icon={<DeleteOutlined />}
-                loading={deleteByFileLoading}
-                onClick={() => deleteFileRef.current?.click()}
-                danger
-              >
-                Удалить файлом
-              </Button>
-            </Tooltip>
-            <input
-              ref={deleteFileRef}
-              type="file"
-              accept=".txt,.csv"
-              style={{ display: "none" }}
-              onChange={handleDeleteByFile}
-            />
-          </div>
-
-          {/* Таблица гостей */}
-          <Table
-            columns={columns}
-            dataSource={list.guests}
-            rowKey="id"
-            loading={loading}
-            size="small"
-            pagination={{ pageSize: 20, showSizeChanger: false }}
-          />
-        </>
-      )}
-    </Modal>
-  );
-};
-
-// ────────────────────────────────────────────────────────────────────────────
-// Основной компонент — вкладка "Списки гостей"
+// Основной компонент
 // ────────────────────────────────────────────────────────────────────────────
 
 interface Props {
   tripId: string;
-  presentations: any[]; // список презентаций выезда (из trip.presentations)
 }
 
-const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
+const GuestListsTab: React.FC<Props> = ({ tripId }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   // ── Состояние ────────────────────────────────────────────────────────────
   const [activeSubTab, setActiveSubTab] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [guestLists, setGuestLists] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Импорт
   const [importOpen, setImportOpen] = useState(false);
-  const [importPresId, setImportPresId] = useState<string | undefined>();
+  const [importDate, setImportDate] = useState<string | undefined>();
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
-
-  // Детали списка
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [availableDates, setAvailableDates] = useState<any[]>([]);
+  const [datesLoading, setDatesLoading] = useState(false);
 
   // ── Загрузка ─────────────────────────────────────────────────────────────
   const loadAll = useCallback(async () => {
@@ -273,27 +105,38 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
 
   React.useEffect(() => { loadAll(); }, [loadAll]);
 
-  // ── Фильтрация по статусу ────────────────────────────────────────────────
-  const filteredLists = guestLists.filter((gl) => {
-    if (statusFilter === "all") return true;
-    const pres = gl.presentation;
-    if (!pres) return statusFilter === "all";
-    const status = getPresEffectiveStatus(pres).toLowerCase();
-    return status === statusFilter;
-  });
+  const loadDates = useCallback(async () => {
+    setDatesLoading(true);
+    try {
+      const dates = await guestListsApi.getDates(tripId);
+      setAvailableDates(dates);
+    } finally {
+      setDatesLoading(false);
+    }
+  }, [tripId]);
 
   // ── Импорт ───────────────────────────────────────────────────────────────
+  const openImportModal = () => {
+    setImportOpen(true);
+    loadDates();
+  };
+
   const handleImport = async () => {
     if (!importFile) {
       message.warning("Выберите CSV файл");
       return;
     }
+    if (!importDate) {
+      message.warning("Выберите дату");
+      return;
+    }
     setImporting(true);
     setImportResult(null);
     try {
-      const result = await guestListsApi.import(tripId, importFile, importPresId);
+      const result = await guestListsApi.import(tripId, importFile, importDate);
       setImportResult(result);
-      message.success(`Импортировано: ${result.importedCount}, отклонено: ${result.failedCount}`);
+      const dupMsg = result.duplicatesCount > 0 ? `, дублей: ${result.duplicatesCount}` : "";
+      message.success(`Импортировано: ${result.importedCount}, отклонено: ${result.failedCount}${dupMsg}`);
       loadAll();
     } catch (e: any) {
       message.error(e?.response?.data?.message || "Ошибка импорта");
@@ -310,7 +153,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
 
   const resetImport = () => {
     setImportOpen(false);
-    setImportPresId(undefined);
+    setImportDate(undefined);
     setImportFile(null);
     setImportResult(null);
   };
@@ -318,27 +161,27 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
   // ── Колонки таблицы списков ───────────────────────────────────────────────
   const listsColumns = [
     {
-      title: "Файл",
-      dataIndex: "fileName",
-      key: "fileName",
-      render: (v: string, r: any) => (
-        <Button type="link" style={{ padding: 0 }} onClick={() => setDetailId(r.id)}>
-          {v}
-        </Button>
-      ),
-    },
-    {
-      title: "Презентация",
-      key: "presentation",
+      title: "Список",
+      key: "title",
       render: (_: any, r: any) => {
-        const p = r.presentation;
-        if (!p) return <Text type="secondary">—</Text>;
-        const status = getPresEffectiveStatus(p);
+        const datePresentations: any[] = r.datePresentations ?? [];
+        const venue = datePresentations[0]?.venue;
+        const dateStr = dayjs(r.date).format("DD.MM.YYYY");
+        const venuePart = venue
+          ? `${venue.address ? venue.address + ", " : ""}${venue.venueName || ""}`.trim().replace(/,\s*$/, "")
+          : "";
+        const presNames = datePresentations.map((p: any) => p.name).join(", ");
+
         return (
-          <Space>
-            <span>{dayjs(p.date).format("DD.MM.YYYY")} {p.time}</span>
-            <Tag color={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Tag>
-          </Space>
+          <div>
+            <div style={{ fontWeight: 500 }}>
+              {[venuePart, dateStr].filter(Boolean).join(" • ")}
+            </div>
+            {presNames && (
+              <div style={{ fontSize: 12, color: "#8c8c8c" }}>{presNames}</div>
+            )}
+            <div style={{ fontSize: 12, color: "#595959" }}>{r.fileName}</div>
+          </div>
         );
       },
     },
@@ -346,49 +189,58 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
       title: "Всего",
       dataIndex: "totalCount",
       key: "totalCount",
-      width: 80,
+      width: 70,
     },
     {
-      title: "Импортировано",
+      title: "Имп.",
       dataIndex: "importedCount",
       key: "importedCount",
-      width: 130,
+      width: 70,
       render: (v: number) => <Text style={{ color: "#52c41a" }}>{v}</Text>,
     },
     {
-      title: "Отклонено",
+      title: "Откл.",
       dataIndex: "failedCount",
       key: "failedCount",
-      width: 100,
+      width: 70,
       render: (v: number) => (
         <Text style={{ color: v ? "#ff4d4f" : undefined }}>{v}</Text>
+      ),
+    },
+    {
+      title: "Дубл.",
+      dataIndex: "duplicatesCount",
+      key: "duplicatesCount",
+      width: 70,
+      render: (v: number) => (
+        <Text style={{ color: v ? "#faad14" : undefined }}>{v || 0}</Text>
       ),
     },
     {
       title: "Дата импорта",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 150,
-      render: (v: string) => dayjs(v).format("DD.MM.YYYY HH:mm"),
+      width: 130,
+      render: (v: string) => dayjs(v).format("DD.MM.YY HH:mm"),
     },
     {
       title: "Кто",
       key: "createdBy",
-      width: 140,
+      width: 120,
       render: (_: any, r: any) =>
-        r.createdBy
-          ? `${r.createdBy.lastName} ${r.createdBy.firstName}`
-          : "—",
+        r.createdBy ? `${r.createdBy.lastName} ${r.createdBy.firstName}` : "—",
     },
     {
       title: "",
       key: "actions",
-      width: 60,
+      width: 90,
       render: (_: any, r: any) => (
         <Button
           size="small"
-          icon={<UserOutlined />}
-          onClick={() => setDetailId(r.id)}
+          icon={<ArrowRightOutlined />}
+          type="primary"
+          ghost
+          onClick={() => navigate(`/trips/${tripId}/guest-lists/${r.id}`)}
         >
           Открыть
         </Button>
@@ -402,14 +254,14 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
       title: "Дата",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 150,
-      render: (v: string) => dayjs(v).format("DD.MM.YYYY HH:mm"),
+      width: 130,
+      render: (v: string) => dayjs(v).format("DD.MM.YY HH:mm"),
     },
     {
       title: "Действие",
       dataIndex: "action",
       key: "action",
-      width: 150,
+      width: 140,
       render: (v: string) => (
         <Tag color={v === "IMPORT" ? "blue" : "orange"}>
           {v === "IMPORT" ? "Импорт" : "Удаление по файлу"}
@@ -425,22 +277,31 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
       title: "Всего",
       dataIndex: "totalCount",
       key: "totalCount",
-      width: 80,
+      width: 70,
     },
     {
       title: "Успешно",
       dataIndex: "importedCount",
       key: "importedCount",
-      width: 90,
+      width: 80,
       render: (v: number) => <Text style={{ color: "#52c41a" }}>{v}</Text>,
     },
     {
-      title: "Отклонено",
+      title: "Откл.",
       dataIndex: "failedCount",
       key: "failedCount",
-      width: 100,
+      width: 70,
       render: (v: number) => (
         <Text style={{ color: v ? "#ff4d4f" : undefined }}>{v}</Text>
+      ),
+    },
+    {
+      title: "Дубл.",
+      dataIndex: "duplicatesCount",
+      key: "duplicatesCount",
+      width: 70,
+      render: (v: number) => (
+        <Text style={{ color: v ? "#faad14" : undefined }}>{v || 0}</Text>
       ),
     },
     {
@@ -448,7 +309,11 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
       key: "guestList",
       render: (_: any, r: any) =>
         r.guestList ? (
-          <Button type="link" style={{ padding: 0 }} onClick={() => setDetailId(r.guestList.id)}>
+          <Button
+            type="link"
+            style={{ padding: 0 }}
+            onClick={() => navigate(`/trips/${tripId}/guest-lists/${r.guestList.id}`)}
+          >
             {r.guestList.fileName}
           </Button>
         ) : (
@@ -458,18 +323,11 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
     {
       title: "Кто",
       key: "createdBy",
-      width: 140,
+      width: 120,
       render: (_: any, r: any) =>
-        r.createdBy
-          ? `${r.createdBy.lastName} ${r.createdBy.firstName}`
-          : "—",
+        r.createdBy ? `${r.createdBy.lastName} ${r.createdBy.firstName}` : "—",
     },
   ];
-
-  // ── Сортировка презентаций для Select ────────────────────────────────────
-  const sortedPresentations = [...presentations].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -482,8 +340,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
             <Button
               type="primary"
               icon={<ImportOutlined />}
-              onClick={() => setImportOpen(true)}
-              style={{ marginBottom: 0 }}
+              onClick={openImportModal}
             >
               Создать список
             </Button>
@@ -494,30 +351,15 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
             key: "all",
             label: "Списки",
             children: (
-              <>
-                {/* Фильтр по статусу презентации */}
-                <div style={{ marginBottom: 12, marginTop: 8 }}>
-                  <Radio.Group
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    <Radio.Button value="all">Все</Radio.Button>
-                    <Radio.Button value="active">Активные</Radio.Button>
-                    <Radio.Button value="planned">Запланированные</Radio.Button>
-                    <Radio.Button value="completed">Завершённые</Radio.Button>
-                    <Radio.Button value="cancelled">Отменённые</Radio.Button>
-                  </Radio.Group>
-                </div>
-                <Table
-                  columns={listsColumns}
-                  dataSource={filteredLists}
-                  rowKey="id"
-                  loading={loading}
-                  size="small"
-                  pagination={{ pageSize: 20, showSizeChanger: false }}
-                  locale={{ emptyText: "Нет списков гостей" }}
-                />
-              </>
+              <Table
+                columns={listsColumns}
+                dataSource={guestLists}
+                rowKey="id"
+                loading={loading}
+                size="small"
+                pagination={{ pageSize: 20, showSizeChanger: false }}
+                locale={{ emptyText: "Нет списков гостей" }}
+              />
             ),
           },
           {
@@ -525,7 +367,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
             label: (
               <Space>
                 <HistoryOutlined />
-                История импортов
+                История
               </Space>
             ),
             children: (
@@ -568,7 +410,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
                 icon={<ImportOutlined />}
                 loading={importing}
                 onClick={handleImport}
-                disabled={!importFile}
+                disabled={!importFile || !importDate}
               >
                 Импортировать
               </Button>
@@ -581,28 +423,31 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
           // ── Результат импорта ──────────────────────────────────────────
           <>
             <Row gutter={16} style={{ marginBottom: 16 }}>
-              <Col span={8}>
+              <Col span={6}>
                 <Statistic title="Всего строк" value={importResult.totalCount} />
               </Col>
-              <Col span={8}>
-                <Statistic
-                  title="Импортировано"
-                  value={importResult.importedCount}
-                  valueStyle={{ color: "#52c41a" }}
-                />
+              <Col span={6}>
+                <Statistic title="Импортировано" value={importResult.importedCount} valueStyle={{ color: "#52c41a" }} />
               </Col>
-              <Col span={8}>
-                <Statistic
-                  title="Отклонено"
-                  value={importResult.failedCount}
-                  valueStyle={{ color: importResult.failedCount ? "#ff4d4f" : undefined }}
-                />
+              <Col span={6}>
+                <Statistic title="Отклонено" value={importResult.failedCount} valueStyle={{ color: importResult.failedCount ? "#ff4d4f" : undefined }} />
+              </Col>
+              <Col span={6}>
+                <Statistic title="Дублей" value={importResult.duplicatesCount ?? 0} valueStyle={{ color: (importResult.duplicatesCount ?? 0) > 0 ? "#faad14" : undefined }} />
               </Col>
             </Row>
+            {importResult.duplicatesCount > 0 && (
+              <Alert
+                type="warning"
+                message={`${importResult.duplicatesCount} дублирующихся номеров пропущены`}
+                style={{ marginBottom: 8 }}
+                showIcon
+              />
+            )}
             {importResult.errorCsv && (
               <Alert
                 type="warning"
-                message={`${importResult.failedCount} строк не прошли валидацию. Скачайте файл с ошибками для просмотра причин.`}
+                message={`${importResult.failedCount} строк не прошли валидацию. Скачайте файл с ошибками.`}
                 showIcon
               />
             )}
@@ -612,23 +457,29 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
           <>
             <div style={{ marginBottom: 16 }}>
               <div style={{ marginBottom: 6, fontWeight: 500 }}>
-                Презентация (опционально)
+                Дата презентации *
               </div>
               <Select
-                placeholder="Выберите дату презентации"
+                placeholder="Выберите дату"
                 style={{ width: "100%" }}
-                allowClear
-                value={importPresId}
-                onChange={setImportPresId}
+                loading={datesLoading}
+                value={importDate}
+                onChange={setImportDate}
               >
-                {sortedPresentations.map((p: any) => (
-                  <Option key={p.id} value={p.id}>
-                    {dayjs(p.date).format("DD.MM.YYYY")} {p.time} — {p.name}
-                  </Option>
-                ))}
+                {availableDates.map((d: any) => {
+                  const presNums = d.presentations
+                    .map((p: any) => `#${p.number} ${p.time}`)
+                    .join(", ");
+                  return (
+                    <Option key={d.date} value={d.date}>
+                      {dayjs(d.date).format("DD.MM.YYYY")}
+                      {presNums ? ` — ${presNums}` : ""}
+                    </Option>
+                  );
+                })}
               </Select>
               <Text type="secondary" style={{ fontSize: 12 }}>
-                Для организации. Валидация дат происходит по всем презентациям выезда.
+                В файле должны быть только строки с этой датой и временем существующих презентаций
               </Text>
             </div>
 
@@ -636,7 +487,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
             <Upload
               beforeUpload={(file) => {
                 setImportFile(file);
-                return false; // не загружаем автоматически
+                return false;
               }}
               onRemove={() => setImportFile(null)}
               accept=".csv"
@@ -646,25 +497,15 @@ const GuestListsTab: React.FC<Props> = ({ tripId, presentations }) => {
               <Button icon={<UploadOutlined />}>Выбрать файл (.csv)</Button>
             </Upload>
 
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginTop: 12 }}>
               <Text type="secondary" style={{ fontSize: 12 }}>
-                Формат CSV (без заголовка или с заголовком):<br />
-                <code>ФИО, Номер, Дата, Время</code><br />
-                Дата: DD.MM.YYYY или YYYY-MM-DD · Время: HH:MM
+                Формат: ФИО, Телефон, Дата, Время (или полный формат с 18 колонками)<br />
+                Лимит: 2000 строк · Дубли по телефону пропускаются автоматически
               </Text>
             </div>
           </>
         )}
       </Modal>
-
-      {/* ── Детали списка (модалка) ─────────────────────────────────────── */}
-      {detailId && (
-        <GuestListDetail
-          guestListId={detailId}
-          onClose={() => setDetailId(null)}
-          onChanged={loadAll}
-        />
-      )}
     </>
   );
 };

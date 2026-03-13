@@ -742,10 +742,7 @@ export default function TripDetailPage() {
               key: "guestLists",
               label: t("trips.guestLists"),
               children: (
-                <GuestListsTab
-                  tripId={id!}
-                  presentations={trip.presentations || []}
-                />
+                <GuestListsTab tripId={id!} />
               ),
             },
           ].filter(Boolean) as any[]}

@@ -1,11 +1,15 @@
 import api from './client';
 
 export const guestListsApi = {
-  /** Импорт CSV-файла для выезда */
-  import: (tripId: string, file: File, presentationId?: string) => {
+  /** Уникальные даты выезда с презентациями (для дропдауна импорта) */
+  getDates: (tripId: string) =>
+    api.get(`/trips/${tripId}/guest-lists/dates`).then((r) => r.data),
+
+  /** Импорт CSV-файла для выезда. date — "YYYY-MM-DD" */
+  import: (tripId: string, file: File, date: string) => {
     const form = new FormData();
     form.append('file', file);
-    if (presentationId) form.append('presentationId', presentationId);
+    form.append('date', date);
     return api
       .post(`/trips/${tripId}/guest-lists/import`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -24,6 +28,10 @@ export const guestListsApi = {
   /** Детали одного списка с записями гостей */
   getById: (id: string) =>
     api.get(`/guest-lists/${id}`).then((r) => r.data),
+
+  /** Обновить запись гостя */
+  updateRecord: (guestListId: string, recordId: string, data: Record<string, any>) =>
+    api.patch(`/guest-lists/${guestListId}/records/${recordId}`, data).then((r) => r.data),
 
   /** Удалить одну запись гостя */
   deleteRecord: (guestListId: string, recordId: string) =>

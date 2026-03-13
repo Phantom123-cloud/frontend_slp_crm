@@ -19,6 +19,7 @@ import AuditPage from "./pages/AuditPage";
 import ProjectMapPage from "./pages/ProjectMapPage";
 import TripsListPage from "./pages/trips/TripsListPage";
 import TripDetailPage from "./pages/trips/TripDetailPage";
+import GuestListDetailPage from "./pages/trips/GuestListDetailPage";
 import PresentationDetailPage from "./pages/trips/PresentationDetailPage";
 import DirectoriesPage from "./pages/directories/DirectoriesPage";
 import PresentationsListPage from "./pages/presentations/PresentationsListPage";
@@ -231,6 +232,16 @@ export default function App() {
                     permission={["trips.view-all", "trips.view-person"]}
                   >
                     <TripDetailPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="trips/:tripId/guest-lists/:glId"
+                element={
+                  <PermissionRoute
+                    permission={["trips.view-all", "trips.view-person"]}
+                  >
+                    <GuestListDetailPage />
                   </PermissionRoute>
                 }
               />
