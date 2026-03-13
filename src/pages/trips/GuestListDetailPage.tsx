@@ -13,6 +13,8 @@ import {
   message,
   Tag,
   Tooltip,
+  Row,
+  Col,
 } from "antd";
 import {
   ArrowLeftOutlined,
