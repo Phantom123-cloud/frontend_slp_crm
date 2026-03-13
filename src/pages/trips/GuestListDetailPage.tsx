@@ -669,6 +669,7 @@ const GuestListDetailPage: React.FC = () => {
             <thead>
               <tr>
                 <th style={thStyle}>Презентация</th>
+                <th style={thStyle}>Пригл.</th>
                 <th style={thStyle}>Приход</th>
                 <th style={thStyle}>Пары</th>
                 <th style={thStyle}>%.пр.</th>
@@ -684,7 +685,8 @@ const GuestListDetailPage: React.FC = () => {
                     {row.number ? `Презентация №${row.number}` : "Без презентации"}
                     {row.time ? ` (${row.time})` : ""}
                   </td>
-                  <td style={tdStyle}>{row.arrivals}</td>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{row.arrivals}</td>
+                  <td style={tdStyle}>{row.arrivals - row.notCount}</td>
                   <td style={tdStyle}>{row.pairsTotal}</td>
                   <td style={tdStyle}>{row.pct}%</td>
                   <td style={{ ...tdStyle, color: row.leftCount ? "#ff4d4f" : undefined }}>
@@ -717,6 +719,7 @@ const GuestListDetailPage: React.FC = () => {
                   <tr>
                     <td style={{ ...tdLabelStyle, background: "#434343" }}>Итого</td>
                     <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivals}</td>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivals - tot.notCount}</td>
                     <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.pairsTotal}</td>
                     <td style={{ ...tdStyle, fontWeight: 700 }}>100%</td>
                     <td style={{ ...tdStyle, fontWeight: 700, color: tot.leftCount ? "#ff4d4f" : undefined }}>
