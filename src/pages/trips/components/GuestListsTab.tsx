@@ -17,6 +17,7 @@ import {
   message,
   Tooltip,
   Dropdown,
+  Popconfirm,
 } from "antd";
 import {
   UploadOutlined,
@@ -311,20 +312,25 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
           >
             <Button size="small" icon={<DownloadOutlined />} />
           </Dropdown>
-          <Tooltip title="Загрузите файл с номерами — найденные записи будут удалены">
+          <Popconfirm
+            title="Удаление по файлу"
+            description="Загрузите файл с номерами телефонов — найденные записи будут удалены из списка."
+            okText="Выбрать файл"
+            cancelText="Отмена"
+            onConfirm={() => {
+              setDeleteByFileRowId(r.id);
+              deleteByFileRef.current?.click();
+            }}
+          >
             <Button
               size="small"
               icon={<DeleteOutlined />}
               danger
               loading={deleteByFileLoading && deleteByFileRowId === r.id}
-              onClick={() => {
-                setDeleteByFileRowId(r.id);
-                deleteByFileRef.current?.click();
-              }}
             >
               Удалить файлом
             </Button>
-          </Tooltip>
+          </Popconfirm>
           <Button
             size="small"
             icon={<ArrowRightOutlined />}

@@ -760,16 +760,21 @@ const GuestListDetailPage: React.FC = () => {
           Внести вручную
         </Button>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <Tooltip title="Загрузите файл с номерами (одна строка — один номер). Найденные записи будут удалены.">
+          <Popconfirm
+            title="Удаление по файлу"
+            description="Загрузите файл с номерами телефонов — найденные записи будут удалены из списка."
+            okText="Выбрать файл"
+            cancelText="Отмена"
+            onConfirm={() => deleteFileRef.current?.click()}
+          >
             <Button
               icon={<DeleteOutlined />}
               loading={deleteByFileLoading}
-              onClick={() => deleteFileRef.current?.click()}
               danger
             >
               Удалить файлом
             </Button>
-          </Tooltip>
+          </Popconfirm>
           <input
             ref={deleteFileRef}
             type="file"
