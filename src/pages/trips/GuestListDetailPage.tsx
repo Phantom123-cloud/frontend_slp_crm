@@ -15,6 +15,7 @@ import {
   Tooltip,
   Row,
   Col,
+  theme,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -260,33 +261,6 @@ const EditModal: React.FC<EditModalProps> = ({ record, isNew, datePresentations,
   );
 };
 
-// ────────────────────────────────────────────────────────────────────────────
-// Стили статистической таблицы
-// ────────────────────────────────────────────────────────────────────────────
-
-const thStyle: React.CSSProperties = {
-  padding: "4px 10px",
-  border: "1px solid #d9d9d9",
-  background: "#f5f5f5",
-  fontWeight: 600,
-  textAlign: "center",
-  whiteSpace: "nowrap",
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: "4px 10px",
-  border: "1px solid #d9d9d9",
-  textAlign: "center",
-  whiteSpace: "nowrap",
-};
-
-const tdLabelStyle: React.CSSProperties = {
-  padding: "4px 12px",
-  border: "1px solid rgba(0,0,0,0.15)",
-  color: "#fff",
-  fontWeight: 600,
-  whiteSpace: "nowrap",
-};
 
 // ────────────────────────────────────────────────────────────────────────────
 // Основная страница
@@ -295,6 +269,30 @@ const tdLabelStyle: React.CSSProperties = {
 const GuestListDetailPage: React.FC = () => {
   const { tripId, glId } = useParams<{ tripId: string; glId: string }>();
   const navigate = useNavigate();
+  const { token } = theme.useToken();
+
+  // ── Стили статистической таблицы (зависят от темы) ───────────────────────
+  const thStyle: React.CSSProperties = {
+    padding: "4px 10px",
+    border: `1px solid ${token.colorBorderSecondary}`,
+    background: token.colorFillAlter,
+    fontWeight: 600,
+    textAlign: "center",
+    whiteSpace: "nowrap",
+  };
+  const tdStyle: React.CSSProperties = {
+    padding: "4px 10px",
+    border: `1px solid ${token.colorBorderSecondary}`,
+    textAlign: "center",
+    whiteSpace: "nowrap",
+  };
+  const tdLabelStyle: React.CSSProperties = {
+    padding: "4px 12px",
+    border: `1px solid ${token.colorBorderSecondary}`,
+    color: "#fff",
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+  };
 
   const [guestList, setGuestList] = useState<any>(null);
   const [loading, setLoading] = useState(true);
