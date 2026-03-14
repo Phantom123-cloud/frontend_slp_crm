@@ -395,7 +395,10 @@
     "tripNoCrewForPresentation": "Prezentatsiya yaratib bo'lmaydi: avval jamoani belgilang",
     "insufficientBalance": "Balansda mablag' yetarli emas",
     "tooManyPendingOutgoing": "Limit oshib ketdi: sizda allaqachon 5 ta kutilayotgan chiquvchi o'tkazma bor",
-    "tooManyPendingIncoming": "Limit oshib ketdi: qabul qiluvchida allaqachon 5 ta kutilayotgan kiruvchi o'tkazma bor"
+    "tooManyPendingIncoming": "Limit oshib ketdi: qabul qiluvchida allaqachon 5 ta kutilayotgan kiruvchi o'tkazma bor",
+    "couponDuplicate": "Bu kupon raqami ro'yxatda allaqachon bor",
+    "phoneDuplicate": "Bu telefon raqamli mehmon allaqachon ro'yxatda bor",
+    "recordHasData": "O'chirib bo'lmaydi: yozuvda qo'lda kiritilgan ma'lumotlar bor"
   },
   "trips": {
     "title": "Sayohatlar",

@@ -468,31 +468,51 @@ const GuestListDetailPage: React.FC = () => {
     return rows;
   }, [guestList]);
 
+  // Проверяем, есть ли вручную заполненные данные (тогда удаление запрещено)
+  const hasFilledData = (r: any) =>
+    !!(r.leftStatus || r.leftReason || r.passportCount !== null ||
+       r.insteadOf || r.guestFullName || r.guestPhone || r.notes ||
+       r.phone2 || r.phone3);
+
   // ── Колонки таблицы ──────────────────────────────────────────────────────
   const columns = [
     {
       title: "",
       key: "fill",
       width: 110,
-      render: (_: any, r: any) => (
-        <Space size={4}>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => setEditRecord(r)}
-          >
-            Запол.
-          </Button>
-          <Popconfirm
-            title="Удалить запись?"
-            onConfirm={() => handleDeleteRecord(r.id)}
-            okText="Да"
-            cancelText="Нет"
-          >
-            <Button size="small" icon={<DeleteOutlined />} danger type="text" />
-          </Popconfirm>
-        </Space>
-      ),
+      render: (_: any, r: any) => {
+        const filled = hasFilledData(r);
+        return (
+          <Space size={4}>
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => setEditRecord(r)}
+            >
+              Запол.
+            </Button>
+            <Tooltip title={filled ? "Нельзя удалить: есть заполненные данные" : "Удалить"}>
+              <span>
+                <Popconfirm
+                  title="Удалить запись?"
+                  onConfirm={() => handleDeleteRecord(r.id)}
+                  okText="Да"
+                  cancelText="Нет"
+                  disabled={filled}
+                >
+                  <Button
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    danger={!filled}
+                    type="text"
+                    disabled={filled}
+                  />
+                </Popconfirm>
+              </span>
+            </Tooltip>
+          </Space>
+        );
+      },
     },
     {
       title: "ФИО",

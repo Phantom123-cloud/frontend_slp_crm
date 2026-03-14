@@ -395,7 +395,10 @@
     "tripNoCrewForPresentation": "Cannot create presentation: assign a crew to the trip first",
     "insufficientBalance": "Insufficient balance",
     "tooManyPendingOutgoing": "Limit exceeded: you already have 5 pending outgoing transfers",
-    "tooManyPendingIncoming": "Limit exceeded: the recipient already has 5 pending incoming transfers"
+    "tooManyPendingIncoming": "Limit exceeded: the recipient already has 5 pending incoming transfers",
+    "couponDuplicate": "A guest with this coupon number already exists in this list",
+    "phoneDuplicate": "A guest with this phone already exists in this list",
+    "recordHasData": "Cannot delete: the record has manually entered data"
   },
   "trips": {
     "title": "Trips",
