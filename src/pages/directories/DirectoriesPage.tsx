@@ -499,6 +499,7 @@ export default function DirectoriesPage() {
                   </div>
                 )}
                 <Table
+        scroll={{ x: "max-content" }}
                   dataSource={types}
                   columns={typeColumns}
                   rowKey="id"
@@ -529,6 +530,7 @@ export default function DirectoriesPage() {
                   </div>
                 )}
                 <Table
+        scroll={{ x: "max-content" }}
                   dataSource={products}
                   columns={productColumns}
                   rowKey="id"
@@ -555,6 +557,7 @@ export default function DirectoriesPage() {
                   </div>
                 )}
                 <Table
+        scroll={{ x: "max-content" }}
                   dataSource={expenseTypes}
                   columns={expenseTypeColumns}
                   rowKey="id"
@@ -582,6 +585,7 @@ export default function DirectoriesPage() {
                   </div>
                 )}
                 <Table
+        scroll={{ x: "max-content" }}
                   dataSource={venues}
                   columns={venueColumns}
                   rowKey="id"

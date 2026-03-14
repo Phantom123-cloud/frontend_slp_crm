@@ -191,6 +191,7 @@ export default function TripsListPage() {
     }
     return (
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={record.crew}
         rowKey="id"
         size="small"
@@ -258,6 +259,7 @@ export default function TripsListPage() {
       </Radio.Group>
 
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={trips}
         columns={columns}
         rowKey="id"

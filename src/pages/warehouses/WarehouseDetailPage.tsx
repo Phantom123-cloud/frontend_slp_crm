@@ -228,6 +228,7 @@ export default function WarehouseDetailPage() {
         }
       >
         <Table
+        scroll={{ x: "max-content" }}
           dataSource={warehouse.stock}
           columns={stockColumns}
           rowKey="id"
@@ -250,6 +251,7 @@ export default function WarehouseDetailPage() {
                 {t("warehouses.pendingOutgoing")}
               </Text>
               <Table
+        scroll={{ x: "max-content" }}
                 size="small"
                 rowKey="id"
                 dataSource={pendingOutgoing}
@@ -308,6 +310,7 @@ export default function WarehouseDetailPage() {
                 {t("warehouses.pendingIncoming")}
               </Text>
               <Table
+        scroll={{ x: "max-content" }}
                 size="small"
                 rowKey="id"
                 dataSource={pendingIncoming}

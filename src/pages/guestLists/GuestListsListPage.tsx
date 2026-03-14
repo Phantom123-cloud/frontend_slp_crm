@@ -116,6 +116,7 @@ export default function GuestListsListPage() {
       </div>
 
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={lists}
         columns={columns}
         rowKey="id"

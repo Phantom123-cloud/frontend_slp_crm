@@ -171,6 +171,7 @@ export default function PresentationsListPage() {
       </Radio.Group>
 
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={presentations}
         columns={columns}
         rowKey="id"

@@ -275,6 +275,7 @@ export default function TripDetailPage() {
     }
     return (
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={record.crew}
         rowKey="id"
         size="small"
@@ -584,6 +585,7 @@ export default function TripDetailPage() {
       >
         {trip.crew?.length > 0 ? (
           <Table
+        scroll={{ x: "max-content" }}
             dataSource={trip.crew}
             columns={crewColumns}
             rowKey="id"
@@ -659,6 +661,7 @@ export default function TripDetailPage() {
                   )}
                   </div>
                   <Table
+        scroll={{ x: "max-content" }}
                     dataSource={filteredPresentations}
                     columns={presColumns}
                     rowKey="id"

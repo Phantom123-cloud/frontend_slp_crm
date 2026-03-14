@@ -105,6 +105,7 @@ export default function TripWarehouseTab({ warehouseId, canTransact, canEdit = f
         }
       >
         <Table
+        scroll={{ x: "max-content" }}
           dataSource={warehouse.stock}
           columns={stockColumns}
           rowKey="id"

@@ -771,6 +771,7 @@ export default function WalletDetailPage() {
                   {t("wallets.pendingOutgoing")}
                 </Text>
                 <Table
+        scroll={{ x: "max-content" }}
                   size="small"
                   rowKey="id"
                   dataSource={pendingOutgoing}
@@ -843,6 +844,7 @@ export default function WalletDetailPage() {
                   {t("wallets.pendingIncoming")}
                 </Text>
                 <Table
+        scroll={{ x: "max-content" }}
                   dataSource={pendingTransfers}
                   rowKey="id"
                   size="small"
@@ -949,6 +951,7 @@ export default function WalletDetailPage() {
         }
       >
         <Table
+        scroll={{ x: "max-content" }}
           columns={txColumns}
           dataSource={transactions.filter(
             (tx: any) => !(tx.type === "TRANSFER_OUT" && tx.transferOut?.status === "PENDING")

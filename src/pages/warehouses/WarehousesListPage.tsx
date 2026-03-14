@@ -288,6 +288,7 @@ export default function WarehousesListPage() {
       />
 
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={filteredWarehouses}
         columns={columns}
         rowKey="id"

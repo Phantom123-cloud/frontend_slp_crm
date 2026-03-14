@@ -188,6 +188,7 @@ export default function PresentationSummaryModal({
             {t("trips.summaryApproaches")}
           </Title>
           <Table
+        scroll={{ x: "max-content" }}
             dataSource={rows}
             columns={approachColumns}
             rowKey="userId"
@@ -199,6 +200,7 @@ export default function PresentationSummaryModal({
 
           <Title level={5}>{t("trips.summaryRefusals")}</Title>
           <Table
+        scroll={{ x: "max-content" }}
             dataSource={rows}
             columns={refusalColumns}
             rowKey="userId"

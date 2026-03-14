@@ -457,6 +457,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
             label: "Списки",
             children: (
               <Table
+        scroll={{ x: "max-content" }}
                 columns={listsColumns}
                 dataSource={guestLists}
                 rowKey="id"
@@ -477,6 +478,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
             ),
             children: (
               <Table
+        scroll={{ x: "max-content" }}
                 columns={logsColumns}
                 dataSource={logs}
                 rowKey="id"

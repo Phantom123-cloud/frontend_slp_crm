@@ -433,6 +433,7 @@ export default function TripWalletTab({ walletId, canTransact, canAudit }: Props
 
       {/* Транзакции */}
       <Table
+        scroll={{ x: "max-content" }}
         columns={txColumns}
         dataSource={transactions}
         rowKey="id"

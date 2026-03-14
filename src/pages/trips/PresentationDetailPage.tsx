@@ -236,6 +236,7 @@ export default function PresentationDetailPage() {
       >
         {presentation.crew?.length > 0 ? (
           <Table
+        scroll={{ x: "max-content" }}
             dataSource={presentation.crew}
             columns={crewColumns}
             rowKey="id"

@@ -348,6 +348,7 @@ export default function TransactionsTable({
   return (
     <>
       <Table
+        scroll={{ x: "max-content" }}
         dataSource={transactions}
         columns={columns}
         rowKey="id"

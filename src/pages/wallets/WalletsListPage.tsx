@@ -285,6 +285,7 @@ export default function WalletsListPage() {
       />
 
       <Table
+        scroll={{ x: "max-content" }}
         columns={columns}
         dataSource={filtered}
         rowKey="id"
