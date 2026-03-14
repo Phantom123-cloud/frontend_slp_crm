@@ -473,15 +473,25 @@ const GuestListDetailPage: React.FC = () => {
     {
       title: "",
       key: "fill",
-      width: 80,
+      width: 110,
       render: (_: any, r: any) => (
-        <Button
-          size="small"
-          icon={<EditOutlined />}
-          onClick={() => setEditRecord(r)}
-        >
-          Запол.
-        </Button>
+        <Space size={4}>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => setEditRecord(r)}
+          >
+            Запол.
+          </Button>
+          <Popconfirm
+            title="Удалить запись?"
+            onConfirm={() => handleDeleteRecord(r.id)}
+            okText="Да"
+            cancelText="Нет"
+          >
+            <Button size="small" icon={<DeleteOutlined />} danger type="text" />
+          </Popconfirm>
+        </Space>
       ),
     },
     {
@@ -616,22 +626,6 @@ const GuestListDetailPage: React.FC = () => {
       key: "time",
       width: 75,
       render: (v: string) => v || <Text type="secondary">—</Text>,
-    },
-    {
-      title: "",
-      key: "actions",
-      width: 48,
-      fixed: "right" as const,
-      render: (_: any, r: any) => (
-        <Popconfirm
-          title="Удалить запись?"
-          onConfirm={() => handleDeleteRecord(r.id)}
-          okText="Да"
-          cancelText="Нет"
-        >
-          <Button size="small" icon={<DeleteOutlined />} danger type="text" />
-        </Popconfirm>
-      ),
     },
   ];
 
