@@ -406,28 +406,42 @@ const GuestListDetailPage: React.FC = () => {
     if (!guestList?.guests || !guestList?.datePresentations) return [];
 
     const guests: any[] = guestList.guests;
-    const total = guests.length;
-
-    // Цвета для презентаций по номеру
     const presColors: Record<number, string> = { 1: "#c0392b", 2: "#b7791f", 3: "#276749" };
+
+    // Гости = к-во записей (каждая запись = 1 приглашение) + сумма guestsCount (доп. люди)
+    // guestsCount=0 → пришёл один, guestsCount=1 → пришёл с одним и т.д.
+    const calcGuests = (recs: any[]) =>
+      recs.length + recs.reduce((s: number, g: any) => s + (Number(g.guestsCount) || 0), 0);
+    const calcPairs = (recs: any[]) =>
+      recs.reduce((s: number, g: any) => s + (Number(g.pairsCount) || 0), 0);
 
     const rows = guestList.datePresentations.map((pres: any) => {
       const records = guests.filter((g) => g.presentationNumber === pres.number);
-      const arrivals = records.length;
-      const pairsTotal = records.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0);
+      const totalInvited = records.length;
 
-      const leftRecs = records.filter((g: any) => g.leftStatus === "ушел");
-      const notRecs  = records.filter((g: any) => g.leftStatus === "не пустили");
+      // Обработанные = у кого заполнен guestsCount (оператор проставил отметку)
+      const processed = records.filter(
+        (g: any) => g.guestsCount !== null && g.guestsCount !== undefined,
+      );
+      const notLetIn  = processed.filter((g: any) => g.leftStatus === "не пустили");
+      const leftRecs  = processed.filter((g: any) => g.leftStatus === "ушел");
+      const inHallRecs = processed.filter((g: any) => !g.leftStatus);
+      // Пришли = обработанные без «не пустили»
+      const arrivedRecs = [...inHallRecs, ...leftRecs];
 
-      const leftCount = leftRecs.length;
-      const leftPairs = leftRecs.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0);
-      const notCount  = notRecs.length;
-      const notPairs  = notRecs.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0);
+      const arrivedGuests = calcGuests(arrivedRecs);
+      const arrivedPairs  = calcPairs(arrivedRecs);
+      const leftGuests    = calcGuests(leftRecs);
+      const leftPairs     = calcPairs(leftRecs);
+      const notGuests     = calcGuests(notLetIn);
+      const notPairs      = calcPairs(notLetIn);
+      const inHallGuests  = calcGuests(inHallRecs);
+      const inHallPairs   = calcPairs(inHallRecs);
 
-      const inHall      = arrivals - leftCount - notCount;
-      const inHallPairs = pairsTotal - leftPairs - notPairs;
-      // % = Приход / Приглашено (сколько из списка реально зашли)
-      const pct = arrivals > 0 ? Math.round(((arrivals - notCount) / arrivals) * 100) : 0;
+      // % = к-во обработанных приглашений (без «не пустили») / всего приглашено
+      const pct = totalInvited > 0
+        ? Math.round((arrivedRecs.length / totalInvited) * 100)
+        : 0;
 
       return {
         key: pres.number,
@@ -435,14 +449,16 @@ const GuestListDetailPage: React.FC = () => {
         name: pres.name,
         time: pres.time,
         color: presColors[pres.number] ?? "#595959",
-        arrivals,
-        pairsTotal,
+        totalInvited,
+        arrivedGuests,
+        arrivedPairs,
+        arrivedCount: arrivedRecs.length,
         pct,
-        leftCount,
+        leftGuests,
         leftPairs,
-        notCount,
+        notGuests,
         notPairs,
-        inHall,
+        inHallGuests,
         inHallPairs,
       };
     });
@@ -450,18 +466,23 @@ const GuestListDetailPage: React.FC = () => {
     // Строка «без презентации» — записи с null presentationNumber
     const noPresRecs = guests.filter((g: any) => g.presentationNumber == null);
     if (noPresRecs.length > 0) {
+      const proc = noPresRecs.filter(
+        (g: any) => g.guestsCount !== null && g.guestsCount !== undefined,
+      );
+      const notL = proc.filter((g: any) => g.leftStatus === "не пустили");
+      const left = proc.filter((g: any) => g.leftStatus === "ушел");
+      const hall = proc.filter((g: any) => !g.leftStatus);
+      const arr  = [...hall, ...left];
       rows.push({
-        key: 0,
-        number: 0,
-        name: "—",
-        time: "",
-        color: "#8c8c8c",
-        arrivals: noPresRecs.length,
-        pairsTotal: noPresRecs.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0),
-        pct: total > 0 ? Math.round((noPresRecs.length / total) * 100) : 0,
-        leftCount: 0, leftPairs: 0, notCount: 0, notPairs: 0,
-        inHall: noPresRecs.length,
-        inHallPairs: noPresRecs.reduce((s: number, g: any) => s + (g.pairsCount || 0), 0),
+        key: 0, number: 0, name: "—", time: "", color: "#8c8c8c",
+        totalInvited: noPresRecs.length,
+        arrivedGuests: calcGuests(arr),
+        arrivedPairs:  calcPairs(arr),
+        arrivedCount:  arr.length,
+        pct: 0,
+        leftGuests: calcGuests(left), leftPairs: calcPairs(left),
+        notGuests:  calcGuests(notL), notPairs:  calcPairs(notL),
+        inHallGuests: calcGuests(hall), inHallPairs: calcPairs(hall),
       });
     }
 
@@ -700,18 +721,18 @@ const GuestListDetailPage: React.FC = () => {
                     {row.number ? `Презентация №${row.number}` : "Без презентации"}
                     {row.time ? ` (${row.time})` : ""}
                   </td>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>{row.arrivals}</td>
-                  <td style={tdStyle}>{row.arrivals - row.notCount}</td>
-                  <td style={tdStyle}>{row.pairsTotal}</td>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{row.totalInvited}</td>
+                  <td style={tdStyle}>{row.arrivedGuests}</td>
+                  <td style={tdStyle}>{row.arrivedPairs}</td>
                   <td style={tdStyle}>{row.pct}%</td>
-                  <td style={{ ...tdStyle, color: row.leftCount ? "#ff4d4f" : undefined }}>
-                    {row.leftCount}/{row.leftPairs}
+                  <td style={{ ...tdStyle, color: row.leftGuests ? "#ff4d4f" : undefined }}>
+                    {row.leftGuests}/{row.leftPairs}
                   </td>
-                  <td style={{ ...tdStyle, color: row.notCount ? "#fa8c16" : undefined }}>
-                    {row.notCount}/{row.notPairs}
+                  <td style={{ ...tdStyle, color: row.notGuests ? "#fa8c16" : undefined }}>
+                    {row.notGuests}/{row.notPairs}
                   </td>
                   <td style={{ ...tdStyle, fontWeight: 600, color: "#52c41a" }}>
-                    {row.inHall}/{row.inHallPairs}
+                    {row.inHallGuests}/{row.inHallPairs}
                   </td>
                 </tr>
               ))}
@@ -719,34 +740,39 @@ const GuestListDetailPage: React.FC = () => {
               {presStats.length > 1 && (() => {
                 const tot = presStats.reduce(
                   (acc, r) => ({
-                    arrivals:   acc.arrivals   + r.arrivals,
-                    pairsTotal: acc.pairsTotal + r.pairsTotal,
-                    leftCount:  acc.leftCount  + r.leftCount,
-                    leftPairs:  acc.leftPairs  + r.leftPairs,
-                    notCount:   acc.notCount   + r.notCount,
-                    notPairs:   acc.notPairs   + r.notPairs,
-                    inHall:     acc.inHall     + r.inHall,
-                    inHallPairs:acc.inHallPairs+ r.inHallPairs,
+                    totalInvited:  acc.totalInvited  + r.totalInvited,
+                    arrivedGuests: acc.arrivedGuests + r.arrivedGuests,
+                    arrivedPairs:  acc.arrivedPairs  + r.arrivedPairs,
+                    arrivedCount:  acc.arrivedCount  + r.arrivedCount,
+                    leftGuests:    acc.leftGuests    + r.leftGuests,
+                    leftPairs:     acc.leftPairs     + r.leftPairs,
+                    notGuests:     acc.notGuests     + r.notGuests,
+                    notPairs:      acc.notPairs      + r.notPairs,
+                    inHallGuests:  acc.inHallGuests  + r.inHallGuests,
+                    inHallPairs:   acc.inHallPairs   + r.inHallPairs,
                   }),
-                  { arrivals:0, pairsTotal:0, leftCount:0, leftPairs:0, notCount:0, notPairs:0, inHall:0, inHallPairs:0 }
+                  { totalInvited:0, arrivedGuests:0, arrivedPairs:0, arrivedCount:0,
+                    leftGuests:0, leftPairs:0, notGuests:0, notPairs:0,
+                    inHallGuests:0, inHallPairs:0 }
                 );
+                const totPct = tot.totalInvited > 0
+                  ? Math.round((tot.arrivedCount / tot.totalInvited) * 100)
+                  : 0;
                 return (
                   <tr>
                     <td style={{ ...tdLabelStyle, background: "#434343" }}>Итого</td>
-                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivals}</td>
-                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivals - tot.notCount}</td>
-                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.pairsTotal}</td>
-                    <td style={{ ...tdStyle, fontWeight: 700 }}>
-                      {tot.arrivals > 0 ? Math.round(((tot.arrivals - tot.notCount) / tot.arrivals) * 100) : 0}%
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.totalInvited}</td>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivedGuests}</td>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>{tot.arrivedPairs}</td>
+                    <td style={{ ...tdStyle, fontWeight: 700 }}>{totPct}%</td>
+                    <td style={{ ...tdStyle, fontWeight: 700, color: tot.leftGuests ? "#ff4d4f" : undefined }}>
+                      {tot.leftGuests}/{tot.leftPairs}
                     </td>
-                    <td style={{ ...tdStyle, fontWeight: 700, color: tot.leftCount ? "#ff4d4f" : undefined }}>
-                      {tot.leftCount}/{tot.leftPairs}
-                    </td>
-                    <td style={{ ...tdStyle, fontWeight: 700, color: tot.notCount ? "#fa8c16" : undefined }}>
-                      {tot.notCount}/{tot.notPairs}
+                    <td style={{ ...tdStyle, fontWeight: 700, color: tot.notGuests ? "#fa8c16" : undefined }}>
+                      {tot.notGuests}/{tot.notPairs}
                     </td>
                     <td style={{ ...tdStyle, fontWeight: 700, color: "#52c41a" }}>
-                      {tot.inHall}/{tot.inHallPairs}
+                      {tot.inHallGuests}/{tot.inHallPairs}
                     </td>
                   </tr>
                 );
