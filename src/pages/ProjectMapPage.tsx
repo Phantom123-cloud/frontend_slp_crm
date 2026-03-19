@@ -35,6 +35,7 @@ import {
   TransactionOutlined,
   LockOutlined,
   BookOutlined,
+  ContactsOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
@@ -520,6 +521,59 @@ const MODULES: ModuleConfig[] = [
       },
     ],
     link: "/wallets",
+  },
+  {
+    titleKey: "projectMap.guestListsTitle",
+    descKey: "projectMap.guestListsDesc",
+    icon: <ContactsOutlined style={{ fontSize: 28 }} />,
+    color: "#eb2f96",
+    permissions: [
+      "guest_lists.view-all",
+      "guest_lists.view-person",
+      "guest_lists.create",
+      "guest_lists.fill",
+      "guest_lists.delete",
+    ],
+    actions: [
+      {
+        permission: "guest_lists.view-all",
+        labelKey: "projectMap.guestListsViewAll",
+        detailKey: "projectMap.guestListsViewAllDetail",
+        locationKey: "projectMap.guestListsViewAllLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "guest_lists.view-person",
+        labelKey: "projectMap.guestListsViewPerson",
+        detailKey: "projectMap.guestListsViewPersonDetail",
+        locationKey: "projectMap.guestListsViewPersonLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "guest_lists.create",
+        labelKey: "projectMap.guestListsCreate",
+        detailKey: "projectMap.guestListsCreateDetail",
+        locationKey: "projectMap.guestListsCreateLocation",
+        icon: <UploadOutlined />,
+        buttonType: "primary",
+      },
+      {
+        permission: "guest_lists.fill",
+        labelKey: "projectMap.guestListsFill",
+        detailKey: "projectMap.guestListsFillDetail",
+        locationKey: "projectMap.guestListsFillLocation",
+        icon: <EditOutlined />,
+      },
+      {
+        permission: "guest_lists.delete",
+        labelKey: "projectMap.guestListsDelete",
+        detailKey: "projectMap.guestListsDeleteDetail",
+        locationKey: "projectMap.guestListsDeleteLocation",
+        icon: <DeleteOutlined />,
+        danger: true,
+      },
+    ],
+    link: "/guest-lists",
   },
 ];
 
