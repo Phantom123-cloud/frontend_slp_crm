@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "../store/auth";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL: "http://localhost:3030/api",
   headers: { "Content-Type": "application/json" },
 });
 
@@ -32,7 +32,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          "http://localhost:3000/api/auth/refresh",
+          "http://localhost:3030/api/auth/refresh",
           {
             refreshToken,
           },

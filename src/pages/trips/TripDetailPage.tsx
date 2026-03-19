@@ -98,6 +98,14 @@ export default function TripDetailPage() {
   // warehouses.edit — редактирование названия, ответственного и примечаний транзакций
   const canEditWarehouse = usePermission("warehouses.edit");
 
+  const canViewGuestLists = useAnyPermission([
+    "guest_lists.view-all",
+    "guest_lists.view-person",
+    "guest_lists.create",
+    "guest_lists.fill",
+    "guest_lists.delete",
+  ]);
+
   const canViewAllWallets = useAnyPermission(["wallets.view-all", "wallets.manage"]);
   const canViewPersonWallets = useAnyPermission(["wallets.view-person", "wallets.edit"]);
   const canTransactWallets = usePermission("wallets.transaction");
@@ -741,7 +749,7 @@ export default function TripDetailPage() {
                 </div>
               ),
             },
-            {
+            canViewGuestLists && {
               key: "guestLists",
               label: t("trips.guestLists"),
               children: (

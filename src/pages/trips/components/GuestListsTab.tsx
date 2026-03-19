@@ -31,6 +31,7 @@ import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { guestListsApi } from "../../../api/guestLists";
+import { useAnyPermission, usePermission } from "../../../hooks/usePermission";
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -105,6 +106,10 @@ interface Props {
 const GuestListsTab: React.FC<Props> = ({ tripId }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const canCreate = usePermission("guest_lists.create");
+  const canDelete = usePermission("guest_lists.delete");
+  const canViewHistory = useAnyPermission(["guest_lists.view-all", "guest_lists.view-person"]);
 
   // ── Состояние ────────────────────────────────────────────────────────────
   const [activeSubTab, setActiveSubTab] = useState("all");
@@ -312,25 +317,27 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
           >
             <Button size="small" icon={<DownloadOutlined />} />
           </Dropdown>
-          <Popconfirm
-            title="Удаление по файлу"
-            description="Загрузите файл с номерами телефонов — найденные записи будут удалены из списка."
-            okText="Выбрать файл"
-            cancelText="Отмена"
-            onConfirm={() => {
-              setDeleteByFileRowId(r.id);
-              deleteByFileRef.current?.click();
-            }}
-          >
-            <Button
-              size="small"
-              icon={<DeleteOutlined />}
-              danger
-              loading={deleteByFileLoading && deleteByFileRowId === r.id}
+          {canDelete && (
+            <Popconfirm
+              title="Удаление по файлу"
+              description="Загрузите файл с номерами телефонов — найденные записи будут удалены из списка."
+              okText="Выбрать файл"
+              cancelText="Отмена"
+              onConfirm={() => {
+                setDeleteByFileRowId(r.id);
+                deleteByFileRef.current?.click();
+              }}
             >
-              Удалить файлом
-            </Button>
-          </Popconfirm>
+              <Button
+                size="small"
+                icon={<DeleteOutlined />}
+                danger
+                loading={deleteByFileLoading && deleteByFileRowId === r.id}
+              >
+                Удалить файлом
+              </Button>
+            </Popconfirm>
+          )}
           <Button
             size="small"
             icon={<ArrowRightOutlined />}
@@ -441,7 +448,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
         activeKey={activeSubTab}
         onChange={setActiveSubTab}
         tabBarExtraContent={
-          activeSubTab !== "history" && (
+          activeSubTab !== "history" && canCreate && (
             <Button
               type="primary"
               icon={<ImportOutlined />}
@@ -468,7 +475,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
               />
             ),
           },
-          {
+          canViewHistory && {
             key: "history",
             label: (
               <Space>
@@ -489,7 +496,7 @@ const GuestListsTab: React.FC<Props> = ({ tripId }) => {
               />
             ),
           },
-        ]}
+        ].filter(Boolean) as any[]}
       />
 
       {/* ── Модалка импорта ─────────────────────────────────────────────── */}

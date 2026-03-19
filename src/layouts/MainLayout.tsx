@@ -106,13 +106,18 @@ export default function MainLayout() {
     "wallets.transaction",
   ]);
 
+  const canViewGuestLists = useAnyPermission([
+    "guest_lists.view-all",
+    "guest_lists.view-person",
+  ]);
+
   const tripsChildren = [
     canViewTrips && { key: "/trips", label: t("menu.tripsList") },
     canViewPresentations && {
       key: "/presentations",
       label: t("menu.presentations"),
     },
-    canViewTrips && {
+    canViewGuestLists && {
       key: "/guest-lists",
       label: t("menu.guestLists"),
     },

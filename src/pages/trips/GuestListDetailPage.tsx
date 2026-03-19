@@ -26,6 +26,7 @@ import {
 } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import { guestListsApi } from "../../api/guestLists";
+import { usePermission } from "../../hooks/usePermission";
 import dayjs from "dayjs";
 
 const { Text, Title } = Typography;
@@ -489,6 +490,9 @@ const GuestListDetailPage: React.FC = () => {
     return rows;
   }, [guestList]);
 
+  const canFill = usePermission("guest_lists.fill");
+  const canDelete = usePermission("guest_lists.delete");
+
   // Проверяем, есть ли вручную заполненные данные (тогда удаление запрещено)
   const hasFilledData = (r: any) =>
     !!(r.leftStatus || r.leftReason || r.passportCount !== null ||
@@ -505,32 +509,36 @@ const GuestListDetailPage: React.FC = () => {
         const filled = hasFilledData(r);
         return (
           <Space size={4}>
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => setEditRecord(r)}
-            >
-              Запол.
-            </Button>
-            <Tooltip title={filled ? "Нельзя удалить: есть заполненные данные" : "Удалить"}>
-              <span>
-                <Popconfirm
-                  title="Удалить запись?"
-                  onConfirm={() => handleDeleteRecord(r.id)}
-                  okText="Да"
-                  cancelText="Нет"
-                  disabled={filled}
-                >
-                  <Button
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    danger={!filled}
-                    type="text"
+            {canFill && (
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => setEditRecord(r)}
+              >
+                Запол.
+              </Button>
+            )}
+            {canDelete && (
+              <Tooltip title={filled ? "Нельзя удалить: есть заполненные данные" : "Удалить"}>
+                <span>
+                  <Popconfirm
+                    title="Удалить запись?"
+                    onConfirm={() => handleDeleteRecord(r.id)}
+                    okText="Да"
+                    cancelText="Нет"
                     disabled={filled}
-                  />
-                </Popconfirm>
-              </span>
-            </Tooltip>
+                  >
+                    <Button
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      danger={!filled}
+                      type="text"
+                      disabled={filled}
+                    />
+                  </Popconfirm>
+                </span>
+              </Tooltip>
+            )}
           </Space>
         );
       },
@@ -792,37 +800,41 @@ const GuestListDetailPage: React.FC = () => {
           allowClear
           style={{ width: 300 }}
         />
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setAddManualOpen(true)}
-        >
-          Внести вручную
-        </Button>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <Popconfirm
-            title="Удаление по файлу"
-            description="Загрузите файл с номерами телефонов — найденные записи будут удалены из списка."
-            okText="Выбрать файл"
-            cancelText="Отмена"
-            onConfirm={() => deleteFileRef.current?.click()}
+        {canFill && (
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setAddManualOpen(true)}
           >
-            <Button
-              icon={<DeleteOutlined />}
-              loading={deleteByFileLoading}
-              danger
+            Внести вручную
+          </Button>
+        )}
+        {canDelete && (
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+            <Popconfirm
+              title="Удаление по файлу"
+              description="Загрузите файл с номерами телефонов — найденные записи будут удалены из списка."
+              okText="Выбрать файл"
+              cancelText="Отмена"
+              onConfirm={() => deleteFileRef.current?.click()}
             >
-              Удалить файлом
-            </Button>
-          </Popconfirm>
-          <input
-            ref={deleteFileRef}
-            type="file"
-            accept=".txt,.csv"
-            style={{ display: "none" }}
-            onChange={handleDeleteByFile}
-          />
-        </div>
+              <Button
+                icon={<DeleteOutlined />}
+                loading={deleteByFileLoading}
+                danger
+              >
+                Удалить файлом
+              </Button>
+            </Popconfirm>
+            <input
+              ref={deleteFileRef}
+              type="file"
+              accept=".txt,.csv"
+              style={{ display: "none" }}
+              onChange={handleDeleteByFile}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Таблица гостей ───────────────────────────────────────────────── */}

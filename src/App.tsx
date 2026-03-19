@@ -240,7 +240,13 @@ export default function App() {
                 path="trips/:tripId/guest-lists/:glId"
                 element={
                   <PermissionRoute
-                    permission={["trips.view-all", "trips.view-person"]}
+                    permission={[
+                      "guest_lists.view-all",
+                      "guest_lists.view-person",
+                      "guest_lists.create",
+                      "guest_lists.fill",
+                      "guest_lists.delete",
+                    ]}
                   >
                     <GuestListDetailPage />
                   </PermissionRoute>
@@ -267,7 +273,10 @@ export default function App() {
                 path="guest-lists"
                 element={
                   <PermissionRoute
-                    permission={["trips.view-all", "trips.view-person"]}
+                    permission={[
+                      "guest_lists.view-all",
+                      "guest_lists.view-person",
+                    ]}
                   >
                     <GuestListsListPage />
                   </PermissionRoute>
