@@ -415,7 +415,8 @@
     "tooManyPendingIncoming": "Limit exceeded: the recipient already has 5 pending incoming transfers",
     "couponDuplicate": "A guest with this coupon number already exists in this list",
     "phoneDuplicate": "A guest with this phone already exists in this list",
-    "recordHasData": "Cannot delete: the record has manually entered data"
+    "recordHasData": "Cannot delete: the record has manually entered data",
+    "tripWalletNotEmpty": "Cannot close trip: wallet balance is not zero. Withdraw all funds before closing."
   },
   "trips": {
     "title": "Trips",
@@ -574,7 +575,6 @@
     "reactivate": "Unblock",
     "deactivateConfirm": "Block the warehouse? This will disable all operations on it.",
     "deleteConfirmPermanent": "Permanently delete the warehouse? This cannot be undone.",
-    "type_TRIP": "Trip",
     "blocked": "Blocked",
     "editNote": "Edit note",
     "noteEdited": "Note updated",
@@ -644,7 +644,6 @@
     "confirmDelete": "Delete wallet? Only possible if no transactions.",
     "wallet": "Wallet",
     "tripWallet": "Trip wallet",
-    "trip": "Trip",
     "currency": "Currency",
     "amount": "Amount",
     "fromCurrency": "From currency",

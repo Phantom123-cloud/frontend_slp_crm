@@ -415,7 +415,8 @@
     "tooManyPendingIncoming": "Limit oshib ketdi: qabul qiluvchida allaqachon 5 ta kutilayotgan kiruvchi o'tkazma bor",
     "couponDuplicate": "Bu kupon raqami ro'yxatda allaqachon bor",
     "phoneDuplicate": "Bu telefon raqamli mehmon allaqachon ro'yxatda bor",
-    "recordHasData": "O'chirib bo'lmaydi: yozuvda qo'lda kiritilgan ma'lumotlar bor"
+    "recordHasData": "O'chirib bo'lmaydi: yozuvda qo'lda kiritilgan ma'lumotlar bor",
+    "tripWalletNotEmpty": "Sayohatni yopib bo'lmaydi: hamyon balansi nolga teng emas. Yopishdan oldin barcha mablag'larni yechib oling."
   },
   "trips": {
     "title": "Sayohatlar",
@@ -530,7 +531,7 @@
     "title": "Omborlar",
     "type_CENTRAL": "Markaziy",
     "type_PERSONAL": "Shaxsiy",
-    "type_TRIP": "Safar",
+    "type_TRIP": "Sayohat",
     "create": "Ombor yaratish",
     "name": "Nomi",
     "type": "Turi",
@@ -574,7 +575,6 @@
     "reactivate": "Blokdan chiqarish",
     "deactivateConfirm": "Omborni bloklash? Bu barcha operatsiyalarni taqiqlaydi.",
     "deleteConfirmPermanent": "Omborni butunlay o'chirish? Bu amal qaytarib bo'lmaydi.",
-    "type_TRIP": "Sayohat",
     "blocked": "Bloklangan",
     "editNote": "Izohni tahrirlash",
     "noteEdited": "Izoh yangilandi",
@@ -644,7 +644,6 @@
     "confirmDelete": "Hamyonni o'chirish? Faqat tranzaksiyalar bo'lmasa mumkin.",
     "wallet": "Hamyon",
     "tripWallet": "Safar hamyoni",
-    "trip": "Safar",
     "currency": "Valyuta",
     "amount": "Summa",
     "fromCurrency": "Qaysi valyutadan",

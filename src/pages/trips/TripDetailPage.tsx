@@ -240,7 +240,8 @@ export default function TripDetailPage() {
 
   const isClosed = trip.status === "CLOSED";
   const canModify = canEdit && (!isClosed || canAdmin);
-  const canModifyPresentations = !isClosed || canAdmin;
+  // Закрытый выезд — презентации нельзя редактировать никому
+  const canModifyPresentations = !isClosed;
 
   // Роль текущего юзера в составе поездки
   const myTripCrewRole = (trip.crew || []).find(
