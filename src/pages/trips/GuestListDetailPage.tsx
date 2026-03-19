@@ -417,7 +417,8 @@ const GuestListDetailPage: React.FC = () => {
       recs.reduce((s: number, g: any) => s + (Number(g.pairsCount) || 0), 0);
 
     const rows = guestList.datePresentations.map((pres: any) => {
-      const records = guests.filter((g) => g.presentationNumber === pres.number);
+      // Группируем по presentationId — он есть у каждого гостя независимо от presentationNumber
+      const records = guests.filter((g) => g.presentationId === pres.id);
       const totalInvited = records.length;
 
       // Обработанные = у кого заполнен guestsCount (оператор проставил отметку)
@@ -439,9 +440,9 @@ const GuestListDetailPage: React.FC = () => {
       const inHallGuests  = calcGuests(inHallRecs);
       const inHallPairs   = calcPairs(inHallRecs);
 
-      // % = к-во обработанных приглашений (без «не пустили») / всего приглашено
+      // % = пришедшие люди (с учётом guestsCount) / всего записей приглашённых
       const pct = totalInvited > 0
-        ? Math.round((arrivedRecs.length / totalInvited) * 100)
+        ? Math.round((arrivedGuests / totalInvited) * 100)
         : 0;
 
       return {
@@ -463,29 +464,6 @@ const GuestListDetailPage: React.FC = () => {
         inHallPairs,
       };
     });
-
-    // Строка «без презентации» — записи с null presentationNumber
-    const noPresRecs = guests.filter((g: any) => g.presentationNumber == null);
-    if (noPresRecs.length > 0) {
-      const proc = noPresRecs.filter(
-        (g: any) => g.guestsCount !== null && g.guestsCount !== undefined,
-      );
-      const notL = proc.filter((g: any) => g.leftStatus === "не пустили");
-      const left = proc.filter((g: any) => g.leftStatus === "ушел");
-      const hall = proc.filter((g: any) => !g.leftStatus);
-      const arr  = [...hall, ...left];
-      rows.push({
-        key: 0, number: 0, name: "—", time: "", color: "#8c8c8c",
-        totalInvited: noPresRecs.length,
-        arrivedGuests: calcGuests(arr),
-        arrivedPairs:  calcPairs(arr),
-        arrivedCount:  arr.length,
-        pct: 0,
-        leftGuests: calcGuests(left), leftPairs: calcPairs(left),
-        notGuests:  calcGuests(notL), notPairs:  calcPairs(notL),
-        inHallGuests: calcGuests(hall), inHallPairs: calcPairs(hall),
-      });
-    }
 
     return rows;
   }, [guestList]);
