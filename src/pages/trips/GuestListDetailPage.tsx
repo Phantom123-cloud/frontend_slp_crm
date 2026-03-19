@@ -300,6 +300,8 @@ const GuestListDetailPage: React.FC = () => {
   const [editRecord, setEditRecord] = useState<any | null>(null);
   const [addManualOpen, setAddManualOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const deleteFileRef = useRef<HTMLInputElement>(null);
   const [deleteByFileLoading, setDeleteByFileLoading] = useState(false);
 
@@ -775,7 +777,7 @@ const GuestListDetailPage: React.FC = () => {
           prefix={<SearchOutlined />}
           placeholder="Поиск по ФИО, телефону, купону..."
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={(e) => { setSearchText(e.target.value); setPage(1); }}
           allowClear
           style={{ width: 300 }}
         />
@@ -824,7 +826,14 @@ const GuestListDetailPage: React.FC = () => {
         loading={loading}
         size="small"
         scroll={{ x: 1800 }}
-        pagination={false}
+        pagination={{
+          current: page,
+          pageSize,
+          pageSizeOptions: [50, 100, 500],
+          showSizeChanger: true,
+          showTotal: (total) => `Всего: ${total}`,
+          onChange: (p, ps) => { setPage(p); setPageSize(ps); },
+        }}
         sticky
         locale={{ emptyText: "Нет записей" }}
       />
