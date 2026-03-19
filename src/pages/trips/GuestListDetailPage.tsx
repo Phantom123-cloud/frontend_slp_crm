@@ -425,14 +425,13 @@ const GuestListDetailPage: React.FC = () => {
       const processed = records.filter(
         (g: any) => g.guestsCount !== null && g.guestsCount !== undefined,
       );
-      const notLetIn  = processed.filter((g: any) => g.leftStatus === "не пустили");
-      const leftRecs  = processed.filter((g: any) => g.leftStatus === "ушел");
+      const notLetIn   = processed.filter((g: any) => g.leftStatus === "не пустили");
+      const leftRecs   = processed.filter((g: any) => g.leftStatus === "ушел");
       const inHallRecs = processed.filter((g: any) => !g.leftStatus);
-      // Пришли = обработанные без «не пустили»
-      const arrivedRecs = [...inHallRecs, ...leftRecs];
 
-      const arrivedGuests = calcGuests(arrivedRecs);
-      const arrivedPairs  = calcPairs(arrivedRecs);
+      // Приход = ВСЕ пришедшие физически (в т.ч. «не пустили» — они же показались у двери)
+      const arrivedGuests = calcGuests(processed);
+      const arrivedPairs  = calcPairs(processed);
       const leftGuests    = calcGuests(leftRecs);
       const leftPairs     = calcPairs(leftRecs);
       const notGuests     = calcGuests(notLetIn);
@@ -440,7 +439,7 @@ const GuestListDetailPage: React.FC = () => {
       const inHallGuests  = calcGuests(inHallRecs);
       const inHallPairs   = calcPairs(inHallRecs);
 
-      // % = пришедшие люди (с учётом guestsCount) / всего записей приглашённых
+      // % = пришедшие люди / всего приглашённых записей
       const pct = totalInvited > 0
         ? Math.round((arrivedGuests / totalInvited) * 100)
         : 0;
@@ -454,7 +453,7 @@ const GuestListDetailPage: React.FC = () => {
         totalInvited,
         arrivedGuests,
         arrivedPairs,
-        arrivedCount: arrivedRecs.length,
+        arrivedCount: processed.length,
         pct,
         leftGuests,
         leftPairs,
@@ -473,7 +472,9 @@ const GuestListDetailPage: React.FC = () => {
 
   // Проверяем, есть ли вручную заполненные данные (тогда удаление запрещено)
   const hasFilledData = (r: any) =>
-    !!(r.leftStatus || r.leftReason || r.passportCount !== null ||
+    !!(r.leftStatus || r.leftReason ||
+       r.guestsCount !== null || r.pairsCount !== null ||
+       r.passportCount !== null || r.age !== null ||
        r.insteadOf || r.guestFullName || r.guestPhone || r.notes ||
        r.phone2 || r.phone3);
 
