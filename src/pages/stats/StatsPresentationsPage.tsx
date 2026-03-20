@@ -7,8 +7,12 @@ import {
   Spin,
   Space,
   Typography,
+  Dropdown,
+  Button,
 } from "antd";
+import { DownloadOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
+import * as XLSX from "xlsx";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { statsApi } from "../../api/stats";
@@ -167,6 +171,83 @@ function buildColumns(tab: string) {
   return cols;
 }
 
+// Метки вкладок для имени файла
+const TAB_LABELS: Record<string, string> = {
+  dates: "По датам",
+  leaders: "По ведущим",
+  coordinators: "По координаторам",
+  individual: "Индивидуально",
+};
+
+// Преобразовать данные в плоские строки для экспорта
+function toExportRows(rows: StatsRow[], tab: string) {
+  return rows.map((r) => {
+    const base: Record<string, any> = {
+      [tab === "dates" ? "Период" : "Имя"]: r.label,
+    };
+    if (tab === "dates") base["Презент."] = r.presentationsCount;
+    if (tab !== "individual") {
+      base["Пригл."] = r.invited;
+      base["Приход"] = r.arrived;
+      base["%пр"] = r.pctArrived;
+      base["Пары"] = r.arrivedPairs;
+      base["у (гости)"] = r.leftGuests;
+      base["у (пары)"] = r.leftPairs;
+      base["н (гости)"] = r.notLetGuests;
+      base["н (пары)"] = r.notLetPairs;
+      base["В зале (г)"] = r.inHallGuests;
+      base["В зале (п)"] = r.inHallPairs;
+    }
+    base["Успешных"] = r.successApproach ?? "";
+    base["Часовка всех"] = r.totalApproach ?? "";
+    base["Кол. отказов"] = r.refusalCount ?? "";
+    base["Знач. отказа"] = r.refusalValue ?? "";
+    base["Кол. перепис."] = r.rewriteCount ?? "";
+    base["Ценность перепис."] = r.rewriteValue ?? "";
+    return base;
+  });
+}
+
+// Скачать файл
+function downloadFile(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Экспорт в Excel
+function exportExcel(rows: StatsRow[], tab: string, from: string, to: string) {
+  const data = toExportRows(rows, tab);
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, TAB_LABELS[tab] || tab);
+  const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  downloadFile(
+    new Blob([buf], { type: "application/octet-stream" }),
+    `статистика_${tab}_${from}_${to}.xlsx`
+  );
+}
+
+// Экспорт в CSV
+function exportCsv(rows: StatsRow[], tab: string, from: string, to: string) {
+  const data = toExportRows(rows, tab);
+  if (!data.length) return;
+  const headers = Object.keys(data[0]);
+  const csvRows = [
+    headers.join(";"),
+    ...data.map((r) =>
+      headers.map((h) => String(r[h] ?? "").replace(/;/g, ",")).join(";")
+    ),
+  ];
+  const blob = new Blob(["\uFEFF" + csvRows.join("\n")], {
+    type: "text/csv;charset=utf-8;",
+  });
+  downloadFile(blob, `статистика_${tab}_${from}_${to}.csv`);
+}
+
 export default function StatsPresentationsPage() {
 
   // Дефолт: текущий месяц
@@ -242,6 +323,29 @@ export default function StatsPresentationsPage() {
       <Tabs
         activeKey={activeTab}
         onChange={(key) => setActiveTab(key)}
+        tabBarExtraContent={
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: "excel",
+                  label: "Скачать Excel (.xlsx)",
+                  onClick: () => exportExcel(data || [], activeTab, from, to),
+                },
+                {
+                  key: "csv",
+                  label: "Скачать CSV (.csv)",
+                  onClick: () => exportCsv(data || [], activeTab, from, to),
+                },
+              ],
+            }}
+            disabled={!data?.length}
+          >
+            <Button icon={<DownloadOutlined />} size="small">
+              Скачать
+            </Button>
+          </Dropdown>
+        }
         items={[
           {
             key: "dates",
