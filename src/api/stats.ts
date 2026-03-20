@@ -23,6 +23,10 @@ export interface StatsRow {
   rewriteValue: number | null;
   userId?: string;
   role?: string;
+  presDate?: string;
+  presTime?: string;
+  presType?: string;
+  presVenue?: string;
 }
 
 export const statsApi = {

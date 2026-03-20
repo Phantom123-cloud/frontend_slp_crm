@@ -26,10 +26,14 @@ const num = (v: number | null | undefined) =>
   v === null || v === undefined ? "—" : v;
 
 // Колонки таблицы (общие для всех вкладок)
-function buildColumns(tab: string) {
+function buildColumns(tab: string, groupBy: string) {
+  const isPresGroupBy = tab === "dates" && groupBy === "presentation";
+
+  const firstColTitle = isPresGroupBy ? "Название" : tab === "dates" ? "Период" : "Имя";
+
   const cols: any[] = [
     {
-      title: tab === "dates" ? "Период" : "Имя",
+      title: firstColTitle,
       dataIndex: "label",
       key: "label",
       width: 200,
@@ -38,9 +42,41 @@ function buildColumns(tab: string) {
     },
   ];
 
+  // Доп. колонки для группировки по презентациям
+  if (isPresGroupBy) {
+    cols.push(
+      {
+        title: "Дата",
+        dataIndex: "presDate",
+        key: "presDate",
+        width: 100,
+      },
+      {
+        title: "Время",
+        dataIndex: "presTime",
+        key: "presTime",
+        width: 75,
+        align: "center" as const,
+      },
+      {
+        title: "Тип",
+        dataIndex: "presType",
+        key: "presType",
+        width: 140,
+        ellipsis: true,
+      },
+      {
+        title: "Место",
+        dataIndex: "presVenue",
+        key: "presVenue",
+        width: 180,
+        ellipsis: true,
+      },
+    );
+  }
 
-  // Количество презентаций — только для вкладки «По датам»
-  if (tab === "dates") cols.push({
+  // Количество презентаций — для вкладки «По датам», кроме группировки по презентациям
+  if (tab === "dates" && !isPresGroupBy) cols.push({
     title: "Презент.",
     dataIndex: "presentationsCount",
     key: "presentationsCount",
@@ -180,12 +216,19 @@ const TAB_LABELS: Record<string, string> = {
 };
 
 // Преобразовать данные в плоские строки для экспорта
-function toExportRows(rows: StatsRow[], tab: string) {
+function toExportRows(rows: StatsRow[], tab: string, groupBy: string) {
+  const isPresGroupBy = tab === "dates" && groupBy === "presentation";
   return rows.map((r) => {
     const base: Record<string, any> = {
-      [tab === "dates" ? "Период" : "Имя"]: r.label,
+      [isPresGroupBy ? "Название" : tab === "dates" ? "Период" : "Имя"]: r.label,
     };
-    if (tab === "dates") base["Презент."] = r.presentationsCount;
+    if (isPresGroupBy) {
+      base["Дата"] = r.presDate ?? "";
+      base["Время"] = r.presTime ?? "";
+      base["Тип"] = r.presType ?? "";
+      base["Место"] = r.presVenue ?? "";
+    }
+    if (tab === "dates" && !isPresGroupBy) base["Презент."] = r.presentationsCount;
     if (tab !== "individual") {
       base["Пригл."] = r.invited;
       base["Приход"] = r.arrived;
@@ -219,8 +262,8 @@ function downloadFile(blob: Blob, filename: string) {
 }
 
 // Экспорт в Excel
-function exportExcel(rows: StatsRow[], tab: string, from: string, to: string) {
-  const data = toExportRows(rows, tab);
+function exportExcel(rows: StatsRow[], tab: string, from: string, to: string, groupBy: string) {
+  const data = toExportRows(rows, tab, groupBy);
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, TAB_LABELS[tab] || tab);
@@ -232,8 +275,8 @@ function exportExcel(rows: StatsRow[], tab: string, from: string, to: string) {
 }
 
 // Экспорт в CSV
-function exportCsv(rows: StatsRow[], tab: string, from: string, to: string) {
-  const data = toExportRows(rows, tab);
+function exportCsv(rows: StatsRow[], tab: string, from: string, to: string, groupBy: string) {
+  const data = toExportRows(rows, tab, groupBy);
   if (!data.length) return;
   const headers = Object.keys(data[0]);
   const csvRows = [
@@ -268,7 +311,7 @@ export default function StatsPresentationsPage() {
     enabled: !!from && !!to,
   });
 
-  const columns = buildColumns(activeTab);
+  const columns = buildColumns(activeTab, groupBy);
 
   const tableProps = {
     dataSource: data || [],
@@ -308,6 +351,7 @@ export default function StatsPresentationsPage() {
               onChange={setGroupBy}
               style={{ width: 140 }}
               options={[
+                { value: "presentation", label: "По презентациям" },
                 { value: "day", label: "День" },
                 { value: "week", label: "Неделя" },
                 { value: "month", label: "Месяц" },
@@ -335,12 +379,12 @@ export default function StatsPresentationsPage() {
                 {
                   key: "excel",
                   label: "Скачать Excel (.xlsx)",
-                  onClick: () => exportExcel(data || [], activeTab, from, to),
+                  onClick: () => exportExcel(data || [], activeTab, from, to, groupBy),
                 },
                 {
                   key: "csv",
                   label: "Скачать CSV (.csv)",
-                  onClick: () => exportCsv(data || [], activeTab, from, to),
+                  onClick: () => exportCsv(data || [], activeTab, from, to, groupBy),
                 },
               ],
             }}
