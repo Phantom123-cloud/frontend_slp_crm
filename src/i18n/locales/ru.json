@@ -23,7 +23,8 @@
     "guestLists": "Списки гостей",
     "directories": "Справочники",
     "warehouses": "Склады",
-    "wallets": "Кошельки"
+    "wallets": "Кошельки",
+    "statsPresentations": "Статистика презентаций"
   },
   "users": {
     "title": "Пользователи",
@@ -620,6 +621,19 @@
     "confirmDelete": "Вы уверены, что хотите удалить?",
     "create": "Создать",
     "close": "Закрыть"
+  },
+  "stats": {
+    "presentationsTitle": "Статистика презентаций",
+    "groupBy": "Группировка",
+    "groupByDay": "День",
+    "groupByWeek": "Неделя",
+    "groupByMonth": "Месяц",
+    "groupByYear": "Год",
+    "groupByTrip": "Выезд",
+    "tabDates": "По датам",
+    "tabLeaders": "По ведущим",
+    "tabCoordinators": "По координаторам",
+    "tabIndividual": "Индивидуально"
   },
   "wallets": {
     "title": "Кошельки",

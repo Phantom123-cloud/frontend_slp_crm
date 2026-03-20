@@ -28,6 +28,7 @@ import WarehousesListPage from "./pages/warehouses/WarehousesListPage";
 import WarehouseDetailPage from "./pages/warehouses/WarehouseDetailPage";
 import WalletsListPage from "./pages/wallets/WalletsListPage";
 import WalletDetailPage from "./pages/wallets/WalletDetailPage";
+import StatsPresentationsPage from "./pages/stats/StatsPresentationsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -360,6 +361,23 @@ export default function App() {
                     ]}
                   >
                     <WalletDetailPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="stats"
+                element={<Navigate to="/stats/presentations" replace />}
+              />
+              <Route
+                path="stats/presentations"
+                element={
+                  <PermissionRoute
+                    permission={[
+                      "presentations.view-all",
+                      "presentations.view-person",
+                    ]}
+                  >
+                    <StatsPresentationsPage />
                   </PermissionRoute>
                 }
               />

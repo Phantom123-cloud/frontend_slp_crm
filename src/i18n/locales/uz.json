@@ -23,7 +23,8 @@
     "guestLists": "Mehmonlar ro'yxati",
     "directories": "Ma'lumotnomalar",
     "warehouses": "Omborlar",
-    "wallets": "Hamyonlar"
+    "wallets": "Hamyonlar",
+    "statsPresentations": "Taqdimotlar statistikasi"
   },
   "users": {
     "title": "Foydalanuvchilar",
@@ -617,6 +618,19 @@
     "confirmDelete": "O'chirishni tasdiqlaysizmi?",
     "create": "Yaratish",
     "close": "Yopish"
+  },
+  "stats": {
+    "presentationsTitle": "Taqdimotlar statistikasi",
+    "groupBy": "Guruhlash",
+    "groupByDay": "Kun",
+    "groupByWeek": "Hafta",
+    "groupByMonth": "Oy",
+    "groupByYear": "Yil",
+    "groupByTrip": "Safar",
+    "tabDates": "Sanalar bo'yicha",
+    "tabLeaders": "Boshlovchilar bo'yicha",
+    "tabCoordinators": "Koordinatorlar bo'yicha",
+    "tabIndividual": "Shaxsiy"
   },
   "wallets": {
     "title": "Hamyonlar",

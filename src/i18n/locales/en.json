@@ -23,7 +23,8 @@
     "guestLists": "Guest Lists",
     "directories": "Directories",
     "warehouses": "Warehouses",
-    "wallets": "Wallets"
+    "wallets": "Wallets",
+    "statsPresentations": "Presentation Statistics"
   },
   "users": {
     "title": "Users",
@@ -617,6 +618,19 @@
     "confirmDelete": "Are you sure you want to delete?",
     "create": "Create",
     "close": "Close"
+  },
+  "stats": {
+    "presentationsTitle": "Presentation Statistics",
+    "groupBy": "Group by",
+    "groupByDay": "Day",
+    "groupByWeek": "Week",
+    "groupByMonth": "Month",
+    "groupByYear": "Year",
+    "groupByTrip": "Trip",
+    "tabDates": "By dates",
+    "tabLeaders": "By leaders",
+    "tabCoordinators": "By coordinators",
+    "tabIndividual": "Individual"
   },
   "wallets": {
     "title": "Wallets",

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import {
   Layout,
   Menu,
@@ -27,6 +27,7 @@ import {
   BookOutlined,
   InboxOutlined,
   WalletOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
@@ -111,6 +112,12 @@ export default function MainLayout() {
     "guest_lists.view-person",
   ]);
 
+  // Доступ к статистике: любой кто видит презентации
+  const canViewStats = useAnyPermission([
+    "presentations.view-all",
+    "presentations.view-person",
+  ]);
+
   const tripsChildren = [
     canViewTrips && { key: "/trips", label: t("menu.tripsList") },
     canViewPresentations && {
@@ -160,6 +167,11 @@ export default function MainLayout() {
       key: "/wallets",
       icon: <WalletOutlined />,
       label: t("menu.wallets"),
+    },
+    canViewStats && {
+      key: "/stats/presentations",
+      icon: <BarChartOutlined />,
+      label: <Link to="/stats/presentations">{t("menu.statsPresentations")}</Link>,
     },
   ].filter(Boolean) as any[];
 
