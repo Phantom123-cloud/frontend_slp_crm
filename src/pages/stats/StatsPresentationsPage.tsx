@@ -300,22 +300,27 @@ export default function StatsPresentationsPage() {
           format="DD.MM.YYYY"
           allowClear={false}
         />
-        <Select
-          value={groupBy}
-          onChange={setGroupBy}
-          style={{ width: 140 }}
-          options={[
-            { value: "day", label: "День" },
-            { value: "week", label: "Неделя" },
-            { value: "month", label: "Месяц" },
-            { value: "year", label: "Год" },
-            { value: "trip", label: "Выезд" },
-          ]}
-        />
-        {groupBy === "trip" && (
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Выезды, пересекающие диапазон, включаются целиком
-          </Typography.Text>
+        {/* Группировка — только для вкладки «По датам» */}
+        {activeTab === "dates" && (
+          <>
+            <Select
+              value={groupBy}
+              onChange={setGroupBy}
+              style={{ width: 140 }}
+              options={[
+                { value: "day", label: "День" },
+                { value: "week", label: "Неделя" },
+                { value: "month", label: "Месяц" },
+                { value: "year", label: "Год" },
+                { value: "trip", label: "Выезд" },
+              ]}
+            />
+            {groupBy === "trip" && (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                Выезды, пересекающие диапазон, включаются целиком
+              </Typography.Text>
+            )}
+          </>
         )}
       </Space>
 
