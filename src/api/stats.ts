@@ -1,11 +1,10 @@
-import api from './index';
+import api from './client';
 
-/** Строка статистики, возвращаемая с бэкенда */
+// Строка статистики — одинакова для всех вкладок и группировок
 export interface StatsRow {
   key: string;
   label: string;
   presentationsCount: number;
-  // Гостевая статистика
   invited: number;
   arrived: number;
   arrivedPairs: number;
@@ -16,20 +15,17 @@ export interface StatsRow {
   notLetPairs: number;
   inHallGuests: number;
   inHallPairs: number;
-  // Сводная статистика (Часовка, отказы, переписанные)
   successApproach: number | null;
   totalApproach: number | null;
   refusalCount: number | null;
   refusalValue: number | null;
   rewriteCount: number | null;
   rewriteValue: number | null;
-  // Только для персональных вкладок
   userId?: string;
   role?: string;
 }
 
 export const statsApi = {
-  /** Получить статистику презентаций за период */
   getPresentationStats: (params: {
     from: string;
     to: string;

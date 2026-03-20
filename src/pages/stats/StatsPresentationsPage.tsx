@@ -1,284 +1,322 @@
-import { useState } from 'react';
-import dayjs, { Dayjs } from 'dayjs';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from "react";
 import {
   DatePicker,
   Select,
   Tabs,
   Table,
   Spin,
-  Card,
   Space,
   Typography,
   Tag,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { BarChartOutlined } from '@ant-design/icons';
-import { statsApi, StatsRow } from '../../api/stats';
+} from "antd";
+import { useQuery } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
+import { statsApi } from "../../api/stats";
+import type { StatsRow } from "../../api/stats";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
-// Опции группировки
-const GROUP_BY_OPTIONS = [
-  { value: 'day', label: 'День' },
-  { value: 'week', label: 'Неделя' },
-  { value: 'month', label: 'Месяц' },
-  { value: 'year', label: 'Год' },
-  { value: 'trip', label: 'Выезд' },
-];
-
-// Отображение роли в составе
+// Роли на русском
 const ROLE_LABELS: Record<string, string> = {
-  LEADER: 'Ведущий',
-  MV: 'МВ',
-  GA: 'ГА',
-  MV_GA: 'МВ/ГА',
-  TRADER: 'Торговый',
+  LEADER: "Ведущий",
+  MV: "МВ",
+  GA: "ГА",
+  MV_GA: "МВ/ГА",
+  TRADER: "Трейдер",
 };
 
-/** Рендер значения, которое может быть null — выводим «—» */
-function nullCell(v: number | null) {
-  return v === null ? <span style={{ color: '#aaa' }}>—</span> : v;
-}
+// Цвета ролей
+const ROLE_COLORS: Record<string, string> = {
+  LEADER: "blue",
+  MV: "purple",
+  GA: "green",
+  MV_GA: "cyan",
+  TRADER: "orange",
+};
 
-export default function StatsPresentationsPage() {
-  // ---- Состояние фильтров ----
-  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>([
-    dayjs().startOf('month'),
-    dayjs().endOf('month'),
-  ]);
-  const [groupBy, setGroupBy] = useState<string>('month');
-  const [activeTab, setActiveTab] = useState<string>('dates');
+// Рендер числа или прочерка
+const num = (v: number | null | undefined) =>
+  v === null || v === undefined ? "—" : v;
 
-  // Формируем строки дат для запроса
-  const from = dateRange ? dateRange[0].format('YYYY-MM-DD') : '';
-  const to = dateRange ? dateRange[1].format('YYYY-MM-DD') : '';
-  const enabled = Boolean(from && to);
+// Колонки таблицы (общие для всех вкладок)
+function buildColumns(tab: string) {
+  const cols: any[] = [
+    {
+      title: tab === "dates" ? "Период" : "Имя",
+      dataIndex: "label",
+      key: "label",
+      width: 200,
+      fixed: "left" as const,
+      ellipsis: true,
+    },
+  ];
 
-  // ---- Загрузка данных ----
-  const { data, isLoading } = useQuery({
-    queryKey: ['stats', 'presentations', from, to, groupBy, activeTab],
-    queryFn: () =>
-      statsApi.getPresentationStats({ from, to, groupBy, tab: activeTab }),
-    enabled,
+  // Роль — только для вкладки "Индивидуально"
+  if (tab === "individual") {
+    cols.push({
+      title: "Роль",
+      dataIndex: "role",
+      key: "role",
+      width: 90,
+      render: (role: string) =>
+        role ? (
+          <Tag color={ROLE_COLORS[role] || "default"}>
+            {ROLE_LABELS[role] || role}
+          </Tag>
+        ) : (
+          "—"
+        ),
+    });
+  }
+
+  // Количество презентаций
+  cols.push({
+    title: "Презент.",
+    dataIndex: "presentationsCount",
+    key: "presentationsCount",
+    width: 80,
+    align: "center" as const,
   });
 
-  // ---- Определение колонок таблицы ----
-  const isDateTab = activeTab === 'dates';
-  const isIndividual = activeTab === 'individual';
-
-  // Первая колонка: Период или Имя
-  const firstColumn: ColumnsType<StatsRow>[number] = {
-    title: isDateTab ? 'Период' : 'Имя',
-    dataIndex: 'label',
-    key: 'label',
-    fixed: 'left',
-    width: 200,
-    render: (v: string) => <strong>{v}</strong>,
-  };
-
-  // Колонка роли (только для вкладки "Индивидуально")
-  const roleColumn: ColumnsType<StatsRow>[number] = {
-    title: 'Роль',
-    dataIndex: 'role',
-    key: 'role',
-    width: 100,
-    render: (v: string) => (
-      <Tag color="blue">{ROLE_LABELS[v] ?? v ?? '—'}</Tag>
-    ),
-  };
-
-  // Общие колонки для всех вкладок
-  const commonColumns: ColumnsType<StatsRow> = [
-    // Количество презентаций (только для вкладки "По датам")
-    ...(isDateTab
-      ? [
-          {
-            title: 'Презентаций',
-            dataIndex: 'presentationsCount',
-            key: 'presentationsCount',
-            width: 100,
-            align: 'right' as const,
-          },
-        ]
-      : []),
+  // Гостевые метрики
+  cols.push(
     {
-      title: 'Пригл.',
-      dataIndex: 'invited',
-      key: 'invited',
-      width: 80,
-      align: 'right' as const,
+      title: "Пригл.",
+      dataIndex: "invited",
+      key: "invited",
+      width: 70,
+      align: "center" as const,
     },
     {
-      title: 'Приход',
-      key: 'arrived',
-      width: 110,
-      align: 'right' as const,
+      title: "Приход",
+      key: "arrived",
+      width: 90,
+      align: "center" as const,
       render: (_: any, r: StatsRow) => `${r.arrived} (${r.pctArrived}%)`,
     },
     {
-      title: 'Пары',
-      dataIndex: 'arrivedPairs',
-      key: 'arrivedPairs',
-      width: 70,
-      align: 'right' as const,
+      title: "Пары",
+      dataIndex: "arrivedPairs",
+      key: "arrivedPairs",
+      width: 65,
+      align: "center" as const,
     },
     {
-      title: 'у/Пар',
-      key: 'left',
-      width: 90,
-      align: 'right' as const,
-      render: (_: any, r: StatsRow) => (
-        <span style={{ color: r.leftGuests > 0 ? '#f5222d' : undefined }}>
-          {r.leftGuests}/{r.leftPairs}
-        </span>
-      ),
+      title: "у/Пар",
+      key: "leftGuests",
+      width: 80,
+      align: "center" as const,
+      render: (_: any, r: StatsRow) =>
+        r.leftGuests > 0 ? (
+          <span style={{ color: "#ff4d4f" }}>
+            {r.leftGuests}/{r.leftPairs}
+          </span>
+        ) : (
+          <span style={{ color: "#595959" }}>
+            {r.leftGuests}/{r.leftPairs}
+          </span>
+        ),
     },
     {
-      title: 'н/Пар',
-      key: 'notLet',
-      width: 90,
-      align: 'right' as const,
-      render: (_: any, r: StatsRow) => (
-        <span style={{ color: r.notLetGuests > 0 ? '#fa8c16' : undefined }}>
-          {r.notLetGuests}/{r.notLetPairs}
-        </span>
-      ),
+      title: "н/Пар",
+      key: "notLetGuests",
+      width: 80,
+      align: "center" as const,
+      render: (_: any, r: StatsRow) =>
+        r.notLetGuests > 0 ? (
+          <span style={{ color: "#fa8c16" }}>
+            {r.notLetGuests}/{r.notLetPairs}
+          </span>
+        ) : (
+          <span style={{ color: "#595959" }}>
+            {r.notLetGuests}/{r.notLetPairs}
+          </span>
+        ),
     },
     {
-      title: 'В зале г/п',
-      key: 'inHall',
+      title: "В зале г/п",
+      key: "inHallGuests",
       width: 100,
-      align: 'right' as const,
+      align: "center" as const,
       render: (_: any, r: StatsRow) => (
-        <span style={{ color: '#52c41a' }}>
+        <span style={{ color: "#52c41a" }}>
           {r.inHallGuests}/{r.inHallPairs}
         </span>
       ),
+    }
+  );
+
+  // Итоговые метрики
+  cols.push(
+    {
+      title: "Успешных",
+      dataIndex: "successApproach",
+      key: "successApproach",
+      width: 90,
+      align: "center" as const,
+      render: num,
     },
     {
-      title: 'Успешных',
-      dataIndex: 'successApproach',
-      key: 'successApproach',
-      width: 100,
-      align: 'right' as const,
-      render: nullCell,
-    },
-    {
-      title: 'Часовка всех',
-      dataIndex: 'totalApproach',
-      key: 'totalApproach',
+      title: "Часовка всех",
+      dataIndex: "totalApproach",
+      key: "totalApproach",
       width: 110,
-      align: 'right' as const,
-      render: nullCell,
+      align: "center" as const,
+      render: num,
     },
     {
-      title: 'Кол. отказов',
-      dataIndex: 'refusalCount',
-      key: 'refusalCount',
+      title: "Кол. отказов",
+      dataIndex: "refusalCount",
+      key: "refusalCount",
       width: 110,
-      align: 'right' as const,
-      render: nullCell,
+      align: "center" as const,
+      render: num,
     },
     {
-      title: 'Знач. отказа',
-      dataIndex: 'refusalValue',
-      key: 'refusalValue',
+      title: "Знач. отказа",
+      dataIndex: "refusalValue",
+      key: "refusalValue",
       width: 110,
-      align: 'right' as const,
-      render: nullCell,
+      align: "center" as const,
+      render: num,
     },
     {
-      title: 'Кол. переписан.',
-      dataIndex: 'rewriteCount',
-      key: 'rewriteCount',
-      width: 130,
-      align: 'right' as const,
-      render: nullCell,
+      title: "Кол. перепис.",
+      dataIndex: "rewriteCount",
+      key: "rewriteCount",
+      width: 115,
+      align: "center" as const,
+      render: num,
     },
     {
-      title: 'Ценность перепис.',
-      dataIndex: 'rewriteValue',
-      key: 'rewriteValue',
+      title: "Ценность перепис.",
+      dataIndex: "rewriteValue",
+      key: "rewriteValue",
       width: 140,
-      align: 'right' as const,
-      render: nullCell,
+      align: "center" as const,
+      render: num,
+    }
+  );
+
+  return cols;
+}
+
+export default function StatsPresentationsPage() {
+
+  // Дефолт: текущий месяц
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
+    dayjs().startOf("month"),
+    dayjs().endOf("month"),
+  ]);
+  const [groupBy, setGroupBy] = useState("month");
+  const [activeTab, setActiveTab] = useState("dates");
+
+  const from = dateRange[0].format("YYYY-MM-DD");
+  const to = dateRange[1].format("YYYY-MM-DD");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["stats", "presentations", from, to, groupBy, activeTab],
+    queryFn: () =>
+      statsApi.getPresentationStats({ from, to, groupBy, tab: activeTab }),
+    enabled: !!from && !!to,
+  });
+
+  const columns = buildColumns(activeTab);
+
+  const tableProps = {
+    dataSource: data || [],
+    columns,
+    rowKey: "key",
+    size: "small" as const,
+    scroll: { x: 1600 },
+    pagination: {
+      pageSize: 50,
+      pageSizeOptions: ["50", "100", "500"],
+      showSizeChanger: true,
     },
-  ];
-
-  // Итоговый массив колонок
-  const columns: ColumnsType<StatsRow> = [
-    firstColumn,
-    ...(isIndividual ? [roleColumn] : []),
-    ...commonColumns,
-  ];
-
-  // ---- Вкладки ----
-  const tabItems = [
-    { key: 'dates', label: 'По датам' },
-    { key: 'leaders', label: 'По ведущим' },
-    { key: 'coordinators', label: 'По координаторам' },
-    { key: 'individual', label: 'Индивидуально' },
-  ];
+    loading: isLoading,
+  };
 
   return (
-    <div>
-      {/* Заголовок страницы */}
-      <Space align="center" style={{ marginBottom: 16 }}>
-        <BarChartOutlined style={{ fontSize: 20 }} />
-        <Title level={4} style={{ margin: 0 }}>
-          Статистика презентаций
-        </Title>
-      </Space>
+    <div style={{ padding: "0 24px 24px" }}>
+      <Title level={4} style={{ marginBottom: 16 }}>
+        Статистика презентаций
+      </Title>
 
       {/* Фильтры */}
-      <Card size="small" style={{ marginBottom: 16 }}>
-        <Space wrap>
-          <span>Период:</span>
-          <RangePicker
-            value={dateRange as any}
-            onChange={(v) => setDateRange(v as [Dayjs, Dayjs] | null)}
-            format="DD.MM.YYYY"
-            allowClear={false}
-          />
-          <span>Группировка:</span>
-          <Select
-            value={groupBy}
-            onChange={setGroupBy}
-            options={GROUP_BY_OPTIONS}
-            style={{ width: 130 }}
-          />
-          {data && (
-            <Text type="secondary">
-              Найдено строк: {data.length}
-            </Text>
-          )}
-        </Space>
-      </Card>
+      <Space style={{ marginBottom: 16 }} wrap>
+        <RangePicker
+          value={dateRange}
+          onChange={(v) => {
+            if (v && v[0] && v[1]) setDateRange([v[0], v[1]]);
+          }}
+          format="DD.MM.YYYY"
+          allowClear={false}
+        />
+        <Select
+          value={groupBy}
+          onChange={setGroupBy}
+          style={{ width: 140 }}
+          options={[
+            { value: "day", label: "День" },
+            { value: "week", label: "Неделя" },
+            { value: "month", label: "Месяц" },
+            { value: "year", label: "Год" },
+            { value: "trip", label: "Выезд" },
+          ]}
+        />
+        {groupBy === "trip" && (
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            Выезды, пересекающие диапазон, включаются целиком
+          </Typography.Text>
+        )}
+      </Space>
 
-      {/* Вкладки + таблица */}
+      {/* Вкладки */}
       <Tabs
         activeKey={activeTab}
-        onChange={setActiveTab}
-        items={tabItems}
+        onChange={(key) => setActiveTab(key)}
+        items={[
+          {
+            key: "dates",
+            label: "По датам",
+            children: (
+              <Spin spinning={isLoading}>
+                <Table {...tableProps} />
+              </Spin>
+            ),
+          },
+          {
+            key: "leaders",
+            label: "По ведущим",
+            children: (
+              <Spin spinning={isLoading}>
+                <Table {...tableProps} />
+              </Spin>
+            ),
+          },
+          {
+            key: "coordinators",
+            label: "По координаторам",
+            children: (
+              <Spin spinning={isLoading}>
+                <Table {...tableProps} />
+              </Spin>
+            ),
+          },
+          {
+            key: "individual",
+            label: "Индивидуально",
+            children: (
+              <Spin spinning={isLoading}>
+                <Table {...tableProps} />
+              </Spin>
+            ),
+          },
+        ]}
       />
-
-      <Spin spinning={isLoading}>
-        <Table<StatsRow>
-          dataSource={data ?? []}
-          columns={columns}
-          rowKey="key"
-          size="small"
-          scroll={{ x: 1800 }}
-          pagination={{
-            pageSize: 50,
-            pageSizeOptions: ['50', '100', '500'],
-            showSizeChanger: true,
-          }}
-          locale={{ emptyText: isLoading ? 'Загрузка...' : 'Нет данных' }}
-        />
-      </Spin>
     </div>
   );
 }
