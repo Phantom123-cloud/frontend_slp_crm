@@ -71,8 +71,8 @@ function buildColumns(tab: string) {
     });
   }
 
-  // Количество презентаций
-  cols.push({
+  // Количество презентаций — только для вкладки «По датам»
+  if (tab === "dates") cols.push({
     title: "Презент.",
     dataIndex: "presentationsCount",
     key: "presentationsCount",
