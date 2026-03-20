@@ -80,8 +80,8 @@ function buildColumns(tab: string) {
     align: "center" as const,
   });
 
-  // Гостевые метрики
-  cols.push(
+  // Гостевые метрики — скрываем для вкладки «Индивидуально» (дублирует данные)
+  if (tab !== "individual") cols.push(
     {
       title: "Пригл.",
       dataIndex: "invited",
