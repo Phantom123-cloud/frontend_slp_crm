@@ -24,7 +24,8 @@
     "directories": "Справочники",
     "warehouses": "Склады",
     "wallets": "Кошельки",
-    "statsPresentations": "Статистика презентаций"
+    "statsPresentations": "Статистика презентаций",
+    "reports": "Отчёты"
   },
   "users": {
     "title": "Пользователи",

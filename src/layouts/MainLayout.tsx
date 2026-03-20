@@ -165,11 +165,21 @@ export default function MainLayout() {
       icon: <WalletOutlined />,
       label: t("menu.wallets"),
     },
-    canViewStats && {
-      key: "/stats/presentations",
-      icon: <BarChartOutlined />,
-      label: <Link to="/stats/presentations">{t("menu.statsPresentations")}</Link>,
-    },
+    // Группа "Отчёты" — аккордион как у Поездок
+    (() => {
+      const reportsChildren = [
+        canViewStats && {
+          key: "/stats/presentations",
+          label: t("menu.statsPresentations"),
+        },
+      ].filter(Boolean);
+      return reportsChildren.length > 0 && {
+        key: "reports-group",
+        icon: <BarChartOutlined />,
+        label: t("menu.reports"),
+        children: reportsChildren,
+      };
+    })(),
   ].filter(Boolean) as any[];
 
   const handleMenuClick = (key: string) => {

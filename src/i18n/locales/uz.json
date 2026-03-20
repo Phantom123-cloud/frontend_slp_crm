@@ -24,7 +24,8 @@
     "directories": "Ma'lumotnomalar",
     "warehouses": "Omborlar",
     "wallets": "Hamyonlar",
-    "statsPresentations": "Taqdimotlar statistikasi"
+    "statsPresentations": "Taqdimotlar statistikasi",
+    "reports": "Hisobotlar"
   },
   "users": {
     "title": "Foydalanuvchilar",

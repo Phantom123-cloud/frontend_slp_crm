@@ -24,7 +24,8 @@
     "directories": "Directories",
     "warehouses": "Warehouses",
     "wallets": "Wallets",
-    "statsPresentations": "Presentation Statistics"
+    "statsPresentations": "Presentation Statistics",
+    "reports": "Reports"
   },
   "users": {
     "title": "Users",
