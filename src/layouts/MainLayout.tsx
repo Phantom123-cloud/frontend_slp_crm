@@ -112,11 +112,8 @@ export default function MainLayout() {
     "guest_lists.view-person",
   ]);
 
-  // Доступ к статистике: любой кто видит презентации
-  const canViewStats = useAnyPermission([
-    "presentations.view-all",
-    "presentations.view-person",
-  ]);
+  // Доступ к статистике презентаций — отдельное право
+  const canViewStats = usePermission("statistics.presentations");
 
   const tripsChildren = [
     canViewTrips && { key: "/trips", label: t("menu.tripsList") },

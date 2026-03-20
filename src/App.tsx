@@ -372,10 +372,7 @@ export default function App() {
                 path="stats/presentations"
                 element={
                   <PermissionRoute
-                    permission={[
-                      "presentations.view-all",
-                      "presentations.view-person",
-                    ]}
+                    permission="statistics.presentations"
                   >
                     <StatsPresentationsPage />
                   </PermissionRoute>
