@@ -13,6 +13,7 @@ import {
   Tabs,
   Popconfirm,
   Tooltip,
+  Grid,
 } from "antd";
 import {
   PlusOutlined,
@@ -38,6 +39,8 @@ const TYPE_COLORS: Record<string, string> = {
 export default function WalletsListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const canCreate = useAnyPermission(["wallets.create", "wallets.manage"]);
   const canManage = usePermission("wallets.manage");
@@ -258,7 +261,7 @@ export default function WalletsListPage() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Title level={3} style={{ margin: 0 }}>
           <WalletOutlined style={{ marginRight: 8 }} />
           {t("wallets.title")}
@@ -267,9 +270,10 @@ export default function WalletsListPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
+            size={isMobile ? "small" : "middle"}
             onClick={() => setCreateModalOpen(true)}
           >
-            {t("wallets.create")}
+            {!isMobile && t("wallets.create")}
           </Button>
         )}
       </div>

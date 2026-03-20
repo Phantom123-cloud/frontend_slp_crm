@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, Tag, Radio, Typography, message, Button, Tooltip } from "antd";
-import { EyeOutlined } from "@ant-design/icons";
+import { EyeOutlined, CalendarOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { presentationsApi } from "../../api/trips";
 import { useTableFilters } from "../../utils/tableFilters";
@@ -154,6 +154,7 @@ export default function PresentationsListPage() {
         }}
       >
         <Title level={3} style={{ margin: 0 }}>
+          <CalendarOutlined style={{ marginRight: 8 }} />
           {t("menu.presentations")}
         </Title>
       </div>

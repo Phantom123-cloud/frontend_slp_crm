@@ -19,7 +19,9 @@ import {
   StopOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
+  InboxOutlined,
 } from "@ant-design/icons";
+import { Grid } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { warehousesApi } from "../../api/warehouses";
@@ -38,6 +40,8 @@ const TYPE_COLORS: Record<string, string> = {
 export default function WarehousesListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const canCreate = useAnyPermission(["warehouses.create", "warehouses.manage"]);
   const canManage = usePermission("warehouses.manage");
@@ -262,20 +266,22 @@ export default function WarehousesListPage() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }} align="center">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Title level={3} style={{ margin: 0 }}>
+          <InboxOutlined style={{ marginRight: 8 }} />
           {t("warehouses.title")}
         </Title>
         {canCreate && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
+            size={isMobile ? "small" : "middle"}
             onClick={() => setCreateModalOpen(true)}
           >
-            {t("warehouses.create")}
+            {!isMobile && t("warehouses.create")}
           </Button>
         )}
-      </Space>
+      </div>
 
       <Tabs
         activeKey={activeTab}

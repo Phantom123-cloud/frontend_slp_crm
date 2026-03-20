@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, Typography, Button, Tooltip } from "antd";
-import { EyeOutlined } from "@ant-design/icons";
+import { EyeOutlined, UnorderedListOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { guestListsApi } from "../../api/guestLists";
 import { useTableFilters } from "../../utils/tableFilters";
 import dayjs from "dayjs";
@@ -9,6 +10,7 @@ import dayjs from "dayjs";
 const { Title } = Typography;
 
 export default function GuestListsListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { colSearch } = useTableFilters();
 
@@ -109,9 +111,10 @@ export default function GuestListsListPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Title level={3} style={{ margin: 0 }}>
-          Списки гостей
+          <UnorderedListOutlined style={{ marginRight: 8 }} />
+          {t("menu.guestLists")}
         </Title>
       </div>
 

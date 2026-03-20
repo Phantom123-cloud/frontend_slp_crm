@@ -10,8 +10,9 @@ import {
   message,
   Popconfirm,
   Tooltip,
+  Grid,
 } from "antd";
-import { PlusOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EyeOutlined, CarOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { tripsApi } from "../../api/trips";
 import { usePermission } from "../../hooks/usePermission";
@@ -38,6 +39,8 @@ const STATUS_COLORS: Record<string, string> = {
 export default function TripsListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const canCreate = usePermission("trips.create");
   const canDelete = usePermission("trips.delete");
   const canAdmin = usePermission("trips.admin");
@@ -232,15 +235,17 @@ export default function TripsListPage() {
         }}
       >
         <Title level={3} style={{ margin: 0 }}>
+          <CarOutlined style={{ marginRight: 8 }} />
           {t("trips.title")}
         </Title>
         {canCreate && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
+            size={isMobile ? "small" : "middle"}
             onClick={() => setCreateModalOpen(true)}
           >
-            {t("trips.create")}
+            {!isMobile && t("trips.create")}
           </Button>
         )}
       </div>
