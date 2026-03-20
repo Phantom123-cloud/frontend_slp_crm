@@ -7,7 +7,6 @@ import {
   Spin,
   Space,
   Typography,
-  Tag,
 } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -17,24 +16,6 @@ import type { StatsRow } from "../../api/stats";
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
-
-// Роли на русском
-const ROLE_LABELS: Record<string, string> = {
-  LEADER: "Ведущий",
-  MV: "МВ",
-  GA: "ГА",
-  MV_GA: "МВ/ГА",
-  TRADER: "Трейдер",
-};
-
-// Цвета ролей
-const ROLE_COLORS: Record<string, string> = {
-  LEADER: "blue",
-  MV: "purple",
-  GA: "green",
-  MV_GA: "cyan",
-  TRADER: "orange",
-};
 
 // Рендер числа или прочерка
 const num = (v: number | null | undefined) =>
@@ -53,23 +34,6 @@ function buildColumns(tab: string) {
     },
   ];
 
-  // Роль — только для вкладки "Индивидуально"
-  if (tab === "individual") {
-    cols.push({
-      title: "Роль",
-      dataIndex: "role",
-      key: "role",
-      width: 90,
-      render: (role: string) =>
-        role ? (
-          <Tag color={ROLE_COLORS[role] || "default"}>
-            {ROLE_LABELS[role] || role}
-          </Tag>
-        ) : (
-          "—"
-        ),
-    });
-  }
 
   // Количество презентаций — только для вкладки «По датам»
   if (tab === "dates") cols.push({
