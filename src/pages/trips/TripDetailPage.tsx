@@ -27,6 +27,7 @@ import {
   ArrowLeftOutlined,
   TeamOutlined,
   BarChartOutlined,
+  BankOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { tripsApi, presentationsApi } from "../../api/trips";
@@ -40,6 +41,7 @@ import PresentationCrewModal from "./components/PresentationCrewModal";
 import TripWarehouseTab from "./components/TripWarehouseTab";
 import TripWalletTab from "./components/TripWalletTab";
 import GuestListsTab from "./components/GuestListsTab";
+import TripBanksTab from "./components/TripBanksTab";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -755,6 +757,21 @@ export default function TripDetailPage() {
               label: t("trips.guestLists"),
               children: (
                 <GuestListsTab tripId={id!} />
+              ),
+            },
+            {
+              key: "banks",
+              label: (
+                <span>
+                  <BankOutlined />
+                  {" "}Банки
+                </span>
+              ),
+              children: (
+                <TripBanksTab
+                  tripId={id!}
+                  isClosed={trip?.status === "CLOSED"}
+                />
               ),
             },
           ].filter(Boolean) as any[]}

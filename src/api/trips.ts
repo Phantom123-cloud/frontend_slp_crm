@@ -26,6 +26,11 @@ export const tripsApi = {
     api.get(`/trips/${tripId}/presentations`),
   createPresentation: (tripId: string, data: any) =>
     api.post(`/trips/${tripId}/presentations`, data),
+
+  // Banks
+  getTripBanks: (tripId: string) => api.get(`/trips/${tripId}/banks`),
+  setTripBanks: (tripId: string, bankIds: string[]) =>
+    api.put(`/trips/${tripId}/banks`, { bankIds }),
 };
 
 export const presentationsApi = {

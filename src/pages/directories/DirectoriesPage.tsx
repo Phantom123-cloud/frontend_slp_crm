@@ -196,6 +196,14 @@ export default function DirectoriesPage() {
   const [expenseTypeForm] = Form.useForm();
   const [editExpenseTypeForm] = Form.useForm();
 
+  // === Banks ===
+  const [banks, setBanks] = useState<any[]>([]);
+  const [banksLoading, setBanksLoading] = useState(false);
+  const [bankModalOpen, setBankModalOpen] = useState(false);
+  const [editBank, setEditBank] = useState<any>(null);
+  const [bankForm] = Form.useForm();
+  const [editBankForm] = Form.useForm();
+
   const loadExpenseTypes = async () => {
     setExpenseTypesLoading(true);
     try {
@@ -241,11 +249,57 @@ export default function DirectoriesPage() {
     }
   };
 
+  const loadBanks = async () => {
+    setBanksLoading(true);
+    try {
+      const { data } = await directoriesApi.getBanks();
+      setBanks(data);
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    } finally {
+      setBanksLoading(false);
+    }
+  };
+
+  const handleCreateBank = async (values: any) => {
+    try {
+      await directoriesApi.createBank(values);
+      message.success(t("common.success"));
+      setBankModalOpen(false);
+      bankForm.resetFields();
+      loadBanks();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleUpdateBank = async (values: any) => {
+    try {
+      await directoriesApi.updateBank(editBank.id, values);
+      message.success(t("common.success"));
+      setEditBank(null);
+      loadBanks();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleDeleteBank = async (id: string) => {
+    try {
+      await directoriesApi.deleteBank(id);
+      message.success(t("common.success"));
+      loadBanks();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
   useEffect(() => {
     loadTypes();
     loadVenues();
     loadProducts();
     loadExpenseTypes();
+    loadBanks();
   }, []);
 
   // === Columns ===
@@ -596,6 +650,119 @@ export default function DirectoriesPage() {
                   }}
                   size="small"
                 />
+              </>
+            ),
+          },
+          {
+            key: "banks",
+            label: "Банки",
+            children: (
+              <>
+                {canCreate && (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setBankModalOpen(true)}
+                    style={{ marginBottom: 12 }}
+                  >
+                    Добавить банк
+                  </Button>
+                )}
+                <Table
+                  scroll={{ x: "max-content" }}
+                  loading={banksLoading}
+                  dataSource={banks}
+                  rowKey="id"
+                  size="small"
+                  pagination={{ pageSize: 20, showSizeChanger: false }}
+                  columns={[
+                    {
+                      title: "Название",
+                      dataIndex: "name",
+                      key: "name",
+                      ...colSearch((r: any) => r.name ?? ""),
+                    },
+                    {
+                      title: "Описание",
+                      dataIndex: "description",
+                      key: "description",
+                      render: (v: any) => v || "—",
+                      ...colSearch((r: any) => r.description ?? ""),
+                    },
+                    {
+                      title: "",
+                      key: "actions",
+                      width: 80,
+                      render: (_: any, record: any) => (
+                        <Space>
+                          {canEdit && (
+                            <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={() => {
+                                setEditBank(record);
+                                editBankForm.setFieldsValue(record);
+                              }}
+                            />
+                          )}
+                          {canDelete && (
+                            <Popconfirm
+                              title={t("common.confirmDelete")}
+                              onConfirm={() => handleDeleteBank(record.id)}
+                              okText={t("common.yes")}
+                              cancelText={t("common.no")}
+                            >
+                              <Button
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined />}
+                              />
+                            </Popconfirm>
+                          )}
+                        </Space>
+                      ),
+                    },
+                  ]}
+                />
+
+                {/* Модал создания банка */}
+                <Modal
+                  title="Добавить банк"
+                  open={bankModalOpen}
+                  onCancel={() => { setBankModalOpen(false); bankForm.resetFields(); }}
+                  onOk={() => bankForm.submit()}
+                  okText={t("common.save")}
+                  cancelText={t("common.cancel")}
+                >
+                  <Form form={bankForm} layout="vertical" onFinish={handleCreateBank}>
+                    <Form.Item name="name" label="Название" rules={[{ required: true }]}>
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="description" label="Описание">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                  </Form>
+                </Modal>
+
+                {/* Модал редактирования банка */}
+                <Modal
+                  title="Редактировать банк"
+                  open={!!editBank}
+                  onCancel={() => setEditBank(null)}
+                  onOk={() => editBankForm.submit()}
+                  okText={t("common.save")}
+                  cancelText={t("common.cancel")}
+                  destroyOnClose
+                >
+                  <Form form={editBankForm} layout="vertical" onFinish={handleUpdateBank}>
+                    <Form.Item name="name" label="Название" rules={[{ required: true }]}>
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="description" label="Описание">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                  </Form>
+                </Modal>
               </>
             ),
           },
