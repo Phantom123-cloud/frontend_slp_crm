@@ -28,6 +28,7 @@ import {
   InboxOutlined,
   WalletOutlined,
   BarChartOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
@@ -115,6 +116,11 @@ export default function MainLayout() {
   // Доступ к статистике презентаций — отдельное право
   const canViewStats = usePermission("statistics.presentations");
 
+  const canViewContracts = useAnyPermission([
+    "contracts.view-all",
+    "contracts.view-person",
+  ]);
+
   const tripsChildren = [
     canViewTrips && { key: "/trips", label: t("menu.tripsList") },
     canViewPresentations && {
@@ -164,6 +170,11 @@ export default function MainLayout() {
       key: "/wallets",
       icon: <WalletOutlined />,
       label: t("menu.wallets"),
+    },
+    canViewContracts && {
+      key: "/contracts",
+      icon: <FileTextOutlined />,
+      label: "Договора",
     },
     // Группа "Отчёты" — аккордион как у Поездок
     (() => {

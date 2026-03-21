@@ -29,6 +29,8 @@ import WarehouseDetailPage from "./pages/warehouses/WarehouseDetailPage";
 import WalletsListPage from "./pages/wallets/WalletsListPage";
 import WalletDetailPage from "./pages/wallets/WalletDetailPage";
 import StatsPresentationsPage from "./pages/stats/StatsPresentationsPage";
+import ContractsListPage from "./pages/contracts/ContractsListPage";
+import ContractFormPage from "./pages/contracts/ContractFormPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -375,6 +377,22 @@ export default function App() {
                     permission="statistics.presentations"
                   >
                     <StatsPresentationsPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="contracts"
+                element={
+                  <PermissionRoute permission={["contracts.view-all", "contracts.view-person"]}>
+                    <ContractsListPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="contracts/new"
+                element={
+                  <PermissionRoute permission="contracts.create">
+                    <ContractFormPage />
                   </PermissionRoute>
                 }
               />

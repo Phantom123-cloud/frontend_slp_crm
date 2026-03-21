@@ -29,9 +29,11 @@ import {
   BarChartOutlined,
   BankOutlined,
   ShopOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { tripsApi, presentationsApi } from "../../api/trips";
+import { contractsApi } from "../../api/contracts";
 import { usePermission, useAnyPermission } from "../../hooks/usePermission";
 import { useAuthStore } from "../../store/auth";
 import { useTableFilters } from "../../utils/tableFilters";
@@ -44,6 +46,7 @@ import TripWalletTab from "./components/TripWalletTab";
 import GuestListsTab from "./components/GuestListsTab";
 import TripBanksTab from "./components/TripBanksTab";
 import TripCompaniesTab from "./components/TripCompaniesTab";
+import ContractSelectModal from "./components/ContractSelectModal";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -112,6 +115,8 @@ export default function TripDetailPage() {
 
   const canManageBanks = usePermission("trips.banks");
   const canManageCompanies = usePermission("trips.companies");
+  const canCreateContract = usePermission("contracts.create");
+  const canViewContracts = useAnyPermission(["contracts.view-all", "contracts.view-person"]);
 
   const canViewAllWallets = useAnyPermission(["wallets.view-all", "wallets.manage"]);
   const canViewPersonWallets = useAnyPermission(["wallets.view-person", "wallets.edit"]);
@@ -141,6 +146,10 @@ export default function TripDetailPage() {
   const [presStatusFilter, setPresStatusFilter] = useState("all");
   const [banksModalOpen, setBanksModalOpen] = useState(false);
   const [companiesModalOpen, setCompaniesModalOpen] = useState(false);
+  const [contractModalOpen, setContractModalOpen] = useState(false);
+  const [contractPreselectedPresId, setContractPreselectedPresId] = useState<string | undefined>();
+  const [tripContracts, setTripContracts] = useState<any[]>([]);
+  const [contractsLoading, setContractsLoading] = useState(false);
 
   const loadTrip = async () => {
     if (!id) return;
@@ -155,8 +164,19 @@ export default function TripDetailPage() {
     }
   };
 
+  const loadTripContracts = async () => {
+    if (!id || !canViewContracts) return;
+    setContractsLoading(true);
+    try {
+      const { data } = await contractsApi.list({ tripId: id });
+      setTripContracts(data);
+    } catch {}
+    finally { setContractsLoading(false); }
+  };
+
   useEffect(() => {
     loadTrip();
+    loadTripContracts();
   }, [id]);
 
   const handleStatusChange = async (status: string) => {
@@ -416,6 +436,24 @@ export default function TripDetailPage() {
               onClick={() => setSummaryPresId(r.id)}
             />
           </Tooltip>
+          {(canCreateContract || (myTripCrewRole && myTripCrewRole !== 'TRADER')) && canModifyPresentations && canCreateContract && (
+            <Tooltip title="Внести договор">
+              <Button
+                type="text"
+                icon={<FileTextOutlined />}
+                size="small"
+                onClick={() => {
+                  const isInCrew = r.crew?.some((c: any) => c.user?.id === myId);
+                  if (isInCrew) {
+                    navigate(`/contracts/new?tripId=${id}&presentationId=${r.id}&userId=${myId}`);
+                  } else {
+                    setContractPreselectedPresId(r.id);
+                    setContractModalOpen(true);
+                  }
+                }}
+              />
+            </Tooltip>
+          )}
           {canDeletePresentation && canModifyPresentations && (
             <Popconfirm
               title={
@@ -500,6 +538,18 @@ export default function TripDetailPage() {
           </Tag>
         </Space>
         <Space wrap>
+          {canCreateContract && !isClosed && (
+            <Button
+              type="primary"
+              icon={<FileTextOutlined />}
+              onClick={() => {
+                setContractPreselectedPresId(undefined);
+                setContractModalOpen(true);
+              }}
+            >
+              Внести договор
+            </Button>
+          )}
           {canManageCompanies && !isClosed && (
             <Button
               icon={<ShopOutlined />}
@@ -796,18 +846,78 @@ export default function TripDetailPage() {
                   />
                 ),
               },
-            {
+            canViewContracts && {
               key: "contracts",
               label: t("trips.contracts"),
               children: (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "40px 0",
-                    color: "#999",
-                  }}
-                >
-                  {t("trips.tabPlaceholder")}
+                <div style={{ paddingTop: 8 }}>
+                  <Table
+                    dataSource={tripContracts}
+                    loading={contractsLoading}
+                    rowKey="id"
+                    size="small"
+                    pagination={{ pageSize: 20, showSizeChanger: false }}
+                    onRow={(record) => ({
+                      style: { cursor: "pointer" },
+                      onClick: () => navigate(`/contracts/${record.id}`),
+                    })}
+                    columns={[
+                      {
+                        title: "№ договора",
+                        dataIndex: "contractNumber",
+                        key: "contractNumber",
+                        width: 150,
+                      },
+                      {
+                        title: "Клиент",
+                        dataIndex: "clientName",
+                        key: "clientName",
+                      },
+                      {
+                        title: "Дата",
+                        key: "date",
+                        width: 110,
+                        render: (_: any, r: any) => dayjs(r.contractDate).format("DD.MM.YYYY"),
+                      },
+                      {
+                        title: "Компания",
+                        key: "company",
+                        render: (_: any, r: any) => r.company?.name || "—",
+                      },
+                      {
+                        title: "Тип оплаты",
+                        key: "paymentType",
+                        width: 120,
+                        render: (_: any, r: any) => ({
+                          CASH: "Наличными", CREDIT: "Кредит", COMPANY: "Компания",
+                          MIXED: "Смешанный", TERMINAL: "Терминал", RESERVATION: "Резервация",
+                        }[r.paymentType as string] || r.paymentType),
+                      },
+                      {
+                        title: "Сумма",
+                        key: "totalAmount",
+                        align: "right" as const,
+                        width: 110,
+                        render: (_: any, r: any) => Number(r.totalAmount).toLocaleString(),
+                      },
+                      {
+                        title: "Подписал",
+                        key: "signedBy",
+                        render: (_: any, r: any) =>
+                          r.signedBy ? `${r.signedBy.lastName} ${r.signedBy.firstName}` : "—",
+                      },
+                      {
+                        title: "Статус",
+                        key: "status",
+                        width: 150,
+                        render: (_: any, r: any) => (
+                          <Tag color={{ UNVERIFIED: "warning", VERIFIED: "success", CANCELLED: "error" }[r.status as string]}>
+                            {{ UNVERIFIED: "Не верифицирован", VERIFIED: "Верифицирован", CANCELLED: "Отменён" }[r.status as string]}
+                          </Tag>
+                        ),
+                      },
+                    ]}
+                  />
                 </div>
               ),
             },
@@ -921,6 +1031,14 @@ export default function TripDetailPage() {
             }))}
         />
       </Modal>
+
+      {/* Модал выбора презентации и подписанта для договора */}
+      <ContractSelectModal
+        open={contractModalOpen}
+        onClose={() => setContractModalOpen(false)}
+        trip={trip}
+        preselectedPresentationId={contractPreselectedPresId}
+      />
     </div>
   );
 }
