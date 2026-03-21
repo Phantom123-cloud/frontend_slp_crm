@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  Button,
   Table,
   Modal,
   Checkbox,
@@ -9,26 +8,26 @@ import {
   message,
   Spin,
   Empty,
+  Tag,
 } from "antd";
-import { EditOutlined } from "@ant-design/icons";
+import { BankOutlined } from "@ant-design/icons";
 import { tripsApi } from "../../../api/trips";
 import { directoriesApi } from "../../../api/directories";
-import { usePermission } from "../../../hooks/usePermission";
 
 const { Text } = Typography;
 
 interface Props {
   tripId: string;
-  isClosed: boolean;
+  /** Открыть модал выбора банков извне */
+  modalOpen: boolean;
+  /** Закрыть модал извне */
+  onModalClose: () => void;
 }
 
-export default function TripBanksTab({ tripId, isClosed }: Props) {
-  const canManageBanks = usePermission("trips.banks");
-
+export default function TripBanksTab({ tripId, modalOpen, onModalClose }: Props) {
   const [tripBanks, setTripBanks] = useState<any[]>([]);
   const [allBanks, setAllBanks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -58,17 +57,19 @@ export default function TripBanksTab({ tripId, isClosed }: Props) {
     loadAllBanks();
   }, [tripId]);
 
-  const handleOpenModal = () => {
-    setSelectedIds(tripBanks.map((b) => b.id));
-    setModalOpen(true);
-  };
+  // При открытии модала — заполняем текущий выбор
+  useEffect(() => {
+    if (modalOpen) {
+      setSelectedIds(tripBanks.map((b) => b.id));
+    }
+  }, [modalOpen]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await tripsApi.setTripBanks(tripId, selectedIds);
       message.success("Банки сохранены");
-      setModalOpen(false);
+      onModalClose();
       loadTripBanks();
     } catch (e: any) {
       message.error(e.response?.data?.message || "Ошибка сохранения");
@@ -79,49 +80,24 @@ export default function TripBanksTab({ tripId, isClosed }: Props) {
 
   const toggleBank = (bankId: string) => {
     setSelectedIds((prev) =>
-      prev.includes(bankId) ? prev.filter((id) => id !== bankId) : [...prev, bankId]
+      prev.includes(bankId) ? prev.filter((id) => id !== bankId) : [...prev, bankId],
     );
   };
 
   return (
-    <div>
-      {/* Заголовок с кнопкой управления банками */}
-      {canManageBanks && !isClosed && (
-        <div style={{ marginBottom: 12 }}>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={handleOpenModal}
-          >
-            Внести банки
-          </Button>
-        </div>
-      )}
-
-      {/* Таблица банков выезда */}
+    <>
+      {/* Список банков выезда в виде тегов */}
       <Spin spinning={loading}>
         {tripBanks.length === 0 ? (
-          <Empty description="Банки не указаны" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Text type="secondary">Банки не указаны</Text>
         ) : (
-          <Table
-            dataSource={tripBanks}
-            rowKey="id"
-            size="small"
-            pagination={false}
-            columns={[
-              {
-                title: "Название банка",
-                dataIndex: "name",
-                key: "name",
-              },
-              {
-                title: "Описание",
-                dataIndex: "description",
-                key: "description",
-                render: (v: any) => v || "—",
-              },
-            ]}
-          />
+          <Space wrap>
+            {tripBanks.map((bank) => (
+              <Tag key={bank.id} icon={<BankOutlined />} color="blue">
+                {bank.name}
+              </Tag>
+            ))}
+          </Space>
         )}
       </Spin>
 
@@ -129,7 +105,7 @@ export default function TripBanksTab({ tripId, isClosed }: Props) {
       <Modal
         title="Выбор банков для выезда"
         open={modalOpen}
-        onCancel={() => setModalOpen(false)}
+        onCancel={onModalClose}
         onOk={handleSave}
         okText="Сохранить"
         cancelText="Отмена"
@@ -161,6 +137,6 @@ export default function TripBanksTab({ tripId, isClosed }: Props) {
           </div>
         )}
       </Modal>
-    </div>
+    </>
   );
 }

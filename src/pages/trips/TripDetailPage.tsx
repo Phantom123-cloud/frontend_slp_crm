@@ -108,6 +108,8 @@ export default function TripDetailPage() {
     "guest_lists.delete",
   ]);
 
+  const canManageBanks = usePermission("trips.banks");
+
   const canViewAllWallets = useAnyPermission(["wallets.view-all", "wallets.manage"]);
   const canViewPersonWallets = useAnyPermission(["wallets.view-person", "wallets.edit"]);
   const canTransactWallets = usePermission("wallets.transaction");
@@ -134,6 +136,7 @@ export default function TripDetailPage() {
   const [crewPresId, setCrewPresId] = useState<string | null>(null);
   const [presTablePage, setPresTablePage] = useState(1);
   const [presStatusFilter, setPresStatusFilter] = useState("all");
+  const [banksModalOpen, setBanksModalOpen] = useState(false);
 
   const loadTrip = async () => {
     if (!id) return;
@@ -493,6 +496,14 @@ export default function TripDetailPage() {
           </Tag>
         </Space>
         <Space wrap>
+          {canManageBanks && !isClosed && (
+            <Button
+              icon={<BankOutlined />}
+              onClick={() => setBanksModalOpen(true)}
+            >
+              Внести банки
+            </Button>
+          )}
           {canAdmin && !isClosed && (
             <Popconfirm
               title={t("trips.closeConfirm")}
@@ -606,6 +617,24 @@ export default function TripDetailPage() {
         ) : (
           <Text type="secondary">{t("trips.noCrew")}</Text>
         )}
+      </Card>
+
+      {/* Банки выезда */}
+      <Card
+        title={
+          <Space>
+            <BankOutlined />
+            Банки выезда
+          </Space>
+        }
+        style={{ marginBottom: 24 }}
+        size="small"
+      >
+        <TripBanksTab
+          tripId={id!}
+          modalOpen={banksModalOpen}
+          onModalClose={() => setBanksModalOpen(false)}
+        />
       </Card>
 
       {/* Tabs: Presentations / Warehouse / Wallet / Contracts */}
@@ -757,21 +786,6 @@ export default function TripDetailPage() {
               label: t("trips.guestLists"),
               children: (
                 <GuestListsTab tripId={id!} />
-              ),
-            },
-            {
-              key: "banks",
-              label: (
-                <span>
-                  <BankOutlined />
-                  {" "}Банки
-                </span>
-              ),
-              children: (
-                <TripBanksTab
-                  tripId={id!}
-                  isClosed={trip?.status === "CLOSED"}
-                />
               ),
             },
           ].filter(Boolean) as any[]}
