@@ -31,6 +31,11 @@ export const tripsApi = {
   getTripBanks: (tripId: string) => api.get(`/trips/${tripId}/banks`),
   setTripBanks: (tripId: string, bankIds: string[]) =>
     api.put(`/trips/${tripId}/banks`, { bankIds }),
+
+  // Companies
+  getTripCompanies: (tripId: string) => api.get(`/trips/${tripId}/companies`),
+  setTripCompanies: (tripId: string, companyIds: string[]) =>
+    api.put(`/trips/${tripId}/companies`, { companyIds }),
 };
 
 export const presentationsApi = {

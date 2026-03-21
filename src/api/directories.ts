@@ -47,4 +47,12 @@ export const directoriesApi = {
   updateBank: (id: string, data: { name?: string; description?: string }) =>
     api.patch(`/banks/${id}`, data),
   deleteBank: (id: string) => api.delete(`/banks/${id}`),
+
+  // Companies
+  getCompanies: () => api.get("/companies"),
+  createCompany: (data: { name: string; description?: string }) =>
+    api.post("/companies", data),
+  updateCompany: (id: string, data: { name?: string; description?: string }) =>
+    api.patch(`/companies/${id}`, data),
+  deleteCompany: (id: string) => api.delete(`/companies/${id}`),
 };

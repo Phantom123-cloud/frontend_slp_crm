@@ -204,6 +204,14 @@ export default function DirectoriesPage() {
   const [bankForm] = Form.useForm();
   const [editBankForm] = Form.useForm();
 
+  // === Companies ===
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [companiesLoading, setCompaniesLoading] = useState(false);
+  const [companyModalOpen, setCompanyModalOpen] = useState(false);
+  const [editCompany, setEditCompany] = useState<any>(null);
+  const [companyForm] = Form.useForm();
+  const [editCompanyForm] = Form.useForm();
+
   const loadExpenseTypes = async () => {
     setExpenseTypesLoading(true);
     try {
@@ -294,12 +302,58 @@ export default function DirectoriesPage() {
     }
   };
 
+  const loadCompanies = async () => {
+    setCompaniesLoading(true);
+    try {
+      const { data } = await directoriesApi.getCompanies();
+      setCompanies(data);
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    } finally {
+      setCompaniesLoading(false);
+    }
+  };
+
+  const handleCreateCompany = async (values: any) => {
+    try {
+      await directoriesApi.createCompany(values);
+      message.success(t("common.success"));
+      setCompanyModalOpen(false);
+      companyForm.resetFields();
+      loadCompanies();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleUpdateCompany = async (values: any) => {
+    try {
+      await directoriesApi.updateCompany(editCompany.id, values);
+      message.success(t("common.success"));
+      setEditCompany(null);
+      loadCompanies();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
+  const handleDeleteCompany = async (id: string) => {
+    try {
+      await directoriesApi.deleteCompany(id);
+      message.success(t("common.success"));
+      loadCompanies();
+    } catch (e: any) {
+      message.error(t(e.response?.data?.message || "common.error"));
+    }
+  };
+
   useEffect(() => {
     loadTypes();
     loadVenues();
     loadProducts();
     loadExpenseTypes();
     loadBanks();
+    loadCompanies();
   }, []);
 
   // === Columns ===
@@ -755,6 +809,119 @@ export default function DirectoriesPage() {
                   destroyOnClose
                 >
                   <Form form={editBankForm} layout="vertical" onFinish={handleUpdateBank}>
+                    <Form.Item name="name" label="Название" rules={[{ required: true }]}>
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="description" label="Описание">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                  </Form>
+                </Modal>
+              </>
+            ),
+          },
+          {
+            key: "companies",
+            label: "Компании",
+            children: (
+              <>
+                {canCreate && (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setCompanyModalOpen(true)}
+                    style={{ marginBottom: 12 }}
+                  >
+                    Добавить компанию
+                  </Button>
+                )}
+                <Table
+                  scroll={{ x: "max-content" }}
+                  loading={companiesLoading}
+                  dataSource={companies}
+                  rowKey="id"
+                  size="small"
+                  pagination={{ pageSize: 20, showSizeChanger: false }}
+                  columns={[
+                    {
+                      title: "Название",
+                      dataIndex: "name",
+                      key: "name",
+                      ...colSearch((r: any) => r.name ?? ""),
+                    },
+                    {
+                      title: "Описание",
+                      dataIndex: "description",
+                      key: "description",
+                      render: (v: any) => v || "—",
+                      ...colSearch((r: any) => r.description ?? ""),
+                    },
+                    {
+                      title: "",
+                      key: "actions",
+                      width: 80,
+                      render: (_: any, record: any) => (
+                        <Space>
+                          {canEdit && (
+                            <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={() => {
+                                setEditCompany(record);
+                                editCompanyForm.setFieldsValue(record);
+                              }}
+                            />
+                          )}
+                          {canDelete && (
+                            <Popconfirm
+                              title={t("common.confirmDelete")}
+                              onConfirm={() => handleDeleteCompany(record.id)}
+                              okText={t("common.yes")}
+                              cancelText={t("common.no")}
+                            >
+                              <Button
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined />}
+                              />
+                            </Popconfirm>
+                          )}
+                        </Space>
+                      ),
+                    },
+                  ]}
+                />
+
+                {/* Модал создания компании */}
+                <Modal
+                  title="Добавить компанию"
+                  open={companyModalOpen}
+                  onCancel={() => { setCompanyModalOpen(false); companyForm.resetFields(); }}
+                  onOk={() => companyForm.submit()}
+                  okText={t("common.save")}
+                  cancelText={t("common.cancel")}
+                >
+                  <Form form={companyForm} layout="vertical" onFinish={handleCreateCompany}>
+                    <Form.Item name="name" label="Название" rules={[{ required: true }]}>
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="description" label="Описание">
+                      <Input.TextArea rows={2} />
+                    </Form.Item>
+                  </Form>
+                </Modal>
+
+                {/* Модал редактирования компании */}
+                <Modal
+                  title="Редактировать компанию"
+                  open={!!editCompany}
+                  onCancel={() => setEditCompany(null)}
+                  onOk={() => editCompanyForm.submit()}
+                  okText={t("common.save")}
+                  cancelText={t("common.cancel")}
+                  destroyOnClose
+                >
+                  <Form form={editCompanyForm} layout="vertical" onFinish={handleUpdateCompany}>
                     <Form.Item name="name" label="Название" rules={[{ required: true }]}>
                       <Input />
                     </Form.Item>

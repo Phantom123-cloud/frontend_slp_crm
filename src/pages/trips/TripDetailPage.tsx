@@ -28,6 +28,7 @@ import {
   TeamOutlined,
   BarChartOutlined,
   BankOutlined,
+  ShopOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { tripsApi, presentationsApi } from "../../api/trips";
@@ -42,6 +43,7 @@ import TripWarehouseTab from "./components/TripWarehouseTab";
 import TripWalletTab from "./components/TripWalletTab";
 import GuestListsTab from "./components/GuestListsTab";
 import TripBanksTab from "./components/TripBanksTab";
+import TripCompaniesTab from "./components/TripCompaniesTab";
 import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
@@ -109,6 +111,7 @@ export default function TripDetailPage() {
   ]);
 
   const canManageBanks = usePermission("trips.banks");
+  const canManageCompanies = usePermission("trips.companies");
 
   const canViewAllWallets = useAnyPermission(["wallets.view-all", "wallets.manage"]);
   const canViewPersonWallets = useAnyPermission(["wallets.view-person", "wallets.edit"]);
@@ -137,6 +140,7 @@ export default function TripDetailPage() {
   const [presTablePage, setPresTablePage] = useState(1);
   const [presStatusFilter, setPresStatusFilter] = useState("all");
   const [banksModalOpen, setBanksModalOpen] = useState(false);
+  const [companiesModalOpen, setCompaniesModalOpen] = useState(false);
 
   const loadTrip = async () => {
     if (!id) return;
@@ -496,6 +500,14 @@ export default function TripDetailPage() {
           </Tag>
         </Space>
         <Space wrap>
+          {canManageCompanies && !isClosed && (
+            <Button
+              icon={<ShopOutlined />}
+              onClick={() => setCompaniesModalOpen(true)}
+            >
+              Внести компании
+            </Button>
+          )}
           {canManageBanks && !isClosed && (
             <Button
               icon={<BankOutlined />}
@@ -634,6 +646,24 @@ export default function TripDetailPage() {
           tripId={id!}
           modalOpen={banksModalOpen}
           onModalClose={() => setBanksModalOpen(false)}
+        />
+      </Card>
+
+      {/* Компании выезда */}
+      <Card
+        title={
+          <Space>
+            <ShopOutlined />
+            Компании выезда
+          </Space>
+        }
+        style={{ marginBottom: 24 }}
+        size="small"
+      >
+        <TripCompaniesTab
+          tripId={id!}
+          modalOpen={companiesModalOpen}
+          onModalClose={() => setCompaniesModalOpen(false)}
         />
       </Card>
 
