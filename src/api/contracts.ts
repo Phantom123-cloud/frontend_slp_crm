@@ -30,8 +30,18 @@ export interface CreateContractData {
   registrationAddress?: string;
   actualAddress?: string;
   bankIds?: string[];
+  bankAdvances?: Record<string, number>;
   phones?: ContractPhone[];
   paymentSchedule?: PaymentScheduleItem[];
+}
+
+export interface RefundData {
+  paymentStatus: 'REFUND' | 'PARTIAL_REFUND';
+  advanceCash?: number;
+  advanceTerminal?: number;
+  advanceBank?: number;
+  bankAdvances?: Record<string, number>;
+  amountAfterRefund?: number;
 }
 
 export const contractsApi = {
@@ -43,5 +53,9 @@ export const contractsApi = {
     api.patch(`/contracts/${id}`, data),
   updateStatus: (id: string, status: string) =>
     api.patch(`/contracts/${id}/status`, { status }),
+  refund: (id: string, data: RefundData) =>
+    api.patch(`/contracts/${id}/refund`, data),
+  updateFinancials: (id: string, data: Partial<CreateContractData>) =>
+    api.patch(`/contracts/${id}/financials`, data),
   delete: (id: string) => api.delete(`/contracts/${id}`),
 };
