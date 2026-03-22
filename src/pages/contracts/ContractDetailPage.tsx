@@ -105,7 +105,17 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 // Встроенный блок финансов для модалки редактирования (реактивный)
-function FinancialsFormContent({ form, tripBanks }: { form: any; tripBanks: any[] }) {
+function FinancialsFormContent({
+  form,
+  tripBanks,
+  paymentSchedule,
+  setPaymentSchedule,
+}: {
+  form: any;
+  tripBanks: any[];
+  paymentSchedule: { date: dayjs.Dayjs; amount: number }[];
+  setPaymentSchedule: (s: { date: dayjs.Dayjs; amount: number }[]) => void;
+}) {
   const paymentType = Form.useWatch("paymentType", form);
   const totalAmount = Form.useWatch("totalAmount", form) || 0;
   const advanceCash = Form.useWatch("advanceCash", form) || 0;
@@ -115,8 +125,6 @@ function FinancialsFormContent({ form, tripBanks }: { form: any; tripBanks: any[
   const selectedBankId = Form.useWatch("bankId", form);
   const selectedBankIds: string[] = Form.useWatch("bankIds", form) || [];
   const bankAdvancesObj: Record<string, number> = Form.useWatch("bankAdvances", form) || {};
-
-  const [paymentSchedule, setPaymentSchedule] = useState<{ date: dayjs.Dayjs; amount: number }[]>([]);
 
   const hasInstallment = paymentType === "COMPANY" || paymentType === "MIXED";
 
@@ -384,6 +392,7 @@ export default function ContractDetailPage() {
   const [finOpen, setFinOpen] = useState(false);
   const [finLoading, setFinLoading] = useState(false);
   const [finForm] = Form.useForm();
+  const [finPaymentSchedule, setFinPaymentSchedule] = useState<{ date: dayjs.Dayjs; amount: number }[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -496,6 +505,16 @@ export default function ContractDetailPage() {
       } catch {}
     }
 
+    // Инициализируем график платежей из текущего договора
+    if (contract.paymentSchedule?.length > 0) {
+      setFinPaymentSchedule(contract.paymentSchedule.map((s: any) => ({
+        date: dayjs(s.date),
+        amount: Number(s.amount),
+      })));
+    } else {
+      setFinPaymentSchedule([]);
+    }
+
     setFinOpen(true);
   };
 
@@ -513,6 +532,8 @@ export default function ContractDetailPage() {
           ? (values.bankIds || [])
           : [];
 
+      const hasInstallment = paymentType === "COMPANY" || paymentType === "MIXED";
+
       await contractsApi.updateFinancials(id!, {
         paymentType,
         totalAmount: values.totalAmount,
@@ -521,10 +542,14 @@ export default function ContractDetailPage() {
         advanceBank: values.advanceBank,
         bankIds,
         bankAdvances: values.bankAdvances,
-        installmentMonths: values.installmentMonths,
-        firstPaymentDate: values.firstPaymentDate
+        installmentMonths: hasInstallment ? values.installmentMonths : undefined,
+        firstPaymentDate: hasInstallment && values.firstPaymentDate
           ? dayjs(values.firstPaymentDate).format("YYYY-MM-DD")
           : undefined,
+        // Передаём график: если рассрочки нет — пустой массив (сервер удалит)
+        paymentSchedule: hasInstallment
+          ? finPaymentSchedule.map((s) => ({ date: s.date.format("YYYY-MM-DD"), amount: s.amount }))
+          : [],
       });
       message.success("Финансы обновлены");
       setFinOpen(false);
@@ -835,7 +860,12 @@ export default function ContractDetailPage() {
           style={{ marginBottom: 16 }}
         />
         <Form form={finForm} layout="vertical">
-          <FinancialsFormContent form={finForm} tripBanks={tripBanks} />
+          <FinancialsFormContent
+            form={finForm}
+            tripBanks={tripBanks}
+            paymentSchedule={finPaymentSchedule}
+            setPaymentSchedule={setFinPaymentSchedule}
+          />
         </Form>
       </Modal>
     </div>
