@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Button,
@@ -134,6 +134,9 @@ function FinancialsFormContent({
 
   const hasInstallment = paymentType === "COMPANY" || paymentType === "MIXED";
 
+  // Флаг первого рендера — пропускаем авто-очистку при монтировании
+  const isMounted = useRef(false);
+
   const totalBankAdvance = (() => {
     if (paymentType === "CREDIT") return Number(bankAdvancesObj[selectedBankId] || 0);
     if (paymentType === "MIXED") return selectedBankIds.reduce((s, id) => s + (Number(bankAdvancesObj[id]) || 0), 0);
@@ -155,8 +158,13 @@ function FinancialsFormContent({
     }
   }, [totalAdvances, totalAmount, installmentBalance, paymentSchedule, hasInstallment]);
 
-  // Автогенерация графика при изменении параметров рассрочки
+  // Автогенерация/очистка графика при изменении параметров рассрочки
   useEffect(() => {
+    if (!isMounted.current) {
+      // Пропускаем первый запуск — не сбрасываем загруженный из договора график
+      isMounted.current = true;
+      return;
+    }
     if (hasInstallment && installmentMonths > 0 && firstPaymentDate && installmentBalance > 0) {
       const perMonth = Math.round((installmentBalance / installmentMonths) * 100) / 100;
       const schedule = [];
