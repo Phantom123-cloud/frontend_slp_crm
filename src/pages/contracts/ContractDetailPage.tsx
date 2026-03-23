@@ -169,8 +169,9 @@ function FinancialsFormContent({
       }
       setPaymentSchedule(schedule);
     } else if (!hasInstallment || installmentBalance <= 0) {
-      // Тип без рассрочки ИЛИ авансы покрывают всю сумму — график не нужен
+      // Тип без рассрочки ИЛИ авансы покрывают всю сумму — рассрочка не нужна
       setPaymentSchedule([]);
+      form.setFieldsValue({ installmentMonths: null, firstPaymentDate: undefined });
     }
   }, [paymentType, installmentMonths, firstPaymentDate, totalAmount, advanceCash, advanceTerminal, totalBankAdvance]);
 
@@ -290,8 +291,8 @@ function FinancialsFormContent({
         )}
       </Row>
 
-      {/* Рассрочка — для COMPANY и MIXED */}
-      {hasInstallment && (
+      {/* Рассрочка — для COMPANY и MIXED, только если есть остаток */}
+      {hasInstallment && installmentBalance > 0 && (
         <>
           <Divider titlePlacement="left" plain>Рассрочка</Divider>
           <Row gutter={16}>
