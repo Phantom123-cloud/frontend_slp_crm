@@ -587,17 +587,23 @@ export default function ContractDetailPage() {
 
   if (!contract) return null;
 
+  // Банковский аванс: сумма per-bank записей; если их нет — fallback на contract.advanceBank
+  const bankTotal = contract.banks?.length > 0
+    ? contract.banks.reduce((sum: number, b: any) => sum + (b.advance != null ? Number(b.advance) : 0), 0) || (Number(contract.advanceBank) || 0)
+    : (Number(contract.advanceBank) || 0);
+
   const totalAdvances =
     (Number(contract.advanceCash) || 0) +
     (Number(contract.advanceTerminal) || 0) +
-    (Number(contract.advanceBank) || 0);
-
-  const installmentBalance = Number(contract.totalAmount) - totalAdvances;
+    bankTotal;
 
   const amountAfterRefund =
     contract.amountAfterRefund != null
       ? Number(contract.amountAfterRefund)
       : Number(contract.totalAmount);
+
+  // Остаток рассрочки считается от amountAfterRefund (сумма после возврата)
+  const installmentBalance = amountAfterRefund - totalAdvances;
 
   const hasRefund = contract.paymentStatus === "REFUND" || contract.paymentStatus === "PARTIAL_REFUND";
 
