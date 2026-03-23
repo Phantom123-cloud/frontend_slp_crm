@@ -110,13 +110,18 @@ function FinancialsFormContent({
   tripBanks,
   paymentSchedule,
   setPaymentSchedule,
+  originalTotalAmount,
+  onCanSaveChange,
 }: {
   form: any;
   tripBanks: any[];
   paymentSchedule: { date: dayjs.Dayjs; amount: number }[];
   setPaymentSchedule: (s: { date: dayjs.Dayjs; amount: number }[]) => void;
+  originalTotalAmount: number;
+  onCanSaveChange: (v: boolean) => void;
 }) {
   const paymentType = Form.useWatch("paymentType", form);
+  // totalAmount здесь = "Общая сумма (после возврата)" — редактируемое поле
   const totalAmount = Form.useWatch("totalAmount", form) || 0;
   const advanceCash = Form.useWatch("advanceCash", form) || 0;
   const advanceTerminal = Form.useWatch("advanceTerminal", form) || 0;
@@ -136,6 +141,18 @@ function FinancialsFormContent({
 
   const totalAdvances = Number(advanceCash) + Number(advanceTerminal) + totalBankAdvance;
   const installmentBalance = Number(totalAmount) - totalAdvances;
+
+  // Проверка возможности сохранения
+  useEffect(() => {
+    if (!hasInstallment) {
+      // Без рассрочки: итого авансов должно совпасть с суммой после возврата
+      onCanSaveChange(totalAmount > 0 && Math.round((totalAdvances - totalAmount) * 100) / 100 === 0);
+    } else {
+      // С рассрочкой: итого рассрочки должно совпасть с остатком
+      const scheduleTotal = paymentSchedule.reduce((s, r) => s + r.amount, 0);
+      onCanSaveChange(installmentBalance >= 0 && Math.round((scheduleTotal - installmentBalance) * 100) / 100 === 0);
+    }
+  }, [totalAdvances, totalAmount, installmentBalance, paymentSchedule, hasInstallment]);
 
   // Автогенерация графика при изменении параметров рассрочки
   useEffect(() => {
@@ -192,7 +209,13 @@ function FinancialsFormContent({
       {/* Суммы */}
       <Row gutter={16}>
         <Col span={8}>
-          <Form.Item name="totalAmount" label="Общая сумма" rules={[{ required: true }]}>
+          {/* Исходная сумма договора — не редактируется */}
+          <Form.Item label="Общая сумма (до возврата)">
+            <InputNumber style={{ width: "100%" }} value={originalTotalAmount} disabled formatter={FMT} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item name="totalAmount" label="Общая сумма (после возврата)" rules={[{ required: true }]}>
             <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
           </Form.Item>
         </Col>
@@ -201,6 +224,8 @@ function FinancialsFormContent({
             <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
           </Form.Item>
         </Col>
+      </Row>
+      <Row gutter={16}>
         <Col span={8}>
           <Form.Item name="advanceTerminal" label="Аванс терминал">
             <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
@@ -391,6 +416,7 @@ export default function ContractDetailPage() {
   // Модалка редактирования финансов
   const [finOpen, setFinOpen] = useState(false);
   const [finLoading, setFinLoading] = useState(false);
+  const [finCanSave, setFinCanSave] = useState(false);
   const [finForm] = Form.useForm();
   const [finPaymentSchedule, setFinPaymentSchedule] = useState<{ date: dayjs.Dayjs; amount: number }[]>([]);
 
@@ -503,9 +529,13 @@ export default function ContractDetailPage() {
       });
     }
 
+    setFinCanSave(false);
     finForm.setFieldsValue({
       paymentType: contract.paymentType,
-      totalAmount: Number(contract.totalAmount),
+      // totalAmount в форме = "Общая сумма (после возврата)" — стартует с amountAfterRefund
+      totalAmount: contract.amountAfterRefund != null
+        ? Number(contract.amountAfterRefund)
+        : Number(contract.totalAmount),
       advanceCash: Number(contract.advanceCash || 0),
       advanceTerminal: Number(contract.advanceTerminal || 0),
       advanceBank: Number(contract.advanceBank || 0),
@@ -876,7 +906,8 @@ export default function ContractDetailPage() {
         okText="Сохранить"
         cancelText="Отмена"
         confirmLoading={finLoading}
-        width={700}
+        okButtonProps={{ disabled: !finCanSave }}
+        width={750}
       >
         <Alert
           type="info"
@@ -890,6 +921,8 @@ export default function ContractDetailPage() {
             tripBanks={tripBanks}
             paymentSchedule={finPaymentSchedule}
             setPaymentSchedule={setFinPaymentSchedule}
+            originalTotalAmount={Number(contract?.totalAmount || 0)}
+            onCanSaveChange={setFinCanSave}
           />
         </Form>
       </Modal>
