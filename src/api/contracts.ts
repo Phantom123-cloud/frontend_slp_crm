@@ -57,5 +57,7 @@ export const contractsApi = {
     api.patch(`/contracts/${id}/refund`, data),
   updateFinancials: (id: string, data: Partial<CreateContractData>) =>
     api.patch(`/contracts/${id}/financials`, data),
+  payScheduleItem: (scheduleItemId: string) =>
+    api.patch(`/contracts/schedule/${scheduleItemId}/pay`),
   delete: (id: string) => api.delete(`/contracts/${id}`),
 };

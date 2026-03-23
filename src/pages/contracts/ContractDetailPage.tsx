@@ -454,6 +454,22 @@ export default function ContractDetailPage() {
   // Модалка редактирования договора (для не верифицированных)
   const [editOpen, setEditOpen] = useState(false);
 
+  // Подтверждение платежа по графику
+  const [payingScheduleItemId, setPayingScheduleItemId] = useState<string | null>(null);
+
+  const handlePayScheduleItem = async (scheduleItemId: string) => {
+    setPayingScheduleItemId(scheduleItemId);
+    try {
+      const { data } = await contractsApi.payScheduleItem(scheduleItemId);
+      setContract(data);
+      message.success("Платёж подтверждён");
+    } catch (e: any) {
+      message.error(e.response?.data?.message || "Ошибка подтверждения платежа");
+    } finally {
+      setPayingScheduleItemId(null);
+    }
+  };
+
   // Модалка редактирования финансов
   const [finOpen, setFinOpen] = useState(false);
   const [finLoading, setFinLoading] = useState(false);
@@ -673,8 +689,15 @@ export default function ContractDetailPage() {
       ? Number(contract.amountAfterRefund)
       : Number(contract.totalAmount);
 
-  // Остаток рассрочки считается от amountAfterRefund (сумма после возврата)
-  const installmentBalance = amountAfterRefund - totalAdvances;
+  // Остаток рассрочки = сумма неоплаченных платежей по графику
+  // (если график есть — считаем по нему; иначе — по разнице сумм)
+  const installmentBalance =
+    contract.paymentSchedule?.length > 0
+      ? contract.paymentSchedule.reduce((sum: number, s: any) => !s.isPaid ? sum + Number(s.amount) : sum, 0)
+      : Math.max(0, amountAfterRefund - totalAdvances);
+
+  // Следующий неоплаченный платёж (по порядку)
+  const nextUnpaidPayment = contract.paymentSchedule?.find((s: any) => !s.isPaid) ?? null;
 
   const hasRefund = contract.paymentStatus === "REFUND" || contract.paymentStatus === "PARTIAL_REFUND";
 
@@ -887,7 +910,26 @@ export default function ContractDetailPage() {
       {/* График платежей */}
       {contract.paymentSchedule?.length > 0 && (
         <Card size="small">
-          <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>ГРАФИК ПЛАТЕЖЕЙ</Divider>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+            <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888", flex: 1 }}>ГРАФИК ПЛАТЕЖЕЙ</Divider>
+            {canEdit && nextUnpaidPayment && contract.status === "VERIFIED" && (
+              <Popconfirm
+                title={`Подтвердить платёж от ${dayjs(nextUnpaidPayment.date).format("DD.MM.YYYY")}?`}
+                onConfirm={() => handlePayScheduleItem(nextUnpaidPayment.id)}
+                okText="Да"
+                cancelText="Нет"
+              >
+                <Button
+                  type="primary"
+                  size="small"
+                  loading={payingScheduleItemId === nextUnpaidPayment.id}
+                  style={{ marginLeft: 12, whiteSpace: "nowrap" }}
+                >
+                  Подтвердить платёж {dayjs(nextUnpaidPayment.date).format("DD.MM.YYYY")}
+                </Button>
+              </Popconfirm>
+            )}
+          </div>
           <Table
             size="small"
             dataSource={contract.paymentSchedule}
