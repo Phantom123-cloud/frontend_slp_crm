@@ -113,6 +113,7 @@ function FinancialsFormContent({
   setPaymentSchedule,
   originalTotalAmount,
   onCanSaveChange,
+  initialPaymentType,
 }: {
   form: any;
   tripBanks: any[];
@@ -120,8 +121,11 @@ function FinancialsFormContent({
   setPaymentSchedule: (s: { date: dayjs.Dayjs; amount: number }[]) => void;
   originalTotalAmount: number;
   onCanSaveChange: (v: boolean) => void;
+  initialPaymentType: string;
 }) {
-  const paymentType = Form.useWatch("paymentType", form);
+  // Fallback на initialPaymentType пока Form.useWatch не синхронизировался (первый рендер)
+  const paymentTypeWatched = Form.useWatch("paymentType", form);
+  const paymentType = paymentTypeWatched ?? initialPaymentType;
   // totalAmount здесь = "Общая сумма (после возврата)" — редактируемое поле
   const totalAmount = Form.useWatch("totalAmount", form) || 0;
   const advanceCash = Form.useWatch("advanceCash", form) || 0;
@@ -134,8 +138,18 @@ function FinancialsFormContent({
 
   const hasInstallment = paymentType === "COMPANY" || paymentType === "MIXED";
 
-  // Флаг первого рендера — пропускаем авто-очистку при монтировании
-  const isMounted = useRef(false);
+  // Хранение предыдущих значений зависимостей — для корректной работы в React StrictMode
+  // (StrictMode дважды запускает эффекты; prevDepsRef позволяет пропустить повторный запуск
+  // с теми же значениями и не сбрасывать загруженный из договора график)
+  const prevDepsRef = useRef<{
+    paymentType: string;
+    installmentMonths: number;
+    firstPaymentDate: any;
+    totalAmount: number;
+    advanceCash: number;
+    advanceTerminal: number;
+    totalBankAdvance: number;
+  } | null>(null);
 
   const totalBankAdvance = (() => {
     if (paymentType === "CREDIT") return Number(bankAdvancesObj[selectedBankId] || 0);
@@ -160,11 +174,24 @@ function FinancialsFormContent({
 
   // Автогенерация/очистка графика при изменении параметров рассрочки
   useEffect(() => {
-    if (!isMounted.current) {
-      // Пропускаем первый запуск — не сбрасываем загруженный из договора график
-      isMounted.current = true;
-      return;
-    }
+    const current = { paymentType, installmentMonths, firstPaymentDate, totalAmount, advanceCash, advanceTerminal, totalBankAdvance };
+    const prev = prevDepsRef.current;
+    prevDepsRef.current = current;
+
+    // Первый рендер — инициализируем без изменения графика
+    if (prev === null) return;
+
+    // Значения не изменились (React StrictMode повторный запуск) — пропускаем
+    const changed =
+      prev.paymentType !== current.paymentType ||
+      prev.installmentMonths !== current.installmentMonths ||
+      prev.firstPaymentDate !== current.firstPaymentDate ||
+      prev.totalAmount !== current.totalAmount ||
+      prev.advanceCash !== current.advanceCash ||
+      prev.advanceTerminal !== current.advanceTerminal ||
+      prev.totalBankAdvance !== current.totalBankAdvance;
+    if (!changed) return;
+
     if (hasInstallment && installmentMonths > 0 && firstPaymentDate && installmentBalance > 0) {
       const perMonth = Math.round((installmentBalance / installmentMonths) * 100) / 100;
       const schedule = [];
@@ -981,6 +1008,7 @@ export default function ContractDetailPage() {
             setPaymentSchedule={setFinPaymentSchedule}
             originalTotalAmount={Number(contract?.totalAmount || 0)}
             onCanSaveChange={setFinCanSave}
+            initialPaymentType={contract?.paymentType ?? "CASH"}
           />
         </Form>
       </Modal>
