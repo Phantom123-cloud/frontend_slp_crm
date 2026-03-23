@@ -437,9 +437,18 @@ export default function ContractDetailPage() {
   // Открыть модалку возврата
   const openRefundModal = () => {
     const bankAdvancesObj: Record<string, number> = {};
+    const bankIds = contract.banks?.map((b: any) => b.bankId) ?? [];
     contract.banks?.forEach((b: any) => {
       if (b.advance != null) bankAdvancesObj[b.bankId] = Number(b.advance);
     });
+    // Фолбэк для старых договоров без per-bank аванса
+    if (bankIds.length > 0 && contract.advanceBank) {
+      bankIds.forEach((bankId: string) => {
+        if (bankAdvancesObj[bankId] == null) {
+          bankAdvancesObj[bankId] = Number(contract.advanceBank) / bankIds.length;
+        }
+      });
+    }
     refundForm.setFieldsValue({
       advanceCash: Number(contract.advanceCash || 0),
       advanceTerminal: Number(contract.advanceTerminal || 0),
@@ -483,6 +492,16 @@ export default function ContractDetailPage() {
     // Определяем bankId / bankIds по текущим банкам договора
     const currentBankIds = contract.banks?.map((b: any) => b.bankId) ?? [];
     const isSingleBank = contract.paymentType === "CREDIT";
+
+    // Фолбэк: если per-bank аванс не задан (старые договоры) — берём общий advanceBank
+    if (currentBankIds.length > 0 && contract.advanceBank) {
+      currentBankIds.forEach((bankId: string) => {
+        if (bankAdvancesObj[bankId] == null) {
+          // Распределяем поровну если банков несколько и per-bank не задан
+          bankAdvancesObj[bankId] = Number(contract.advanceBank) / currentBankIds.length;
+        }
+      });
+    }
 
     finForm.setFieldsValue({
       paymentType: contract.paymentType,
