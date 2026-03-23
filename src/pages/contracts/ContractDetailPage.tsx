@@ -960,6 +960,7 @@ export default function ContractDetailPage() {
         open={finOpen}
         onCancel={() => setFinOpen(false)}
         onOk={handleFinSave}
+        destroyOnClose
         okText="Сохранить"
         cancelText="Отмена"
         confirmLoading={finLoading}
