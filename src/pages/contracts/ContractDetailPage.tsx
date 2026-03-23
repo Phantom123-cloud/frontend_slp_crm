@@ -168,7 +168,8 @@ function FinancialsFormContent({
         });
       }
       setPaymentSchedule(schedule);
-    } else if (!hasInstallment) {
+    } else if (!hasInstallment || installmentBalance <= 0) {
+      // Тип без рассрочки ИЛИ авансы покрывают всю сумму — график не нужен
       setPaymentSchedule([]);
     }
   }, [paymentType, installmentMonths, firstPaymentDate, totalAmount, advanceCash, advanceTerminal, totalBankAdvance]);
@@ -637,6 +638,15 @@ export default function ContractDetailPage() {
 
   const hasRefund = contract.paymentStatus === "REFUND" || contract.paymentStatus === "PARTIAL_REFUND";
 
+  // Должник: авансы не покрывают исходную сумму договора
+  const isDebtor = totalAdvances < Number(contract.totalAmount);
+
+  // Спасенный контракт: частичный возврат = да, полный возврат = нет, иначе — нет значения
+  const savedContract: "yes" | "no" | null =
+    contract.paymentStatus === "PARTIAL_REFUND" ? "yes" :
+    contract.paymentStatus === "REFUND" ? "no" :
+    null;
+
   return (
     <div style={{ padding: "0 24px 24px", maxWidth: 960, margin: "0 auto" }}>
       {/* Шапка */}
@@ -796,6 +806,30 @@ export default function ContractDetailPage() {
           )}
           {contract.firstPaymentDate && (
             <Col span={6}><Field label="Первый платёж" value={dayjs(contract.firstPaymentDate).format("DD.MM.YYYY")} /></Col>
+          )}
+          {/* Должник */}
+          <Col span={6}>
+            <Field
+              label="Должник"
+              value={
+                <Tag color={isDebtor ? "error" : "success"} style={{ marginTop: 2 }}>
+                  {isDebtor ? "Да" : "Нет"}
+                </Tag>
+              }
+            />
+          </Col>
+          {/* Спасенный контракт */}
+          {savedContract !== null && (
+            <Col span={6}>
+              <Field
+                label="Спасенный контракт"
+                value={
+                  <Tag color={savedContract === "yes" ? "success" : "default"} style={{ marginTop: 2 }}>
+                    {savedContract === "yes" ? "Да" : "Нет"}
+                  </Tag>
+                }
+              />
+            </Col>
           )}
         </Row>
       </Card>
