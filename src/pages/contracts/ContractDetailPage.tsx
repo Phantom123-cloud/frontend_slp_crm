@@ -910,9 +910,9 @@ export default function ContractDetailPage() {
       {/* График платежей */}
       {contract.paymentSchedule?.length > 0 && (
         <Card size="small">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-            <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888", flex: 1 }}>ГРАФИК ПЛАТЕЖЕЙ</Divider>
-            {canEdit && nextUnpaidPayment && contract.status === "VERIFIED" && (
+          <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>ГРАФИК ПЛАТЕЖЕЙ</Divider>
+          {canEdit && nextUnpaidPayment && contract.status === "VERIFIED" && (
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
               <Popconfirm
                 title={`Подтвердить платёж от ${dayjs(nextUnpaidPayment.date).format("DD.MM.YYYY")}?`}
                 onConfirm={() => handlePayScheduleItem(nextUnpaidPayment.id)}
@@ -921,15 +921,14 @@ export default function ContractDetailPage() {
               >
                 <Button
                   type="primary"
-                  size="small"
+                  icon={<CheckCircleOutlined />}
                   loading={payingScheduleItemId === nextUnpaidPayment.id}
-                  style={{ marginLeft: 12, whiteSpace: "nowrap" }}
                 >
                   Подтвердить платёж {dayjs(nextUnpaidPayment.date).format("DD.MM.YYYY")}
                 </Button>
               </Popconfirm>
-            )}
-          </div>
+            </div>
+          )}
           <Table
             size="small"
             dataSource={contract.paymentSchedule}
