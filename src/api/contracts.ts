@@ -59,5 +59,7 @@ export const contractsApi = {
     api.patch(`/contracts/${id}/financials`, data),
   payScheduleItem: (scheduleItemId: string) =>
     api.patch(`/contracts/schedule/${scheduleItemId}/pay`),
+  unpayScheduleItem: (scheduleItemId: string) =>
+    api.patch(`/contracts/schedule/${scheduleItemId}/unpay`),
   delete: (id: string) => api.delete(`/contracts/${id}`),
 };

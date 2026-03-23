@@ -454,7 +454,7 @@ export default function ContractDetailPage() {
   // Модалка редактирования договора (для не верифицированных)
   const [editOpen, setEditOpen] = useState(false);
 
-  // Подтверждение платежа по графику
+  // Подтверждение / отмена платежа по графику
   const [payingScheduleItemId, setPayingScheduleItemId] = useState<string | null>(null);
 
   const handlePayScheduleItem = async (scheduleItemId: string) => {
@@ -465,6 +465,19 @@ export default function ContractDetailPage() {
       message.success("Платёж подтверждён");
     } catch (e: any) {
       message.error(e.response?.data?.message || "Ошибка подтверждения платежа");
+    } finally {
+      setPayingScheduleItemId(null);
+    }
+  };
+
+  const handleUnpayScheduleItem = async (scheduleItemId: string) => {
+    setPayingScheduleItemId(scheduleItemId);
+    try {
+      const { data } = await contractsApi.unpayScheduleItem(scheduleItemId);
+      setContract(data);
+      message.success("Платёж отменён");
+    } catch (e: any) {
+      message.error(e.response?.data?.message || "Ошибка отмены платежа");
     } finally {
       setPayingScheduleItemId(null);
     }
@@ -696,8 +709,13 @@ export default function ContractDetailPage() {
       ? contract.paymentSchedule.reduce((sum: number, s: any) => !s.isPaid ? sum + Number(s.amount) : sum, 0)
       : Math.max(0, amountAfterRefund - totalAdvances);
 
-  // Следующий неоплаченный платёж (по порядку)
+  // Следующий неоплаченный платёж (по порядку А→Я)
   const nextUnpaidPayment = contract.paymentSchedule?.find((s: any) => !s.isPaid) ?? null;
+
+  // Последний оплаченный платёж (по порядку Я→А) — для кнопки отмены
+  const lastPaidPayment = contract.paymentSchedule
+    ? [...contract.paymentSchedule].reverse().find((s: any) => s.isPaid) ?? null
+    : null;
 
   const hasRefund = contract.paymentStatus === "REFUND" || contract.paymentStatus === "PARTIAL_REFUND";
 
@@ -942,7 +960,30 @@ export default function ContractDetailPage() {
                 title: "Статус",
                 key: "isPaid",
                 render: (_: any, r: any) => (
-                  <Tag color={r.isPaid ? "success" : "default"}>{r.isPaid ? "Оплачен" : "Ожидает"}</Tag>
+                  <Space size={4}>
+                    <Tag color={r.isPaid ? "success" : "default"}>
+                      {r.isPaid ? "Оплачен" : "Ожидает"}
+                    </Tag>
+                    {/* Крестик отмены — только у последнего оплаченного, только для верифицированных */}
+                    {canEdit && r.isPaid && lastPaidPayment?.id === r.id && contract.status === "VERIFIED" && (
+                      <Popconfirm
+                        title="Отменить подтверждение этого платежа?"
+                        onConfirm={() => handleUnpayScheduleItem(r.id)}
+                        okText="Да"
+                        cancelText="Нет"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          icon={<CloseCircleOutlined />}
+                          loading={payingScheduleItemId === r.id}
+                          style={{ padding: "0 2px" }}
+                        />
+                      </Popconfirm>
+                    )}
+                  </Space>
                 ),
               },
             ]}
