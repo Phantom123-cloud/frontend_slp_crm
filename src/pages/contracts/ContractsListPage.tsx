@@ -5,6 +5,8 @@ import {
   Tag,
   message,
   Spin,
+  Descriptions,
+  Space,
 } from "antd";
 import { FileTextOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -66,6 +68,14 @@ export default function ContractsListPage() {
       width: 160,
       fixed: "left" as const,
       ...colSearch((r: any) => r.contractNumber ?? ""),
+      render: (_: any, r: any) => (
+        <a
+          onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${r.id}`); }}
+          style={{ fontWeight: 600 }}
+        >
+          {r.contractNumber}
+        </a>
+      ),
     },
     {
       title: "Клиент",
@@ -125,15 +135,17 @@ export default function ContractsListPage() {
         r.signedBy ? `${r.signedBy.lastName} ${r.signedBy.firstName}` : "—",
     },
     {
-      title: "Статус",
+      title: "Проверен?",
       key: "status",
-      width: 150,
+      width: 90,
       ...colEnum(
-        Object.entries(STATUS_LABELS).map(([v, t]) => ({ text: t, value: v })),
+        [{ text: "Да", value: "VERIFIED" }, { text: "Нет", value: "UNVERIFIED" }, { text: "Отменён", value: "CANCELLED" }],
         (v: any, r: any) => r.status === v,
       ),
       render: (_: any, r: any) => (
-        <Tag color={STATUS_COLORS[r.status]}>{STATUS_LABELS[r.status]}</Tag>
+        <Tag color={STATUS_COLORS[r.status]}>
+          {r.status === "VERIFIED" ? "Да" : r.status === "UNVERIFIED" ? "Нет" : "Отменён"}
+        </Tag>
       ),
     },
   ];
@@ -171,10 +183,34 @@ export default function ContractsListPage() {
             const hasFilter = Object.values(filters).some((f) => f && f.length > 0);
             if (hasFilter) setPage(1);
           }}
-          onRow={(record) => ({
-            style: { cursor: "pointer" },
-            onClick: () => navigate(`/contracts/${record.id}`),
-          })}
+          expandable={{
+            expandRowByClick: false,
+            expandedRowRender: (r: any) => {
+              const totalAdv = (Number(r.advanceCash) || 0) + (Number(r.advanceTerminal) || 0) + (Number(r.advanceBank) || 0);
+              return (
+                <Descriptions size="small" bordered column={3} style={{ margin: "8px 0" }}>
+                  <Descriptions.Item label="Адрес регистрации" span={3}>{r.registrationAddress || "—"}</Descriptions.Item>
+                  <Descriptions.Item label="Адрес проживания" span={3}>{r.actualAddress || "—"}</Descriptions.Item>
+                  {r.phones?.length > 0 && (
+                    <Descriptions.Item label="Телефоны" span={3}>
+                      {r.phones.map((p: any) => `${p.countryCode} ${p.number}`).join(", ")}
+                    </Descriptions.Item>
+                  )}
+                  <Descriptions.Item label="Тип продажи">{{ RAFFLE: "Розыгрыш", HOURLY: "Часовка" }[r.saleType as string] || "—"}</Descriptions.Item>
+                  <Descriptions.Item label="Аванс наличные">{Number(r.advanceCash || 0).toLocaleString()}</Descriptions.Item>
+                  <Descriptions.Item label="Аванс терминал">{Number(r.advanceTerminal || 0).toLocaleString()}</Descriptions.Item>
+                  <Descriptions.Item label="Аванс банк">{Number(r.advanceBank || 0).toLocaleString()}</Descriptions.Item>
+                  <Descriptions.Item label="Итого авансов">{totalAdv.toLocaleString()}</Descriptions.Item>
+                  {r.installmentMonths && <Descriptions.Item label="Рассрочка (мес)">{r.installmentMonths}</Descriptions.Item>}
+                  {r.banks?.length > 0 && (
+                    <Descriptions.Item label="Банки" span={3}>{r.banks.map((b: any) => b.bank?.name).join(", ")}</Descriptions.Item>
+                  )}
+                  <Descriptions.Item label="Ведущий">{r.speaker ? `${r.speaker.lastName} ${r.speaker.firstName}` : "—"}</Descriptions.Item>
+                  <Descriptions.Item label="Оформил" span={2}>{r.signedBy ? `${r.signedBy.lastName} ${r.signedBy.firstName}` : "—"}</Descriptions.Item>
+                </Descriptions>
+              );
+            },
+          }}
         />
       </Spin>
     </div>

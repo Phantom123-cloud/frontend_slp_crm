@@ -35,6 +35,7 @@ import dayjs from "dayjs";
 import { contractsApi } from "../../api/contracts";
 import { tripsApi } from "../../api/trips";
 import { usePermission } from "../../hooks/usePermission";
+import ContractEditModal from "./ContractEditModal";
 
 const { Title, Text } = Typography;
 
@@ -415,6 +416,9 @@ export default function ContractDetailPage() {
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundForm] = Form.useForm();
 
+  // Модалка редактирования договора (для не верифицированных)
+  const [editOpen, setEditOpen] = useState(false);
+
   // Модалка редактирования финансов
   const [finOpen, setFinOpen] = useState(false);
   const [finLoading, setFinLoading] = useState(false);
@@ -667,14 +671,10 @@ export default function ContractDetailPage() {
         </Tag>
         <div style={{ flex: 1 }} />
 
-        {canEdit && contract.paymentStatus !== "REFUND" && (
-          <Button icon={<RollbackOutlined />} onClick={openRefundModal}>
-            Оформить возврат
-          </Button>
-        )}
-        {canEdit && (
-          <Button icon={<EditOutlined />} onClick={openFinModal}>
-            Редактировать финансы
+        {/* Не верифицирован: кнопка редактирования договора */}
+        {canEdit && contract.status === "UNVERIFIED" && (
+          <Button icon={<EditOutlined />} onClick={() => setEditOpen(true)}>
+            Редактировать договор
           </Button>
         )}
         {canVerify && contract.status === "UNVERIFIED" && (
@@ -833,6 +833,20 @@ export default function ContractDetailPage() {
             </Col>
           )}
         </Row>
+
+        {/* Кнопки возврата — только для верифицированных договоров */}
+        {canEdit && contract.status === "VERIFIED" && (
+          <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+            {contract.paymentStatus !== "REFUND" && (
+              <Button icon={<RollbackOutlined />} onClick={openRefundModal}>
+                Возврат
+              </Button>
+            )}
+            <Button icon={<EditOutlined />} onClick={openFinModal}>
+              Частичный возврат
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* График платежей */}
@@ -961,6 +975,16 @@ export default function ContractDetailPage() {
           />
         </Form>
       </Modal>
+
+      {/* Модалка редактирования договора (только до верификации) */}
+      {id && (
+        <ContractEditModal
+          contractId={id}
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          onSuccess={load}
+        />
+      )}
     </div>
   );
 }

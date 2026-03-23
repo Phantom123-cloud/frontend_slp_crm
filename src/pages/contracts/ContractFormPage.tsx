@@ -32,8 +32,8 @@ const { Title, Text } = Typography;
 
 // Коды стран для телефонов
 const COUNTRY_CODES = [
-  { code: "+7", label: "🇷🇺 +7 (Россия/Казахстан)" },
   { code: "+998", label: "🇺🇿 +998 (Узбекистан)" },
+  { code: "+7", label: "🇷🇺 +7 (Россия/Казахстан)" },
   { code: "+996", label: "🇰🇬 +996 (Кыргызстан)" },
   { code: "+992", label: "🇹🇯 +992 (Таджикистан)" },
   { code: "+993", label: "🇹🇲 +993 (Туркменистан)" },
@@ -82,7 +82,7 @@ export default function ContractFormPage() {
 
   // Телефоны (динамические)
   const [phones, setPhones] = useState<{ countryCode: string; number: string }[]>([
-    { countryCode: "+7", number: "" },
+    { countryCode: "+998", number: "" },
   ]);
 
   // График платежей (для COMPANY)
@@ -92,12 +92,24 @@ export default function ContractFormPage() {
   const totalAmount = Form.useWatch("totalAmount", form) || 0;
   const advanceCash = Form.useWatch("advanceCash", form) || 0;
   const advanceTerminal = Form.useWatch("advanceTerminal", form) || 0;
-  const advanceBank = Form.useWatch("advanceBank", form) || 0;
   const installmentMonths = Form.useWatch("installmentMonths", form) || 0;
   const firstPaymentDate = Form.useWatch("firstPaymentDate", form);
 
+  // Банки: одиночный для CREDIT, мульти для MIXED
+  const selectedBankId = Form.useWatch("bankId", form);
+  const selectedBankIds: string[] = Form.useWatch("bankIds", form) || [];
+  // Авансы по банкам: { [bankId]: number }
+  const bankAdvancesObj: Record<string, number> = Form.useWatch("bankAdvances", form) || {};
+
+  // Суммарный аванс по всем банкам
+  const totalBankAdvance = (() => {
+    if (paymentType === "CREDIT") return Number(bankAdvancesObj[selectedBankId] || 0);
+    if (paymentType === "MIXED") return selectedBankIds.reduce((s, id) => s + (Number(bankAdvancesObj[id]) || 0), 0);
+    return 0;
+  })();
+
   // Итого авансов
-  const totalAdvances = Number(advanceCash) + Number(advanceTerminal) + Number(advanceBank);
+  const totalAdvances = Number(advanceCash) + Number(advanceTerminal) + totalBankAdvance;
   // Остаток для рассрочки
   const installmentBalance = Number(totalAmount) - totalAdvances;
 
@@ -106,8 +118,9 @@ export default function ContractFormPage() {
   }, []);
 
   // Автогенерация графика платежей при изменении параметров рассрочки
+  const hasInstallment = paymentType === "COMPANY" || paymentType === "MIXED";
   useEffect(() => {
-    if (paymentType === "COMPANY" && installmentMonths > 0 && firstPaymentDate && installmentBalance > 0) {
+    if (hasInstallment && installmentMonths > 0 && firstPaymentDate && installmentBalance > 0) {
       const perMonth = Math.round((installmentBalance / installmentMonths) * 100) / 100;
       const schedule = [];
       for (let i = 0; i < installmentMonths; i++) {
@@ -119,10 +132,10 @@ export default function ContractFormPage() {
         });
       }
       setPaymentSchedule(schedule);
-    } else if (paymentType !== "COMPANY") {
+    } else if (!hasInstallment) {
       setPaymentSchedule([]);
     }
-  }, [paymentType, installmentMonths, firstPaymentDate, totalAmount, advanceCash, advanceTerminal, advanceBank]);
+  }, [paymentType, installmentMonths, firstPaymentDate, totalAmount, advanceCash, advanceTerminal, totalBankAdvance]);
 
   const loadData = async () => {
     setLoading(true);
@@ -163,7 +176,7 @@ export default function ContractFormPage() {
 
   const addPhone = () => {
     if (phones.length < 10) {
-      setPhones([...phones, { countryCode: "+7", number: "" }]);
+      setPhones([...phones, { countryCode: "+998", number: "" }]);
     }
   };
 
@@ -190,7 +203,7 @@ export default function ContractFormPage() {
       const payload: any = {
         clientName: values.clientName,
         contractDate: values.contractDate.format("YYYY-MM-DD"),
-        companyId: values.companyId || undefined,
+        companyId: values.companyId,
         paymentType: values.paymentType,
         saleType: values.saleType || undefined,
         presentationId,
@@ -200,15 +213,17 @@ export default function ContractFormPage() {
         totalAmount: Number(values.totalAmount) || 0,
         advanceCash: Number(values.advanceCash) || undefined,
         advanceTerminal: Number(values.advanceTerminal) || undefined,
-        advanceBank: Number(values.advanceBank) || undefined,
-        installmentMonths: values.paymentType === "COMPANY" ? Number(values.installmentMonths) || undefined : undefined,
-        firstPaymentDate: values.paymentType === "COMPANY" && values.firstPaymentDate
+        advanceBank: totalBankAdvance || undefined,
+        installmentMonths: hasInstallment ? Number(values.installmentMonths) || undefined : undefined,
+        firstPaymentDate: hasInstallment && values.firstPaymentDate
           ? values.firstPaymentDate.format("YYYY-MM-DD") : undefined,
-        registrationAddress: values.registrationAddress || undefined,
-        actualAddress: values.actualAddress || undefined,
-        bankIds: values.bankIds || [],
+        registrationAddress: values.registrationAddress,
+        actualAddress: values.actualAddress,
+        bankIds: paymentType === "CREDIT"
+          ? (selectedBankId ? [selectedBankId] : [])
+          : (selectedBankIds || []),
         phones: validPhones,
-        paymentSchedule: paymentType === "COMPANY"
+        paymentSchedule: hasInstallment
           ? paymentSchedule.map((s) => ({ date: s.date.format("YYYY-MM-DD"), amount: s.amount }))
           : [],
       };
@@ -261,9 +276,9 @@ export default function ContractFormPage() {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="speakerId" label="Докладчик (Leader)">
+              <Form.Item name="speakerId" label="Ведущий">
                 <Select
-                  placeholder="Выберите докладчика"
+                  placeholder="Выберите ведущего"
                   options={crewMembers
                     .filter((c) => c.role === "LEADER")
                     .map((c) => ({
@@ -342,12 +357,12 @@ export default function ContractFormPage() {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="registrationAddress" label="Адрес регистрации">
+              <Form.Item name="registrationAddress" label="Адрес регистрации" rules={[{ required: true, message: "Введите адрес регистрации" }]}>
                 <Input.TextArea rows={2} placeholder="Адрес постоянной регистрации" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="actualAddress" label="Адрес проживания">
+              <Form.Item name="actualAddress" label="Адрес проживания" rules={[{ required: true, message: "Введите адрес проживания" }]}>
                 <Input.TextArea rows={2} placeholder="Адрес фактического проживания" />
               </Form.Item>
             </Col>
@@ -358,11 +373,10 @@ export default function ContractFormPage() {
         <Card title="Условия договора" size="small" style={{ marginBottom: 16 }}>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="companyId" label="Компания">
+              <Form.Item name="companyId" label="Компания" rules={[{ required: true, message: "Выберите компанию" }]}>
                 <Select
                   placeholder="Выберите компанию"
                   options={tripCompanies.map((c) => ({ value: c.id, label: c.name }))}
-                  allowClear
                 />
               </Form.Item>
             </Col>
@@ -383,15 +397,28 @@ export default function ContractFormPage() {
                 <Select placeholder="Выберите тип оплаты" options={PAYMENT_TYPE_OPTIONS} />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item name="bankIds" label="Банк(и)">
-                <Select
-                  mode="multiple"
-                  placeholder="Выберите банки"
-                  options={tripBanks.map((b) => ({ value: b.id, label: b.name }))}
-                />
-              </Form.Item>
-            </Col>
+            {paymentType === "CREDIT" && (
+              <Col span={12}>
+                <Form.Item name="bankId" label="Банк">
+                  <Select
+                    placeholder="Выберите банк"
+                    options={tripBanks.map((b) => ({ value: b.id, label: b.name }))}
+                    allowClear
+                  />
+                </Form.Item>
+              </Col>
+            )}
+            {paymentType === "MIXED" && (
+              <Col span={12}>
+                <Form.Item name="bankIds" label="Банк(и)">
+                  <Select
+                    mode="multiple"
+                    placeholder="Выберите банки"
+                    options={tripBanks.map((b) => ({ value: b.id, label: b.name }))}
+                  />
+                </Form.Item>
+              </Col>
+            )}
           </Row>
         </Card>
 
@@ -410,21 +437,46 @@ export default function ContractFormPage() {
             </Col>
             <Col span={8}>
               <Form.Item name="advanceCash" label="Аванс наличные">
-                <InputNumber style={{ width: "100%" }} min={0} placeholder="0" />
+                <InputNumber style={{ width: "100%" }} min={0} placeholder="0" formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")} />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item name="advanceTerminal" label="Аванс терминал">
-                <InputNumber style={{ width: "100%" }} min={0} placeholder="0" />
+                <InputNumber style={{ width: "100%" }} min={0} placeholder="0" formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")} />
               </Form.Item>
             </Col>
           </Row>
+          {/* Авансы по банкам — для CREDIT (один банк) */}
+          {paymentType === "CREDIT" && selectedBankId && (() => {
+            const bank = tripBanks.find((b) => b.id === selectedBankId);
+            return (
+              <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item name={["bankAdvances", selectedBankId]} label={`Аванс банк ${bank?.name || ""}`}>
+                    <InputNumber style={{ width: "100%" }} min={0} placeholder="0" formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")} />
+                  </Form.Item>
+                </Col>
+              </Row>
+            );
+          })()}
+
+          {/* Авансы по банкам — для MIXED (несколько банков) */}
+          {paymentType === "MIXED" && selectedBankIds.length > 0 && (
+            <Row gutter={16}>
+              {selectedBankIds.map((bankId) => {
+                const bank = tripBanks.find((b) => b.id === bankId);
+                return (
+                  <Col span={8} key={bankId}>
+                    <Form.Item name={["bankAdvances", bankId]} label={`Аванс банк ${bank?.name || ""}`}>
+                      <InputNumber style={{ width: "100%" }} min={0} placeholder="0" formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")} />
+                    </Form.Item>
+                  </Col>
+                );
+              })}
+            </Row>
+          )}
+
           <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="advanceBank" label="Аванс банк">
-                <InputNumber style={{ width: "100%" }} min={0} placeholder="0" />
-              </Form.Item>
-            </Col>
             <Col span={8}>
               <Form.Item label="Итого авансов">
                 <InputNumber
@@ -436,7 +488,7 @@ export default function ContractFormPage() {
               </Form.Item>
             </Col>
             <Col span={8}>
-              {paymentType === "COMPANY" && (
+              {hasInstallment && (
                 <Form.Item label="Остаток (рассрочка)">
                   <InputNumber
                     style={{ width: "100%", color: installmentBalance < 0 ? "red" : undefined }}
@@ -449,10 +501,10 @@ export default function ContractFormPage() {
             </Col>
           </Row>
 
-          {/* Рассрочка — только для COMPANY */}
-          {paymentType === "COMPANY" && (
+          {/* Рассрочка — для COMPANY и MIXED */}
+          {hasInstallment && (
             <>
-              <Divider orientation="left" plain>Рассрочка</Divider>
+              <Divider titlePlacement="left" plain>Рассрочка</Divider>
               <Row gutter={16}>
                 <Col span={8}>
                   <Form.Item name="installmentMonths" label="Кол-во месяцев">
@@ -469,7 +521,10 @@ export default function ContractFormPage() {
               {/* График платежей */}
               {paymentSchedule.length > 0 && (
                 <>
-                  <Text strong>График платежей:</Text>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                    <Text strong>График платежей:</Text>
+                    <Button size="small" danger onClick={() => setPaymentSchedule([])}>Очистить график</Button>
+                  </div>
                   <Table
                     size="small"
                     style={{ marginTop: 8 }}
