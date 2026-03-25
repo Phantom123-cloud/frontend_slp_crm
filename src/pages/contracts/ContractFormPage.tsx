@@ -125,6 +125,36 @@ export default function ContractFormPage() {
   const installmentMonths = Form.useWatch("installmentMonths", form) || 0;
   const firstPaymentDate = Form.useWatch("firstPaymentDate", form);
 
+  // Превью номера договора
+  const [previewNumber, setPreviewNumber] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const watchedSignedById = Form.useWatch("signedById", form);
+  const watchedContractDate = Form.useWatch("contractDate", form);
+
+  useEffect(() => {
+    if (!presentationId || !watchedSignedById || !watchedContractDate) {
+      setPreviewNumber(null);
+      return;
+    }
+    // Дебаунс 600ms
+    const timer = setTimeout(async () => {
+      setPreviewLoading(true);
+      try {
+        const res = await contractsApi.previewNumber({
+          presentationId,
+          signedById: watchedSignedById,
+          contractDate: watchedContractDate.toISOString(),
+        });
+        setPreviewNumber(res.data.number);
+      } catch {
+        setPreviewNumber(null);
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [presentationId, watchedSignedById, watchedContractDate]);
+
   // Банки: одиночный для CREDIT, мульти для MIXED
   const selectedBankId = Form.useWatch("bankId", form);
   const selectedBankIds: string[] = Form.useWatch("bankIds", form) || [];
@@ -324,9 +354,27 @@ export default function ContractFormPage() {
         К выезду {trip?.name}
       </Button>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
         <FileTextOutlined style={{ fontSize: 24, color: "#1677ff" }} />
         <Title level={3} style={{ margin: 0 }}>Новый договор</Title>
+        {/* Превью номера */}
+        {previewLoading && <Spin size="small" />}
+        {!previewLoading && previewNumber && (
+          <div style={{
+            background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)",
+            border: "1px solid #6366f1",
+            borderRadius: 8,
+            padding: "4px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            <span style={{ color: "#a5b4fc", fontSize: 11, fontWeight: 500 }}>№</span>
+            <span style={{ color: "#e0e7ff", fontSize: 18, fontWeight: 700, letterSpacing: "0.05em", fontFamily: "monospace" }}>
+              {previewNumber}
+            </span>
+          </div>
+        )}
       </div>
 
       <Form form={form} layout="vertical" onFinish={handleSubmit}>

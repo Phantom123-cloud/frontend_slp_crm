@@ -49,6 +49,8 @@ export const contractsApi = {
   list: (params?: { tripId?: string }) =>
     api.get('/contracts', { params }),
   getById: (id: string) => api.get(`/contracts/${id}`),
+  previewNumber: (params: { presentationId: string; signedById: string; contractDate: string }) =>
+    api.get('/contracts/preview-number', { params }),
   create: (data: CreateContractData) => api.post('/contracts', data),
   update: (id: string, data: Partial<CreateContractData>) =>
     api.patch(`/contracts/${id}`, data),
