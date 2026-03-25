@@ -348,6 +348,16 @@ export default function ContractsListPage() {
       },
     },
     {
+      title: "Подписал",
+      key: "speaker",
+      responsive: ["lg"] as any,
+      ...colSearch((r: any) =>
+        r.speaker ? `${r.speaker.lastName} ${r.speaker.firstName}` : "",
+      ),
+      render: (_: any, r: any) =>
+        r.speaker ? `${r.speaker.lastName} ${r.speaker.firstName}` : "—",
+    },
+    {
       title: "Оформил",
       key: "signedBy",
       responsive: ["lg"] as any,
