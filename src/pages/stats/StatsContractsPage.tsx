@@ -732,10 +732,13 @@ export default function StatsContractsPage() {
                       {/* Секция: Реальные деньги по источникам */}
                       <tr>
                         <td colSpan={2} style={{
-                          padding: "10px 16px", fontWeight: 700, fontSize: 15,
-                          background: token.colorFillSecondary,
-                          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                          padding: "10px 16px 10px 20px", fontWeight: 700, fontSize: 15,
+                          background: token.colorFillTertiary,
+                          borderBottom: `2px solid ${token.colorBorderSecondary}`,
+                          borderTop: `1px solid ${token.colorBorderSecondary}`,
+                          borderLeft: "4px solid #6366f1",
                           color: token.colorText,
+                          letterSpacing: "0.3px",
                         }}>
                           Реальные деньги по источникам
                         </td>
@@ -770,10 +773,13 @@ export default function StatsContractsPage() {
                       {/* Секция: Сводные показатели */}
                       <tr>
                         <td colSpan={2} style={{
-                          padding: "10px 16px", fontWeight: 700, fontSize: 15,
-                          background: token.colorFillSecondary,
-                          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                          padding: "10px 16px 10px 20px", fontWeight: 700, fontSize: 15,
+                          background: token.colorFillTertiary,
+                          borderBottom: `2px solid ${token.colorBorderSecondary}`,
+                          borderTop: `1px solid ${token.colorBorderSecondary}`,
+                          borderLeft: "4px solid #6366f1",
                           color: token.colorText,
+                          letterSpacing: "0.3px",
                         }}>
                           Сводные показатели
                         </td>
@@ -798,10 +804,13 @@ export default function StatsContractsPage() {
                       {/* Секция: Рассрочки */}
                       <tr>
                         <td colSpan={2} style={{
-                          padding: "10px 16px", fontWeight: 700, fontSize: 15,
-                          background: token.colorFillSecondary,
-                          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                          padding: "10px 16px 10px 20px", fontWeight: 700, fontSize: 15,
+                          background: token.colorFillTertiary,
+                          borderBottom: `2px solid ${token.colorBorderSecondary}`,
+                          borderTop: `1px solid ${token.colorBorderSecondary}`,
+                          borderLeft: "4px solid #6366f1",
                           color: token.colorText,
+                          letterSpacing: "0.3px",
                         }}>
                           Рассрочки
                         </td>
