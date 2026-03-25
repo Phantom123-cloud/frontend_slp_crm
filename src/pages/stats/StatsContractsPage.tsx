@@ -257,13 +257,6 @@ export default function StatsContractsPage() {
                     </Col>
                     <Col xs={12} md={8}>
                       <Card style={cardStyle} size="small">
-                        <Statistic title="Конверсия (договоров / презентаций)" value={`${conversion}%`}
-                          prefix={<PercentageOutlined style={{ color: "#e879f9" }} />}
-                          valueStyle={{ color: "#e879f9" }} />
-                      </Card>
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Card style={cardStyle} size="small">
                         <Statistic title="Оборот до возврата" value={fmtFull(data?.turnoverBefore ?? 0)}
                           prefix={<RiseOutlined style={{ color: "#10b981" }} />}
                           valueStyle={{ color: "#10b981", fontSize: 16 }} />
