@@ -410,6 +410,15 @@ export default function DirectoriesPage() {
       ...colSearch((r: any) => r.name || ""),
     },
     {
+      title: "Буква",
+      dataIndex: "letter",
+      key: "letter",
+      width: 80,
+      render: (v: any) => v
+        ? <span style={{ fontWeight: 700, fontSize: 16, color: "#6366f1" }}>{v}</span>
+        : "—",
+    },
+    {
       title: t("directories.description"),
       dataIndex: "description",
       key: "description",
@@ -432,6 +441,7 @@ export default function DirectoriesPage() {
                     setEditType(record);
                     editTypeForm.setFieldsValue({
                       name: record.name,
+                      letter: record.letter,
                       description: record.description,
                     });
                   }}
@@ -1172,6 +1182,13 @@ export default function DirectoriesPage() {
           >
             <Input />
           </Form.Item>
+          <Form.Item
+            name="letter"
+            label="Буква (для номера договора)"
+            tooltip="Одна заглавная буква, например: П, Р, С"
+          >
+            <Input maxLength={3} style={{ width: 80, textTransform: "uppercase" }} />
+          </Form.Item>
           <Form.Item name="description" label={t("directories.description")}>
             <Input.TextArea rows={2} />
           </Form.Item>
@@ -1195,6 +1212,13 @@ export default function DirectoriesPage() {
             rules={[{ required: true }]}
           >
             <Input />
+          </Form.Item>
+          <Form.Item
+            name="letter"
+            label="Буква (для номера договора)"
+            tooltip="Одна заглавная буква, например: П, Р, С"
+          >
+            <Input maxLength={3} style={{ width: 80, textTransform: "uppercase" }} />
           </Form.Item>
           <Form.Item name="description" label={t("directories.description")}>
             <Input.TextArea rows={2} />
