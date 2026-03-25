@@ -239,8 +239,9 @@ export default function StatsContractsPage() {
               label: <span><BarChartOutlined /> Диаграммы</span>,
               children: (
                 <>
-                  {/* KPI карточки */}
-                  <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                  {/* KPI карточки — 3 строки по 3 */}
+                  {/* Строка 1: Договоров | Презентаций | Возвраты / Частичные */}
+                  <Row gutter={[16, 16]} style={{ marginBottom: 12 }}>
                     <Col xs={12} md={8}>
                       <Card style={cardStyle} size="small">
                         <Statistic title="Договоров" value={data?.total ?? 0}
@@ -257,24 +258,20 @@ export default function StatsContractsPage() {
                     </Col>
                     <Col xs={12} md={8}>
                       <Card style={cardStyle} size="small">
-                        <Statistic title="Оборот до возврата" value={fmtFull(data?.turnoverBefore ?? 0)}
-                          prefix={<RiseOutlined style={{ color: "#10b981" }} />}
-                          valueStyle={{ color: "#10b981", fontSize: 16 }} />
-                      </Card>
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Card style={cardStyle} size="small">
-                        <Statistic title="Оборот после возврата" value={fmtFull(data?.turnoverAfter ?? 0)}
-                          prefix={<RiseOutlined style={{ color: "#34d399" }} />}
-                          valueStyle={{ color: "#34d399", fontSize: 16 }} />
-                      </Card>
-                    </Col>
-                    <Col xs={12} md={8}>
-                      <Card style={cardStyle} size="small">
                         <Statistic title="Возвраты / Частичные"
                           value={`${data?.refundsCount ?? 0} / ${data?.partialRefundsCount ?? 0}`}
                           prefix={<RollbackOutlined style={{ color: "#f43f5e" }} />}
                           valueStyle={{ color: "#f43f5e" }} />
+                      </Card>
+                    </Col>
+                  </Row>
+                  {/* Строка 2: Оборот до | Реал. деньги до | Ср. оборот до */}
+                  <Row gutter={[16, 16]} style={{ marginBottom: 12 }}>
+                    <Col xs={12} md={8}>
+                      <Card style={cardStyle} size="small">
+                        <Statistic title="Оборот до возврата" value={fmtFull(data?.turnoverBefore ?? 0)}
+                          prefix={<RiseOutlined style={{ color: "#10b981" }} />}
+                          valueStyle={{ color: "#10b981", fontSize: 16 }} />
                       </Card>
                     </Col>
                     <Col xs={12} md={8}>
@@ -286,16 +283,26 @@ export default function StatsContractsPage() {
                     </Col>
                     <Col xs={12} md={8}>
                       <Card style={cardStyle} size="small">
-                        <Statistic title="Реал. деньги после возврата" value={fmtFull(data?.totalRealMoney ?? 0)}
-                          prefix={<DollarOutlined style={{ color: "#22d3ee" }} />}
-                          valueStyle={{ color: "#22d3ee", fontSize: 16 }} />
+                        <Statistic title="Ср. оборот / презентацию (до)" value={fmtFull(data?.avgPerPresentation ?? 0)}
+                          prefix={<RiseOutlined style={{ color: "#10b981" }} />}
+                          valueStyle={{ color: "#10b981", fontSize: 15 }} />
+                      </Card>
+                    </Col>
+                  </Row>
+                  {/* Строка 3: Оборот после | Реал. деньги после | Ср. оборот после */}
+                  <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                    <Col xs={12} md={8}>
+                      <Card style={cardStyle} size="small">
+                        <Statistic title="Оборот после возврата" value={fmtFull(data?.turnoverAfter ?? 0)}
+                          prefix={<RiseOutlined style={{ color: "#34d399" }} />}
+                          valueStyle={{ color: "#34d399", fontSize: 16 }} />
                       </Card>
                     </Col>
                     <Col xs={12} md={8}>
                       <Card style={cardStyle} size="small">
-                        <Statistic title="Ср. оборот / презентацию (до)" value={fmtFull(data?.avgPerPresentation ?? 0)}
-                          prefix={<RiseOutlined style={{ color: "#10b981" }} />}
-                          valueStyle={{ color: "#10b981", fontSize: 15 }} />
+                        <Statistic title="Реал. деньги после возврата" value={fmtFull(data?.totalRealMoney ?? 0)}
+                          prefix={<DollarOutlined style={{ color: "#22d3ee" }} />}
+                          valueStyle={{ color: "#22d3ee", fontSize: 16 }} />
                       </Card>
                     </Col>
                     <Col xs={12} md={8}>
