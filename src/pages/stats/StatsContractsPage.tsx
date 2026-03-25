@@ -154,7 +154,9 @@ export default function StatsContractsPage() {
       name: s.name.length > 18 ? s.name.slice(0, 18) + "…" : s.name,
       fullName: s.name,
       "Средняя на презентацию": Math.round(s.turnover / presCount),
+      turnover: s.turnover,
       count: s.count,
+      presCount,
     }))
     .sort((a: any, b: any) => b["Средняя на презентацию"] - a["Средняя на презентацию"]);
 
@@ -165,7 +167,9 @@ export default function StatsContractsPage() {
       name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name,
       fullName: m.name,
       "Средняя на презентацию": Math.round(m.turnover / presCount),
+      turnover: m.turnover,
       count: m.count,
+      presCount,
     }))
     .sort((a: any, b: any) => b["Средняя на презентацию"] - a["Средняя на презентацию"]);
 
@@ -586,7 +590,9 @@ export default function StatsContractsPage() {
                                     <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
                                       <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
                                       <div style={{ color: "#f59e0b" }}>Средняя на презентацию: <b>{fmtFull(d["Средняя на презентацию"])}</b></div>
+                                      <div style={{ color: "#34d399" }}>Оборот: <b>{fmtFull(d.turnover)}</b></div>
                                       <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
+                                      <div style={{ color: "#888" }}>Презентаций: <b>{d.presCount}</b></div>
                                     </div>
                                   );
                                 }} />
@@ -649,7 +655,9 @@ export default function StatsContractsPage() {
                                     <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
                                       <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
                                       <div style={{ color: "#fb923c" }}>Средняя на презентацию: <b>{fmtFull(d["Средняя на презентацию"])}</b></div>
+                                      <div style={{ color: "#6366f1" }}>Оборот: <b>{fmtFull(d.turnover)}</b></div>
                                       <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
+                                      <div style={{ color: "#888" }}>Презентаций: <b>{d.presCount}</b></div>
                                     </div>
                                   );
                                 }} />
