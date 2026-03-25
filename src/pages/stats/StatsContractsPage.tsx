@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Card, Col, DatePicker, Row, Spin, Statistic, Typography, theme, Tabs,
-  Select, Segmented,
+  Select,
 } from "antd";
 import {
   FileTextOutlined, DollarOutlined, RollbackOutlined, RiseOutlined,
@@ -72,10 +72,9 @@ const renderPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, n
 export default function StatsContractsPage() {
   const { token } = theme.useToken();
   const [activeTab, setActiveTab] = useState("charts");
-  const [employeeView, setEmployeeView] = useState<string>("all");
 
   // Состояние фильтра таблицы
-  const [filterType, setFilterType] = useState<"period" | "coordinator" | "crew" | "employee">("period");
+  const [filterType, setFilterType] = useState<"period" | "speaker" | "employee">("period");
   const [filterId, setFilterId] = useState<string | undefined>(undefined);
 
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
@@ -94,7 +93,7 @@ export default function StatsContractsPage() {
   });
 
   // Запрос для таблицы (с фильтром по сотруднику если выбран)
-  const tableFilterBy = filterType === "period" ? undefined : filterType;
+  const tableFilterBy = filterType === "period" ? undefined : filterType; // "speaker" | "employee"
   const { data: tableData, isLoading: tableLoading } = useQuery({
     queryKey: ["stats", "contracts", from, to, filterType, filterId],
     queryFn: () => statsApi.getContractStats({ from, to, filterBy: tableFilterBy, userId: filterId }),
@@ -127,12 +126,22 @@ export default function StatsContractsPage() {
     "Реал. деньги (тыс.)": Math.round(d.realMoney / 1000),
   }));
 
+  // "Сотрудники по обороту" — те кто числится как Оформил (signedById → byManager)
   const managerData = (data?.byManager ?? []).map((m: any) => ({
     name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name,
     fullName: m.name,
     "Оборот": m.turnover,
     "Реал. деньги": m.realMoney,
     count: m.count,
+  }));
+
+  // "Ведущие по обороту" — те кто числится как Ведущий в договоре (speakerId → bySpeaker)
+  const speakerData = (data?.bySpeaker ?? []).map((s: any) => ({
+    name: s.name.length > 18 ? s.name.slice(0, 18) + "…" : s.name,
+    fullName: s.name,
+    "Оборот": s.turnover,
+    "Реал. деньги": s.realMoney,
+    count: s.count,
   }));
 
   const saleTypePieData = (data?.bySaleType ?? []).map((s: any, i: number) => ({
@@ -144,38 +153,6 @@ export default function StatsContractsPage() {
   const conversion = data?.presentationsCount > 0 && data?.total > 0
     ? Math.min(100, Math.round((data.total / data.presentationsCount) * 100))
     : 0;
-
-  // Данные для диаграммы сотрудников
-  const rawEmployeeSource =
-    employeeView === "coordinators" ? (data?.byCoordinator ?? [])
-    : employeeView === "hosts"      ? (data?.byHost ?? [])
-    : (data?.byEmployee ?? []);
-
-  // Маркер роли в подписи оси Y для режима "Все"
-  const roleTag = (e: any) => {
-    if (employeeView !== "all" || !e.roles?.length) return "";
-    const tags = e.roles as string[];
-    if (tags.includes("Ведущий") && tags.includes("Координатор")) return " ★";
-    if (tags.includes("Координатор")) return " [К]";
-    return " [В]";
-  };
-
-  const employeeChartData = rawEmployeeSource.slice(0, 15).map((e: any) => {
-    const tag = roleTag(e);
-    const shortName = e.name.length > 18 ? e.name.slice(0, 18) + "…" : e.name;
-    return {
-      name: shortName + tag,
-      fullName: e.name,
-      "Оборот": e.turnover,
-      "Реал. деньги": e.realMoney,
-      count: e.count,
-      roles: e.roles?.join(", ") ?? (
-        employeeView === "coordinators" ? "Координатор"
-        : employeeView === "hosts"      ? "Ведущий"
-        : ""
-      ),
-    };
-  });
 
   // tableData — данные для таблицы (с фильтром)
   const td = tableData ?? data; // fallback на общие данные пока фильтрованные грузятся
@@ -536,55 +513,30 @@ export default function StatsContractsPage() {
                     </Col>
                   </Row>
 
-                  {/* Диаграмма сотрудников (ведущие и координаторы) */}
-                  {(data?.byEmployee ?? []).length > 0 && (
+                  {/* Ведущие по обороту (speakerId из договора) */}
+                  {speakerData.length > 0 && (
                     <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
                       <Col xs={24}>
-                        <Card
-                          title={<span><TeamOutlined style={{ color: "#34d399", marginRight: 8 }} />Сотрудники по обороту</span>}
-                          style={cardStyle}
-                          size="small"
-                          extra={
-                            <Segmented
-                              size="small"
-                              value={employeeView}
-                              onChange={(v) => setEmployeeView(v as string)}
-                              options={[
-                                { label: "Все", value: "all" },
-                                { label: "Ведущие", value: "hosts" },
-                                { label: "Координаторы", value: "coordinators" },
-                              ]}
-                            />
-                          }
-                        >
-                          {/* Легенда маркеров в режиме "Все" */}
-                          {employeeView === "all" && (
-                            <div style={{ marginBottom: 10, fontSize: 12, color: "#888", display: "flex", gap: 16 }}>
-                              <span><span style={{ color: "#ccc" }}>[В]</span> — Ведущий</span>
-                              <span><span style={{ color: "#ccc" }}>[К]</span> — Координатор</span>
-                              <span><span style={{ color: "#ccc" }}>★</span> — Ведущий + Координатор</span>
-                            </div>
-                          )}
-                          <ResponsiveContainer width="100%" height={Math.max(200, employeeChartData.length * 52)}>
-                            <BarChart data={employeeChartData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
+                        <Card title={<span><TeamOutlined style={{ color: "#34d399", marginRight: 8 }} />Ведущие по обороту</span>} style={cardStyle} size="small">
+                          <ResponsiveContainer width="100%" height={Math.max(200, speakerData.length * 52)}>
+                            <BarChart data={speakerData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
                               <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
-                              <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={170} />
+                              <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={140} />
                               <ReTooltip content={({ active, payload }: any) => {
                                 if (!active || !payload?.length) return null;
                                 const d = payload[0].payload;
                                 return (
                                   <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
                                     <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
-                                    {d.roles && <div style={{ color: "#888", fontSize: 11, marginBottom: 4 }}>{d.roles}</div>}
-                                    <div style={{ color: "#10b981" }}>Оборот: <b>{fmtFull(d["Оборот"])}</b></div>
+                                    <div style={{ color: "#34d399" }}>Оборот: <b>{fmtFull(d["Оборот"])}</b></div>
                                     <div style={{ color: "#22d3ee" }}>Реал. деньги: <b>{fmtFull(d["Реал. деньги"])}</b></div>
                                     <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
                                   </div>
                                 );
                               }} />
                               <Legend formatter={(v) => <span style={{ fontSize: 11, color: "#ccc" }}>{v}</span>} />
-                              <Bar dataKey="Оборот" fill="#10b981" radius={[0, 4, 4, 0]}>
+                              <Bar dataKey="Оборот" fill="#34d399" radius={[0, 4, 4, 0]}>
                                 <LabelList dataKey="Оборот" position="right" formatter={fmt} style={{ fill: "#6ee7b7", fontSize: 11 }} />
                               </Bar>
                               <Bar dataKey="Реал. деньги" fill="#22d3ee" radius={[0, 4, 4, 0]}>
@@ -597,11 +549,11 @@ export default function StatsContractsPage() {
                     </Row>
                   )}
 
-                  {/* Топ менеджеров */}
+                  {/* Сотрудники по обороту (signedById — Оформил) */}
                   {managerData.length > 0 && (
                     <Row gutter={[16, 16]}>
                       <Col xs={24}>
-                        <Card title={<span><TeamOutlined style={{ color: "#60a5fa", marginRight: 8 }} />Топ менеджеров по обороту</span>} style={cardStyle} size="small">
+                        <Card title={<span><TeamOutlined style={{ color: "#60a5fa", marginRight: 8 }} />Сотрудники по обороту</span>} style={cardStyle} size="small">
                           <ResponsiveContainer width="100%" height={Math.max(200, managerData.length * 52)}>
                             <BarChart data={managerData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
@@ -648,10 +600,9 @@ export default function StatsContractsPage() {
                         onChange={(v) => { setFilterType(v); setFilterId(undefined); }}
                         style={{ width: 180 }}
                         options={[
-                          { value: "period",      label: "Период (общее)" },
-                          { value: "coordinator", label: "Координатор" },
-                          { value: "crew",        label: "Ведущий" },
-                          { value: "employee",    label: "Сотрудник" },
+                          { value: "period",   label: "Период (общее)" },
+                          { value: "speaker",  label: "Ведущий" },
+                          { value: "employee", label: "Сотрудник (Оформил)" },
                         ]}
                       />
                     </Col>
@@ -659,8 +610,7 @@ export default function StatsContractsPage() {
                       <Col>
                         <Select
                           placeholder={
-                            filterType === "coordinator" ? "Выберите координатора"
-                            : filterType === "crew" ? "Выберите ведущего"
+                            filterType === "speaker" ? "Выберите ведущего"
                             : "Выберите сотрудника"
                           }
                           value={filterId}
@@ -670,12 +620,11 @@ export default function StatsContractsPage() {
                           optionFilterProp="label"
                           style={{ width: 240 }}
                           options={(
-                            filterType === "coordinator" ? (data?.byCoordinator ?? [])
-                            : filterType === "crew"      ? (data?.byHost ?? [])
-                            : (data?.byEmployee ?? [])
+                            filterType === "speaker" ? (data?.bySpeaker ?? [])
+                            : (data?.byManager ?? [])
                           ).map((p: any) => ({
                             value: p.id,
-                            label: p.name + (p.roles?.length ? ` (${p.roles.join(", ")})` : ""),
+                            label: p.name,
                           }))}
                         />
                       </Col>
