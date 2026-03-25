@@ -547,21 +547,21 @@ export default function StatsContractsPage() {
                     {saleTypePieData.length === 0 ? (
                       <div style={{ textAlign: "center", padding: 30, color: "#666" }}>Нет данных</div>
                     ) : (
-                      <ResponsiveContainer width="100%" height={180}>
-                        <PieChart>
+                      <ResponsiveContainer width="100%" height={240}>
+                        <PieChart margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
                           <Pie
                             data={saleTypePieData}
                             dataKey="value"
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            outerRadius={70}
-                            innerRadius={35}
+                            outerRadius={75}
+                            innerRadius={38}
                             paddingAngle={3}
                             label={({ name, percent, value }) =>
                               `${name} (${value}) ${(percent * 100).toFixed(0)}%`
                             }
-                            labelLine={true}
+                            labelLine={false}
                           >
                             {saleTypePieData.map((_: any, i: number) => (
                               <Cell key={i} fill={COLORS[(i + 4) % COLORS.length]} />
