@@ -348,7 +348,7 @@ export default function ContractsListPage() {
       },
     },
     {
-      title: "Подписал",
+      title: "Подписал (Ведущий)",
       key: "speaker",
       responsive: ["lg"] as any,
       ...colSearch((r: any) =>
