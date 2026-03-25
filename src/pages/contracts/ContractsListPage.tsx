@@ -137,7 +137,7 @@ function toExportRows(rows: any[]) {
     "Должник": calcInstallmentBalance(r) > 0 ? "Да" : "Нет",
     "Спасённый": r.paymentStatus === "PARTIAL_REFUND" ? "Да" : r.paymentStatus === "REFUND" ? "Нет" : "",
     "Ведущий": r.speaker ? `${r.speaker.lastName} ${r.speaker.firstName}` : "",
-    "Подписал": r.signedBy ? `${r.signedBy.lastName} ${r.signedBy.firstName}` : "",
+    "Оформил": r.signedBy ? `${r.signedBy.lastName} ${r.signedBy.firstName}` : "",
     "Координатор": r.presentation?.coordinator
       ? `${r.presentation.coordinator.lastName} ${r.presentation.coordinator.firstName}`
       : "",
@@ -348,7 +348,7 @@ export default function ContractsListPage() {
       },
     },
     {
-      title: "Подписал",
+      title: "Оформил",
       key: "signedBy",
       responsive: ["lg"] as any,
       ...colSearch((r: any) =>
