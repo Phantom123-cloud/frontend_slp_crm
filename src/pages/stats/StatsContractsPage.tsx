@@ -144,27 +144,30 @@ export default function StatsContractsPage() {
     count: s.count,
   }));
 
-  // "Ведущие по средней" — средний оборот на договор по speakerId
+  // Кол-во презентаций для деления средней
+  const presCount = data?.presentationsCount || 1;
+
+  // "Ведущие по средней" — оборот ведущего / кол-во презентаций за период
   const speakerAvgData = (data?.bySpeaker ?? [])
     .filter((s: any) => s.count > 0)
     .map((s: any) => ({
       name: s.name.length > 18 ? s.name.slice(0, 18) + "…" : s.name,
       fullName: s.name,
-      "Средний оборот": Math.round(s.turnover / s.count),
+      "Средняя на презентацию": Math.round(s.turnover / presCount),
       count: s.count,
     }))
-    .sort((a: any, b: any) => b["Средний оборот"] - a["Средний оборот"]);
+    .sort((a: any, b: any) => b["Средняя на презентацию"] - a["Средняя на презентацию"]);
 
-  // "Сотрудники по средней" — средний оборот на договор по signedById
+  // "Сотрудники по средней" — оборот сотрудника / кол-во презентаций за период
   const managerAvgData = (data?.byManager ?? [])
     .filter((m: any) => m.count > 0)
     .map((m: any) => ({
       name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name,
       fullName: m.name,
-      "Средний оборот": Math.round(m.turnover / m.count),
+      "Средняя на презентацию": Math.round(m.turnover / presCount),
       count: m.count,
     }))
-    .sort((a: any, b: any) => b["Средний оборот"] - a["Средний оборот"]);
+    .sort((a: any, b: any) => b["Средняя на презентацию"] - a["Средняя на презентацию"]);
 
   const saleTypePieData = (data?.bySaleType ?? []).map((s: any, i: number) => ({
     name: s.label, value: s.count, turnover: s.turnover,
@@ -319,9 +322,9 @@ export default function StatsContractsPage() {
                     </Col>
                   </Row>
 
-                  {/* Pie + Bar */}
+                  {/* Пайчарты: Реальные деньги по источникам + По типам сделок */}
                   <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-                    <Col xs={24} lg={10}>
+                    <Col xs={24} lg={12}>
                       <Card title="Реальные деньги по источникам" style={cardStyle} size="small">
                         {pieData.length === 0
                           ? <div style={{ textAlign: "center", padding: 40, color: "#666" }}>Нет данных</div>
@@ -338,11 +341,42 @@ export default function StatsContractsPage() {
                         }
                       </Card>
                     </Col>
-                    <Col xs={24} lg={14}>
+                    <Col xs={24} lg={12}>
+                      <Card title="По типам сделок" style={cardStyle} size="small">
+                        {saleTypePieData.length === 0
+                          ? <div style={{ textAlign: "center", padding: 30, color: "#666" }}>Нет данных</div>
+                          : <ResponsiveContainer width="100%" height={300}>
+                              <PieChart margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
+                                <Pie data={saleTypePieData} dataKey="value" nameKey="name" cx="50%" cy="50%"
+                                  outerRadius={100} innerRadius={50} paddingAngle={3} labelLine={false}
+                                  label={({ name, percent, value }) => `${name} (${value}) ${(percent * 100).toFixed(0)}%`}>
+                                  {saleTypePieData.map((_: any, i: number) => <Cell key={i} fill={COLORS[(i + 4) % COLORS.length]} />)}
+                                </Pie>
+                                <ReTooltip content={({ active, payload }: any) => {
+                                  if (!active || !payload?.length) return null;
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
+                                      <div style={{ color: d.fill }}>{d.name}</div>
+                                      <div style={{ color: "#fff" }}>Договоров: <b>{d.value}</b></div>
+                                      <div style={{ color: "#aaa" }}>Оборот: <b>{fmtFull(d.turnover)}</b></div>
+                                    </div>
+                                  );
+                                }} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                        }
+                      </Card>
+                    </Col>
+                  </Row>
+
+                  {/* Аванс vs Реальные деньги */}
+                  <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+                    <Col xs={24}>
                       <Card title="Аванс vs Реальные деньги" style={cardStyle} size="small">
                         {barData.length === 0
                           ? <div style={{ textAlign: "center", padding: 40, color: "#666" }}>Нет данных</div>
-                          : <ResponsiveContainer width="100%" height={300}>
+                          : <ResponsiveContainer width="100%" height={280}>
                               <BarChart data={barData} margin={{ top: 24, right: 16, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
                                 <XAxis dataKey="name" tick={{ fill: "#888", fontSize: 11 }} />
@@ -481,64 +515,33 @@ export default function StatsContractsPage() {
                     </Col>
 
                     <Col xs={24} lg={8}>
-                      <Row gutter={[0, 16]}>
-                        <Col xs={24}>
-                          <Card title="Возвраты по источникам" style={cardStyle} size="small">
-                            {(data?.refundChart ?? []).length === 0
-                              ? <div style={{ textAlign: "center", padding: 40, color: "#666" }}>Нет возвратов</div>
-                              : <ResponsiveContainer width="100%" height={200}>
-                                  <BarChart data={data?.refundChart ?? []} layout="vertical" margin={{ top: 4, right: 60, left: 8, bottom: 4 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
-                                    <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
-                                    <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 11 }} width={70} />
-                                    <ReTooltip content={<CustomTooltip />} />
-                                    <Legend formatter={(v) => <span style={{ fontSize: 11, color: "#ccc" }}>{v}</span>} />
-                                    <Bar dataKey="refundAmount" name="Возврат" fill="#f43f5e" radius={[0, 4, 4, 0]}>
-                                      <LabelList dataKey="refundAmount" position="right" formatter={fmt} style={{ fill: "#fca5a5", fontSize: 10 }} />
-                                    </Bar>
-                                    <Bar dataKey="partialRefundAmount" name="Частичный" fill="#f59e0b" radius={[0, 4, 4, 0]}>
-                                      <LabelList dataKey="partialRefundAmount" position="right" formatter={fmt} style={{ fill: "#fcd34d", fontSize: 10 }} />
-                                    </Bar>
-                                  </BarChart>
-                                </ResponsiveContainer>
-                            }
-                          </Card>
-                        </Col>
-                        <Col xs={24}>
-                          <Card title="По типам сделок" style={cardStyle} size="small">
-                            {saleTypePieData.length === 0
-                              ? <div style={{ textAlign: "center", padding: 30, color: "#666" }}>Нет данных</div>
-                              : <ResponsiveContainer width="100%" height={240}>
-                                  <PieChart margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
-                                    <Pie data={saleTypePieData} dataKey="value" nameKey="name" cx="50%" cy="50%"
-                                      outerRadius={75} innerRadius={38} paddingAngle={3} labelLine={false}
-                                      label={({ name, percent, value }) => `${name} (${value}) ${(percent * 100).toFixed(0)}%`}>
-                                      {saleTypePieData.map((_: any, i: number) => <Cell key={i} fill={COLORS[(i + 4) % COLORS.length]} />)}
-                                    </Pie>
-                                    <ReTooltip content={({ active, payload }: any) => {
-                                      if (!active || !payload?.length) return null;
-                                      const d = payload[0].payload;
-                                      return (
-                                        <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
-                                          <div style={{ color: d.fill }}>{d.name}</div>
-                                          <div style={{ color: "#fff" }}>Договоров: <b>{d.value}</b></div>
-                                          <div style={{ color: "#aaa" }}>Оборот: <b>{fmtFull(d.turnover)}</b></div>
-                                        </div>
-                                      );
-                                    }} />
-                                  </PieChart>
-                                </ResponsiveContainer>
-                            }
-                          </Card>
-                        </Col>
-                      </Row>
+                      <Card title="Возвраты по источникам" style={cardStyle} size="small">
+                        {(data?.refundChart ?? []).length === 0
+                          ? <div style={{ textAlign: "center", padding: 40, color: "#666" }}>Нет возвратов</div>
+                          : <ResponsiveContainer width="100%" height={200}>
+                              <BarChart data={data?.refundChart ?? []} layout="vertical" margin={{ top: 4, right: 60, left: 8, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
+                                <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
+                                <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 11 }} width={70} />
+                                <ReTooltip content={<CustomTooltip />} />
+                                <Legend formatter={(v) => <span style={{ fontSize: 11, color: "#ccc" }}>{v}</span>} />
+                                <Bar dataKey="refundAmount" name="Возврат" fill="#f43f5e" radius={[0, 4, 4, 0]}>
+                                  <LabelList dataKey="refundAmount" position="right" formatter={fmt} style={{ fill: "#fca5a5", fontSize: 10 }} />
+                                </Bar>
+                                <Bar dataKey="partialRefundAmount" name="Частичный" fill="#f59e0b" radius={[0, 4, 4, 0]}>
+                                  <LabelList dataKey="partialRefundAmount" position="right" formatter={fmt} style={{ fill: "#fcd34d", fontSize: 10 }} />
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                        }
+                      </Card>
                     </Col>
                   </Row>
 
-                  {/* Ведущие по обороту (speakerId из договора) */}
+                  {/* Ведущие: оборот + средняя на презентацию */}
                   {speakerData.length > 0 && (
                     <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-                      <Col xs={24}>
+                      <Col xs={24} lg={12}>
                         <Card title={<span><TeamOutlined style={{ color: "#34d399", marginRight: 8 }} />Ведущие по обороту</span>} style={cardStyle} size="small">
                           <ResponsiveContainer width="100%" height={Math.max(200, speakerData.length * 52)}>
                             <BarChart data={speakerData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
@@ -568,13 +571,40 @@ export default function StatsContractsPage() {
                           </ResponsiveContainer>
                         </Card>
                       </Col>
+                      {speakerAvgData.length > 0 && (
+                        <Col xs={24} lg={12}>
+                          <Card title={<span><TeamOutlined style={{ color: "#f59e0b", marginRight: 8 }} />Ведущие по средней на презентацию</span>} style={cardStyle} size="small">
+                            <ResponsiveContainer width="100%" height={Math.max(200, speakerAvgData.length * 52)}>
+                              <BarChart data={speakerAvgData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
+                                <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
+                                <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={140} />
+                                <ReTooltip content={({ active, payload }: any) => {
+                                  if (!active || !payload?.length) return null;
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
+                                      <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
+                                      <div style={{ color: "#f59e0b" }}>Средняя на презентацию: <b>{fmtFull(d["Средняя на презентацию"])}</b></div>
+                                      <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
+                                    </div>
+                                  );
+                                }} />
+                                <Bar dataKey="Средняя на презентацию" fill="#f59e0b" radius={[0, 4, 4, 0]}>
+                                  <LabelList dataKey="Средняя на презентацию" position="right" formatter={fmt} style={{ fill: "#fcd34d", fontSize: 11 }} />
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </Card>
+                        </Col>
+                      )}
                     </Row>
                   )}
 
-                  {/* Сотрудники по обороту (signedById — Оформил) */}
+                  {/* Сотрудники: оборот + средняя на презентацию */}
                   {managerData.length > 0 && (
                     <Row gutter={[16, 16]}>
-                      <Col xs={24}>
+                      <Col xs={24} lg={12}>
                         <Card title={<span><TeamOutlined style={{ color: "#60a5fa", marginRight: 8 }} />Сотрудники по обороту</span>} style={cardStyle} size="small">
                           <ResponsiveContainer width="100%" height={Math.max(200, managerData.length * 52)}>
                             <BarChart data={managerData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
@@ -604,42 +634,9 @@ export default function StatsContractsPage() {
                           </ResponsiveContainer>
                         </Card>
                       </Col>
-                    </Row>
-                  )}
-
-                  {/* Ведущие по средней и Сотрудники по средней */}
-                  {(speakerAvgData.length > 0 || managerAvgData.length > 0) && (
-                    <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-                      {speakerAvgData.length > 0 && (
-                        <Col xs={24} lg={12}>
-                          <Card title={<span><TeamOutlined style={{ color: "#f59e0b", marginRight: 8 }} />Ведущие по средней</span>} style={cardStyle} size="small">
-                            <ResponsiveContainer width="100%" height={Math.max(200, speakerAvgData.length * 52)}>
-                              <BarChart data={speakerAvgData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
-                                <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
-                                <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={140} />
-                                <ReTooltip content={({ active, payload }: any) => {
-                                  if (!active || !payload?.length) return null;
-                                  const d = payload[0].payload;
-                                  return (
-                                    <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
-                                      <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
-                                      <div style={{ color: "#f59e0b" }}>Средний оборот: <b>{fmtFull(d["Средний оборот"])}</b></div>
-                                      <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
-                                    </div>
-                                  );
-                                }} />
-                                <Bar dataKey="Средний оборот" fill="#f59e0b" radius={[0, 4, 4, 0]}>
-                                  <LabelList dataKey="Средний оборот" position="right" formatter={fmt} style={{ fill: "#fcd34d", fontSize: 11 }} />
-                                </Bar>
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </Card>
-                        </Col>
-                      )}
                       {managerAvgData.length > 0 && (
                         <Col xs={24} lg={12}>
-                          <Card title={<span><TeamOutlined style={{ color: "#fb923c", marginRight: 8 }} />Сотрудники по средней</span>} style={cardStyle} size="small">
+                          <Card title={<span><TeamOutlined style={{ color: "#fb923c", marginRight: 8 }} />Сотрудники по средней на презентацию</span>} style={cardStyle} size="small">
                             <ResponsiveContainer width="100%" height={Math.max(200, managerAvgData.length * 52)}>
                               <BarChart data={managerAvgData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
@@ -651,13 +648,13 @@ export default function StatsContractsPage() {
                                   return (
                                     <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
                                       <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
-                                      <div style={{ color: "#fb923c" }}>Средний оборот: <b>{fmtFull(d["Средний оборот"])}</b></div>
+                                      <div style={{ color: "#fb923c" }}>Средняя на презентацию: <b>{fmtFull(d["Средняя на презентацию"])}</b></div>
                                       <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
                                     </div>
                                   );
                                 }} />
-                                <Bar dataKey="Средний оборот" fill="#fb923c" radius={[0, 4, 4, 0]}>
-                                  <LabelList dataKey="Средний оборот" position="right" formatter={fmt} style={{ fill: "#fdba74", fontSize: 11 }} />
+                                <Bar dataKey="Средняя на презентацию" fill="#fb923c" radius={[0, 4, 4, 0]}>
+                                  <LabelList dataKey="Средняя на презентацию" position="right" formatter={fmt} style={{ fill: "#fdba74", fontSize: 11 }} />
                                 </Bar>
                               </BarChart>
                             </ResponsiveContainer>
