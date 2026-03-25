@@ -42,6 +42,6 @@ export const statsApi = {
       .get('/stats/presentations', { params })
       .then((r) => r.data as StatsRow[]),
 
-  getContractStats: (params: { from: string; to: string }) =>
+  getContractStats: (params: { from: string; to: string; filterBy?: string; userId?: string }) =>
     api.get('/stats/contracts', { params }).then((r) => r.data),
 };

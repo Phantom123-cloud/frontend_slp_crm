@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Card, Col, DatePicker, Row, Spin, Statistic, Typography, theme, Tabs,
+  Select, Segmented,
 } from "antd";
 import {
   FileTextOutlined, DollarOutlined, RollbackOutlined, RiseOutlined,
@@ -71,6 +72,11 @@ const renderPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, n
 export default function StatsContractsPage() {
   const { token } = theme.useToken();
   const [activeTab, setActiveTab] = useState("charts");
+  const [employeeView, setEmployeeView] = useState<string>("all");
+
+  // Состояние фильтра таблицы
+  const [filterType, setFilterType] = useState<"period" | "coordinator" | "crew" | "employee">("period");
+  const [filterId, setFilterId] = useState<string | undefined>(undefined);
 
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().startOf("month"),
@@ -80,9 +86,18 @@ export default function StatsContractsPage() {
   const from = dateRange[0].format("YYYY-MM-DD");
   const to   = dateRange[1].format("YYYY-MM-DD");
 
+  // Основной запрос (без фильтра — для диаграмм и списков сотрудников)
   const { data, isLoading } = useQuery({
     queryKey: ["stats", "contracts", from, to],
     queryFn: () => statsApi.getContractStats({ from, to }),
+    enabled: !!from && !!to,
+  });
+
+  // Запрос для таблицы (с фильтром по сотруднику если выбран)
+  const tableFilterBy = filterType === "period" ? undefined : filterType;
+  const { data: tableData, isLoading: tableLoading } = useQuery({
+    queryKey: ["stats", "contracts", from, to, filterType, filterId],
+    queryFn: () => statsApi.getContractStats({ from, to, filterBy: tableFilterBy, userId: filterId }),
     enabled: !!from && !!to,
   });
 
@@ -130,25 +145,42 @@ export default function StatsContractsPage() {
     ? Math.min(100, Math.round((data.total / data.presentationsCount) * 100))
     : 0;
 
-  // Сводные данные для таблицы
-  const totalRefundAmount  = (data?.bankStats ?? []).reduce((s: number, b: any) => s + (b.refundAmount ?? 0), 0);
-  const totalPartialAmount = (data?.bankStats ?? []).reduce((s: number, b: any) => s + (b.partialRefundAmount ?? 0), 0);
+  // Данные для диаграммы сотрудников
+  const rawEmployeeSource =
+    employeeView === "coordinators" ? (data?.byCoordinator ?? [])
+    : employeeView === "hosts"      ? (data?.byHost ?? [])
+    : (data?.byEmployee ?? []);
+  const employeeChartData = rawEmployeeSource.slice(0, 15).map((e: any) => ({
+    name: e.name.length > 20 ? e.name.slice(0, 20) + "…" : e.name,
+    fullName: e.name,
+    "Оборот": e.turnover,
+    "Реал. деньги": e.realMoney,
+    count: e.count,
+    roles: e.roles?.join(", ") ?? "",
+  }));
+
+  // tableData — данные для таблицы (с фильтром)
+  const td = tableData ?? data; // fallback на общие данные пока фильтрованные грузятся
+
+  // Сводные данные для таблицы (используем td вместо data)
+  const totalRefundAmount  = (td?.bankStats ?? []).reduce((s: number, b: any) => s + (b.refundAmount ?? 0), 0);
+  const totalPartialAmount = (td?.bankStats ?? []).reduce((s: number, b: any) => s + (b.partialRefundAmount ?? 0), 0);
   const totalRefunds       = totalRefundAmount + totalPartialAmount;
-  const avgRealMoney       = (data?.total ?? 0) > 0 ? Math.round((data?.totalRealMoney ?? 0) / data.total) : 0;
+  const avgRealMoney       = (td?.total ?? 0) > 0 ? Math.round((td?.totalRealMoney ?? 0) / td.total) : 0;
 
   // Строки сводной таблицы
   const summaryRows = [
-    { label: "Количество договоров",          value: String(data?.total ?? 0),                              highlight: false },
-    { label: "Количество презентаций",         value: String(data?.presentationsCount ?? 0),                 highlight: false },
-    { label: "Оборот до возвратов",            value: fmtFull(data?.turnoverBefore ?? 0),                   highlight: false },
-    { label: "Средний оборот до возвратов",    value: fmtFull((data?.total ?? 0) > 0 ? Math.round((data?.turnoverBefore ?? 0) / data.total) : 0), highlight: false },
-    { label: "Оборот после возвратов",         value: fmtFull(data?.turnoverAfter ?? 0),                    highlight: false },
-    { label: "Средний оборот после возвратов", value: fmtFull((data?.total ?? 0) > 0 ? Math.round((data?.turnoverAfter ?? 0) / data.total) : 0),  highlight: false },
+    { label: "Количество договоров",          value: String(td?.total ?? 0),                              highlight: false },
+    { label: "Количество презентаций",         value: String(td?.presentationsCount ?? 0),                 highlight: false },
+    { label: "Оборот до возвратов",            value: fmtFull(td?.turnoverBefore ?? 0),                   highlight: false },
+    { label: "Средний оборот до возвратов",    value: fmtFull((td?.total ?? 0) > 0 ? Math.round((td?.turnoverBefore ?? 0) / td.total) : 0), highlight: false },
+    { label: "Оборот после возвратов",         value: fmtFull(td?.turnoverAfter ?? 0),                    highlight: false },
+    { label: "Средний оборот после возвратов", value: fmtFull((td?.total ?? 0) > 0 ? Math.round((td?.turnoverAfter ?? 0) / td.total) : 0),  highlight: false },
     { label: "Средний оборот от реальных денег", value: fmtFull(avgRealMoney),                              highlight: false },
     { label: "Сумма возвратов (полных)",       value: fmtFull(totalRefundAmount),                           highlight: true  },
-    { label: "Количество возвратов (полных)",  value: String(data?.refundsCount ?? 0),                      highlight: true  },
+    { label: "Количество возвратов (полных)",  value: String(td?.refundsCount ?? 0),                      highlight: true  },
     { label: "Сумма возвратов (частичных)",    value: fmtFull(totalPartialAmount),                          highlight: true  },
-    { label: "Количество возвратов (частичных)", value: String(data?.partialRefundsCount ?? 0),             highlight: true  },
+    { label: "Количество возвратов (частичных)", value: String(td?.partialRefundsCount ?? 0),             highlight: true  },
     { label: "Сумма возвратов (общая)",        value: fmtFull(totalRefunds),                                highlight: true  },
   ];
 
@@ -486,6 +518,59 @@ export default function StatsContractsPage() {
                     </Col>
                   </Row>
 
+                  {/* Диаграмма сотрудников (ведущие и координаторы) */}
+                  {(data?.byEmployee ?? []).length > 0 && (
+                    <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+                      <Col xs={24}>
+                        <Card
+                          title={<span><TeamOutlined style={{ color: "#34d399", marginRight: 8 }} />Сотрудники по обороту</span>}
+                          style={cardStyle}
+                          size="small"
+                          extra={
+                            <Segmented
+                              size="small"
+                              value={employeeView}
+                              onChange={(v) => setEmployeeView(v as string)}
+                              options={[
+                                { label: "Все", value: "all" },
+                                { label: "Ведущие", value: "hosts" },
+                                { label: "Координаторы", value: "coordinators" },
+                              ]}
+                            />
+                          }
+                        >
+                          <ResponsiveContainer width="100%" height={Math.max(200, employeeChartData.length * 52)}>
+                            <BarChart data={employeeChartData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
+                              <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
+                              <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={150} />
+                              <ReTooltip content={({ active, payload }: any) => {
+                                if (!active || !payload?.length) return null;
+                                const d = payload[0].payload;
+                                return (
+                                  <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
+                                    <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
+                                    {d.roles && <div style={{ color: "#888", fontSize: 11, marginBottom: 4 }}>{d.roles}</div>}
+                                    <div style={{ color: "#10b981" }}>Оборот: <b>{fmtFull(d["Оборот"])}</b></div>
+                                    <div style={{ color: "#22d3ee" }}>Реал. деньги: <b>{fmtFull(d["Реал. деньги"])}</b></div>
+                                    <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
+                                  </div>
+                                );
+                              }} />
+                              <Legend formatter={(v) => <span style={{ fontSize: 11, color: "#ccc" }}>{v}</span>} />
+                              <Bar dataKey="Оборот" fill="#10b981" radius={[0, 4, 4, 0]}>
+                                <LabelList dataKey="Оборот" position="right" formatter={fmt} style={{ fill: "#6ee7b7", fontSize: 11 }} />
+                              </Bar>
+                              <Bar dataKey="Реал. деньги" fill="#22d3ee" radius={[0, 4, 4, 0]}>
+                                <LabelList dataKey="Реал. деньги" position="right" formatter={fmt} style={{ fill: "#67e8f9", fontSize: 11 }} />
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </Card>
+                      </Col>
+                    </Row>
+                  )}
+
                   {/* Топ менеджеров */}
                   {managerData.length > 0 && (
                     <Row gutter={[16, 16]}>
@@ -528,7 +613,51 @@ export default function StatsContractsPage() {
               key: "table",
               label: <span><TableOutlined /> Таблица</span>,
               children: (
-                <Card style={cardStyle} size="small">
+                <>
+                  {/* Фильтр таблицы */}
+                  <Row gutter={12} style={{ marginBottom: 16 }} align="middle">
+                    <Col>
+                      <Select
+                        value={filterType}
+                        onChange={(v) => { setFilterType(v); setFilterId(undefined); }}
+                        style={{ width: 180 }}
+                        options={[
+                          { value: "period",      label: "Период (общее)" },
+                          { value: "coordinator", label: "Координатор" },
+                          { value: "crew",        label: "Ведущий" },
+                          { value: "employee",    label: "Сотрудник" },
+                        ]}
+                      />
+                    </Col>
+                    {filterType !== "period" && (
+                      <Col>
+                        <Select
+                          placeholder={
+                            filterType === "coordinator" ? "Выберите координатора"
+                            : filterType === "crew" ? "Выберите ведущего"
+                            : "Выберите сотрудника"
+                          }
+                          value={filterId}
+                          onChange={setFilterId}
+                          allowClear
+                          showSearch
+                          optionFilterProp="label"
+                          style={{ width: 240 }}
+                          options={(
+                            filterType === "coordinator" ? (data?.byCoordinator ?? [])
+                            : filterType === "crew"      ? (data?.byHost ?? [])
+                            : (data?.byEmployee ?? [])
+                          ).map((p: any) => ({
+                            value: p.id,
+                            label: p.name + (p.roles?.length ? ` (${p.roles.join(", ")})` : ""),
+                          }))}
+                        />
+                      </Col>
+                    )}
+                    {tableLoading && <Col><Spin size="small" /></Col>}
+                  </Row>
+
+                  <Card style={cardStyle} size="small">
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                     <tbody>
                       {/* Секция: Реальные деньги по источникам */}
@@ -542,7 +671,7 @@ export default function StatsContractsPage() {
                           Реальные деньги по источникам
                         </td>
                       </tr>
-                      {(data?.bankStats ?? []).map((b: any, i: number) => (
+                      {(td?.bankStats ?? []).map((b: any, i: number) => (
                         <tr key={b.name} style={{
                           borderBottom: `1px solid ${token.colorBorderSecondary}`,
                           background: i % 2 === 0 ? "transparent" : token.colorFillAlter,
@@ -562,7 +691,7 @@ export default function StatsContractsPage() {
                           ИТОГО РЕАЛЬНЫЕ ДЕНЬГИ
                         </td>
                         <td style={{ padding: "10px 16px", textAlign: "right", fontWeight: 700, color: "#22d3ee", fontSize: 16, background: token.colorFillTertiary }}>
-                          {fmtFull(data?.totalRealMoney ?? 0)}
+                          {fmtFull(td?.totalRealMoney ?? 0)}
                         </td>
                       </tr>
 
@@ -596,6 +725,7 @@ export default function StatsContractsPage() {
                     </tbody>
                   </table>
                 </Card>
+                </>
               ),
             },
           ]}
