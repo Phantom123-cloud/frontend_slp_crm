@@ -150,14 +150,32 @@ export default function StatsContractsPage() {
     employeeView === "coordinators" ? (data?.byCoordinator ?? [])
     : employeeView === "hosts"      ? (data?.byHost ?? [])
     : (data?.byEmployee ?? []);
-  const employeeChartData = rawEmployeeSource.slice(0, 15).map((e: any) => ({
-    name: e.name.length > 20 ? e.name.slice(0, 20) + "…" : e.name,
-    fullName: e.name,
-    "Оборот": e.turnover,
-    "Реал. деньги": e.realMoney,
-    count: e.count,
-    roles: e.roles?.join(", ") ?? "",
-  }));
+
+  // Маркер роли в подписи оси Y для режима "Все"
+  const roleTag = (e: any) => {
+    if (employeeView !== "all" || !e.roles?.length) return "";
+    const tags = e.roles as string[];
+    if (tags.includes("Ведущий") && tags.includes("Координатор")) return " ★";
+    if (tags.includes("Координатор")) return " [К]";
+    return " [В]";
+  };
+
+  const employeeChartData = rawEmployeeSource.slice(0, 15).map((e: any) => {
+    const tag = roleTag(e);
+    const shortName = e.name.length > 18 ? e.name.slice(0, 18) + "…" : e.name;
+    return {
+      name: shortName + tag,
+      fullName: e.name,
+      "Оборот": e.turnover,
+      "Реал. деньги": e.realMoney,
+      count: e.count,
+      roles: e.roles?.join(", ") ?? (
+        employeeView === "coordinators" ? "Координатор"
+        : employeeView === "hosts"      ? "Ведущий"
+        : ""
+      ),
+    };
+  });
 
   // tableData — данные для таблицы (с фильтром)
   const td = tableData ?? data; // fallback на общие данные пока фильтрованные грузятся
@@ -539,11 +557,19 @@ export default function StatsContractsPage() {
                             />
                           }
                         >
+                          {/* Легенда маркеров в режиме "Все" */}
+                          {employeeView === "all" && (
+                            <div style={{ marginBottom: 10, fontSize: 12, color: "#888", display: "flex", gap: 16 }}>
+                              <span><span style={{ color: "#ccc" }}>[В]</span> — Ведущий</span>
+                              <span><span style={{ color: "#ccc" }}>[К]</span> — Координатор</span>
+                              <span><span style={{ color: "#ccc" }}>★</span> — Ведущий + Координатор</span>
+                            </div>
+                          )}
                           <ResponsiveContainer width="100%" height={Math.max(200, employeeChartData.length * 52)}>
                             <BarChart data={employeeChartData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
                               <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
-                              <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={150} />
+                              <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={170} />
                               <ReTooltip content={({ active, payload }: any) => {
                                 if (!active || !payload?.length) return null;
                                 const d = payload[0].payload;
