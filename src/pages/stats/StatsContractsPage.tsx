@@ -144,6 +144,28 @@ export default function StatsContractsPage() {
     count: s.count,
   }));
 
+  // "Ведущие по средней" — средний оборот на договор по speakerId
+  const speakerAvgData = (data?.bySpeaker ?? [])
+    .filter((s: any) => s.count > 0)
+    .map((s: any) => ({
+      name: s.name.length > 18 ? s.name.slice(0, 18) + "…" : s.name,
+      fullName: s.name,
+      "Средний оборот": Math.round(s.turnover / s.count),
+      count: s.count,
+    }))
+    .sort((a: any, b: any) => b["Средний оборот"] - a["Средний оборот"]);
+
+  // "Сотрудники по средней" — средний оборот на договор по signedById
+  const managerAvgData = (data?.byManager ?? [])
+    .filter((m: any) => m.count > 0)
+    .map((m: any) => ({
+      name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name,
+      fullName: m.name,
+      "Средний оборот": Math.round(m.turnover / m.count),
+      count: m.count,
+    }))
+    .sort((a: any, b: any) => b["Средний оборот"] - a["Средний оборот"]);
+
   const saleTypePieData = (data?.bySaleType ?? []).map((s: any, i: number) => ({
     name: s.label, value: s.count, turnover: s.turnover,
     total: (data?.bySaleType ?? []).reduce((acc: number, x: any) => acc + x.count, 0) || 1,
@@ -582,6 +604,66 @@ export default function StatsContractsPage() {
                           </ResponsiveContainer>
                         </Card>
                       </Col>
+                    </Row>
+                  )}
+
+                  {/* Ведущие по средней и Сотрудники по средней */}
+                  {(speakerAvgData.length > 0 || managerAvgData.length > 0) && (
+                    <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+                      {speakerAvgData.length > 0 && (
+                        <Col xs={24} lg={12}>
+                          <Card title={<span><TeamOutlined style={{ color: "#f59e0b", marginRight: 8 }} />Ведущие по средней</span>} style={cardStyle} size="small">
+                            <ResponsiveContainer width="100%" height={Math.max(200, speakerAvgData.length * 52)}>
+                              <BarChart data={speakerAvgData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
+                                <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
+                                <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={140} />
+                                <ReTooltip content={({ active, payload }: any) => {
+                                  if (!active || !payload?.length) return null;
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
+                                      <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
+                                      <div style={{ color: "#f59e0b" }}>Средний оборот: <b>{fmtFull(d["Средний оборот"])}</b></div>
+                                      <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
+                                    </div>
+                                  );
+                                }} />
+                                <Bar dataKey="Средний оборот" fill="#f59e0b" radius={[0, 4, 4, 0]}>
+                                  <LabelList dataKey="Средний оборот" position="right" formatter={fmt} style={{ fill: "#fcd34d", fontSize: 11 }} />
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </Card>
+                        </Col>
+                      )}
+                      {managerAvgData.length > 0 && (
+                        <Col xs={24} lg={12}>
+                          <Card title={<span><TeamOutlined style={{ color: "#fb923c", marginRight: 8 }} />Сотрудники по средней</span>} style={cardStyle} size="small">
+                            <ResponsiveContainer width="100%" height={Math.max(200, managerAvgData.length * 52)}>
+                              <BarChart data={managerAvgData} layout="vertical" margin={{ top: 4, right: 100, left: 16, bottom: 4 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
+                                <XAxis type="number" tickFormatter={fmt} tick={{ fill: "#888", fontSize: 11 }} />
+                                <YAxis type="category" dataKey="name" tick={{ fill: "#ccc", fontSize: 12 }} width={140} />
+                                <ReTooltip content={({ active, payload }: any) => {
+                                  if (!active || !payload?.length) return null;
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div style={{ background: "#1f1f2e", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", fontSize: 12 }}>
+                                      <div style={{ color: "#ccc", marginBottom: 4 }}>{d.fullName}</div>
+                                      <div style={{ color: "#fb923c" }}>Средний оборот: <b>{fmtFull(d["Средний оборот"])}</b></div>
+                                      <div style={{ color: "#aaa" }}>Договоров: <b>{d.count}</b></div>
+                                    </div>
+                                  );
+                                }} />
+                                <Bar dataKey="Средний оборот" fill="#fb923c" radius={[0, 4, 4, 0]}>
+                                  <LabelList dataKey="Средний оборот" position="right" formatter={fmt} style={{ fill: "#fdba74", fontSize: 11 }} />
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </Card>
+                        </Col>
+                      )}
                     </Row>
                   )}
                 </>
