@@ -60,9 +60,12 @@ export default function PresentationCreateModal({
       const d = dayjs(date);
       const dd = d.format("DD");
       const mm = d.format("MM");
+      const yy = d.format("YY");
+      // Порядковый номер слота по времени (приближённый, точный присвоит бэкенд)
       const hour = time.hour();
-      const number = hour < 12 ? 1 : hour < 16 ? 2 : 3;
-      setPreview(`${trip.teamName} ${dd}.${mm} #${number}`);
+      const slot = hour < 12 ? 1 : hour < 16 ? 2 : 3;
+      const nn = String(slot).padStart(2, "0");
+      setPreview(`${trip.teamName}${dd}${mm}${yy}${nn}`);
     } else {
       setPreview("");
     }
