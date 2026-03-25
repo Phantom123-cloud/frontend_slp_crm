@@ -791,6 +791,37 @@ export default function StatsContractsPage() {
                           </td>
                         </tr>
                       ))}
+
+                      {/* Разделитель */}
+                      <tr><td colSpan={2} style={{ height: 8 }} /></tr>
+
+                      {/* Секция: Рассрочки */}
+                      <tr>
+                        <td colSpan={2} style={{
+                          padding: "10px 16px", fontWeight: 700, fontSize: 15,
+                          background: token.colorFillSecondary,
+                          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                          color: token.colorText,
+                        }}>
+                          Рассрочки
+                        </td>
+                      </tr>
+                      {[
+                        { label: "К-во договоров рассрочек",        value: String(td?.installmentStats?.installmentCount ?? 0),                        color: token.colorText },
+                        { label: "Ожидаемая сумма оплат рассрочек", value: fmtFull(td?.installmentStats?.expectedPaymentsTotal ?? 0),                  color: "#a78bfa" },
+                        { label: "Оплачено рассрочек (сумма)",      value: fmtFull(td?.installmentStats?.paidPaymentsTotal ?? 0),                      color: "#34d399" },
+                        { label: "% оплаченных рассрочек",          value: `${td?.installmentStats?.paidPaymentsPct ?? 0}%`,                           color: "#34d399" },
+                        { label: "Оплачено рассрочек (договоров)",  value: String(td?.installmentStats?.paidContractsCount ?? 0),                      color: "#22d3ee" },
+                        { label: "% оплаченных договоров",          value: `${td?.installmentStats?.paidContractsPct ?? 0}%`,                          color: "#22d3ee" },
+                      ].map((row, i) => (
+                        <tr key={row.label} style={{
+                          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                          background: i % 2 === 0 ? "transparent" : token.colorFillAlter,
+                        }}>
+                          <td style={{ padding: "9px 16px", color: token.colorTextSecondary }}>{row.label}</td>
+                          <td style={{ padding: "9px 16px", textAlign: "right", fontWeight: 600, color: row.color, fontSize: 15 }}>{row.value}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </Card>
