@@ -183,6 +183,10 @@ export default function StatsContractsPage() {
     ? Math.min(100, Math.round((data.total / data.presentationsCount) * 100))
     : 0;
 
+  // % падения после возвратов
+  const dropPct = (before: number, after: number) =>
+    before > 0 ? ((before - after) / before * 100).toFixed(1) : null;
+
   // tableData — данные для таблицы (с фильтром)
   const td = tableData ?? data; // fallback на общие данные пока фильтрованные грузятся
 
@@ -296,6 +300,11 @@ export default function StatsContractsPage() {
                         <Statistic title="Оборот после возврата" value={fmtFull(data?.turnoverAfter ?? 0)}
                           prefix={<RiseOutlined style={{ color: "#34d399" }} />}
                           valueStyle={{ color: "#34d399", fontSize: 16 }} />
+                        {dropPct(data?.turnoverBefore, data?.turnoverAfter) !== null && (
+                          <div style={{ marginTop: 4, fontSize: 12, color: "#f43f5e" }}>
+                            ↓ {dropPct(data?.turnoverBefore, data?.turnoverAfter)}% после возвратов
+                          </div>
+                        )}
                       </Card>
                     </Col>
                     <Col xs={12} md={8}>
@@ -303,6 +312,11 @@ export default function StatsContractsPage() {
                         <Statistic title="Реал. деньги после возврата" value={fmtFull(data?.totalRealMoney ?? 0)}
                           prefix={<DollarOutlined style={{ color: "#22d3ee" }} />}
                           valueStyle={{ color: "#22d3ee", fontSize: 16 }} />
+                        {dropPct(data?.totalRealMoneyBefore, data?.totalRealMoney) !== null && (
+                          <div style={{ marginTop: 4, fontSize: 12, color: "#f43f5e" }}>
+                            ↓ {dropPct(data?.totalRealMoneyBefore, data?.totalRealMoney)}% после возвратов
+                          </div>
+                        )}
                       </Card>
                     </Col>
                     <Col xs={12} md={8}>
@@ -310,6 +324,11 @@ export default function StatsContractsPage() {
                         <Statistic title="Ср. оборот / презентацию (после)" value={fmtFull(data?.avgPerPresentationAfter ?? 0)}
                           prefix={<RiseOutlined style={{ color: "#34d399" }} />}
                           valueStyle={{ color: "#34d399", fontSize: 15 }} />
+                        {dropPct(data?.avgPerPresentation, data?.avgPerPresentationAfter) !== null && (
+                          <div style={{ marginTop: 4, fontSize: 12, color: "#f43f5e" }}>
+                            ↓ {dropPct(data?.avgPerPresentation, data?.avgPerPresentationAfter)}% после возвратов
+                          </div>
+                        )}
                       </Card>
                     </Col>
                   </Row>
