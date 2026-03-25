@@ -312,18 +312,6 @@ export default function StatsContractsPage() {
                           valueStyle={{ color: "#34d399", fontSize: 15 }} />
                       </Card>
                     </Col>
-                    <Col xs={12} md={8}>
-                      <Card style={cardStyle} size="small">
-                        <Statistic title="Топ менеджер" value={managerData[0]?.fullName ?? "—"}
-                          prefix={<TeamOutlined style={{ color: "#60a5fa" }} />}
-                          valueStyle={{ color: "#60a5fa", fontSize: 14 }}
-                          suffix={managerData[0]
-                            ? <span style={{ fontSize: 12, color: "#aaa", fontWeight: 400, marginLeft: 8 }}>
-                                {fmtFull(managerData[0]?.["Оборот"] ?? 0)} сум
-                              </span>
-                            : null} />
-                      </Card>
-                    </Col>
                   </Row>
 
                   {/* Пайчарты: Реальные деньги по источникам + По типам сделок */}
