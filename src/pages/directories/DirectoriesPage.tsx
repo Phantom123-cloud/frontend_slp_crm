@@ -6,6 +6,7 @@ import {
   Modal,
   Form,
   Input,
+  InputNumber,
   Select,
   Space,
   Popconfirm,
@@ -203,6 +204,10 @@ export default function DirectoriesPage() {
   const [editBank, setEditBank] = useState<any>(null);
   const [bankForm] = Form.useForm();
   const [editBankForm] = Form.useForm();
+  const [conditionsModal, setConditionsModal] = useState<{ bank: any } | null>(null);
+  const [conditionForm] = Form.useForm();
+  const [editingConditionId, setEditingConditionId] = useState<string | null>(null);
+  const [editingConditionValues, setEditingConditionValues] = useState<{ name: string; rate: number }>({ name: '', rate: 0 });
 
   // === Companies ===
   const [companies, setCompanies] = useState<any[]>([]);
@@ -744,6 +749,22 @@ export default function DirectoriesPage() {
                       ...colSearch((r: any) => r.description ?? ""),
                     },
                     {
+                      title: "Условия",
+                      key: "conditions",
+                      render: (_: any, record: any) => {
+                        const count = record.conditions?.length ?? 0;
+                        return (
+                          <Button
+                            size="small"
+                            type="link"
+                            onClick={() => setConditionsModal({ bank: record })}
+                          >
+                            {count > 0 ? `${count} усл.` : "Добавить условия"}
+                          </Button>
+                        );
+                      },
+                    },
+                    {
                       title: "",
                       key: "actions",
                       width: 80,
@@ -816,6 +837,121 @@ export default function DirectoriesPage() {
                       <Input.TextArea rows={2} />
                     </Form.Item>
                   </Form>
+                </Modal>
+
+                {/* Модал управления условиями банка */}
+                <Modal
+                  title={`Условия банка: ${conditionsModal?.bank?.name}`}
+                  open={!!conditionsModal}
+                  onCancel={() => { setConditionsModal(null); conditionForm.resetFields(); setEditingConditionId(null); }}
+                  footer={null}
+                  destroyOnClose
+                >
+                  {conditionsModal?.bank?.conditions?.map((c: any) => {
+                    const isEditing = editingConditionId === c.id;
+                    const refreshConditions = async () => {
+                      const updatedBanks = await directoriesApi.getBanks().then(r => r.data);
+                      setBanks(updatedBanks);
+                      const updatedBank = updatedBanks.find((b: any) => b.id === conditionsModal?.bank?.id);
+                      if (updatedBank) setConditionsModal({ bank: updatedBank });
+                    };
+                    return (
+                      <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #303030' }}>
+                        {isEditing ? (
+                          <>
+                            <Input
+                              size="small"
+                              value={editingConditionValues.name}
+                              onChange={e => setEditingConditionValues(v => ({ ...v, name: e.target.value }))}
+                              style={{ flex: 1 }}
+                            />
+                            <InputNumber
+                              size="small"
+                              value={editingConditionValues.rate}
+                              onChange={v => setEditingConditionValues(prev => ({ ...prev, rate: Number(v) }))}
+                              min={0} max={100} step={0.1}
+                              addonAfter="%"
+                              style={{ width: 110 }}
+                            />
+                            <Button
+                              size="small"
+                              type="primary"
+                              onClick={async () => {
+                                await directoriesApi.updateBankCondition(c.id, {
+                                  name: editingConditionValues.name,
+                                  rate: editingConditionValues.rate,
+                                });
+                                setEditingConditionId(null);
+                                await refreshConditions();
+                              }}
+                            >
+                              Сохранить
+                            </Button>
+                            <Button size="small" onClick={() => setEditingConditionId(null)}>Отмена</Button>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ flex: 1 }}>{c.name} — <b>{Number(c.rate)}%</b></span>
+                            {canEdit && (
+                              <>
+                                <Button
+                                  type="text"
+                                  icon={<EditOutlined />}
+                                  size="small"
+                                  onClick={() => {
+                                    setEditingConditionId(c.id);
+                                    setEditingConditionValues({ name: c.name, rate: Number(c.rate) });
+                                  }}
+                                />
+                                <Popconfirm
+                                  title="Удалить условие?"
+                                  onConfirm={async () => {
+                                    await directoriesApi.deleteBankCondition(c.id);
+                                    await refreshConditions();
+                                  }}
+                                  okText="Да"
+                                  cancelText="Нет"
+                                >
+                                  <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                                </Popconfirm>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {conditionsModal?.bank?.conditions?.length === 0 && (
+                    <div style={{ color: '#999', marginBottom: 12 }}>Нет условий</div>
+                  )}
+                  {canCreate && (
+                    <Form
+                      form={conditionForm}
+                      layout="inline"
+                      style={{ marginTop: 16 }}
+                      onFinish={async (values) => {
+                        await directoriesApi.createBankCondition(conditionsModal!.bank.id, {
+                          name: values.name,
+                          rate: values.rate,
+                        });
+                        conditionForm.resetFields();
+                        const updatedBanks = await directoriesApi.getBanks().then(r => r.data);
+                        setBanks(updatedBanks);
+                        const updatedBank = updatedBanks.find((b: any) => b.id === conditionsModal?.bank?.id);
+                        if (updatedBank) setConditionsModal({ bank: updatedBank });
+                      }}
+                    >
+                      <Form.Item name="name" rules={[{ required: true, message: '' }]}>
+                        <Input placeholder="Название (24 месяца)" style={{ width: 160 }} />
+                      </Form.Item>
+                      <Form.Item name="rate" rules={[{ required: true, message: '' }]}>
+                        <InputNumber placeholder="%" min={0} max={100} step={0.1} style={{ width: 90 }} addonAfter="%" />
+                      </Form.Item>
+                      <Form.Item>
+                        <Button type="primary" htmlType="submit" icon={<PlusOutlined />}>Добавить</Button>
+                      </Form.Item>
+                    </Form>
+                  )}
                 </Modal>
               </>
             ),

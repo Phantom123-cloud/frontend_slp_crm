@@ -29,8 +29,10 @@ import WarehouseDetailPage from "./pages/warehouses/WarehouseDetailPage";
 import WalletsListPage from "./pages/wallets/WalletsListPage";
 import WalletDetailPage from "./pages/wallets/WalletDetailPage";
 import StatsPresentationsPage from "./pages/stats/StatsPresentationsPage";
+import StatsContractsPage from "./pages/stats/StatsContractsPage";
 import ContractsListPage from "./pages/contracts/ContractsListPage";
 import ContractFormPage from "./pages/contracts/ContractFormPage";
+import ContractDetailPage from "./pages/contracts/ContractDetailPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -381,6 +383,16 @@ export default function App() {
                 }
               />
               <Route
+                path="stats/contracts"
+                element={
+                  <PermissionRoute
+                    permission={["statistics.presentations", "contracts.view-all"]}
+                  >
+                    <StatsContractsPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
                 path="contracts"
                 element={
                   <PermissionRoute permission={["contracts.view-all", "contracts.view-person"]}>
@@ -393,6 +405,14 @@ export default function App() {
                 element={
                   <PermissionRoute permission="contracts.create">
                     <ContractFormPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="contracts/:id"
+                element={
+                  <PermissionRoute permission={["contracts.view-all", "contracts.view-person"]}>
+                    <ContractDetailPage />
                   </PermissionRoute>
                 }
               />

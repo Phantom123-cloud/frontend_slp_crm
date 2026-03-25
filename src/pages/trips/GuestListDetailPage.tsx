@@ -237,9 +237,12 @@ const EditModal: React.FC<EditModalProps> = ({ record, isNew, datePresentations,
 
         <Row gutter={12}>
           <Col span={12}>
-            <Form.Item label="Презентация №" name="presentationNumber">
+            <Form.Item
+              label="Презентация №"
+              name="presentationNumber"
+              rules={[{ required: true, message: "Выберите презентацию" }]}
+            >
               <Select
-                allowClear
                 placeholder="Номер презентации"
                 onChange={handlePresNumberChange}
               >

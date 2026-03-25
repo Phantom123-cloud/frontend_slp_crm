@@ -183,6 +183,10 @@ export default function MainLayout() {
           key: "/stats/presentations",
           label: t("menu.statsPresentations"),
         },
+        canViewStats && {
+          key: "/stats/contracts",
+          label: "Договора",
+        },
       ].filter(Boolean);
       return reportsChildren.length > 0 && {
         key: "reports-group",
@@ -217,7 +221,13 @@ export default function MainLayout() {
         theme={isDark ? "dark" : "light"}
         mode="inline"
         selectedKeys={[location.pathname.split("/").slice(0, 2).join("/")]}
-        defaultOpenKeys={["trips-group"]}
+        defaultOpenKeys={
+          ["/trips", "/presentations", "/guest-lists"].some((p) => location.pathname.startsWith(p))
+            ? ["trips-group"]
+            : location.pathname.startsWith("/stats")
+            ? ["reports-group"]
+            : []
+        }
         items={menuItems}
         onClick={({ key }) => handleMenuClick(key)}
       />

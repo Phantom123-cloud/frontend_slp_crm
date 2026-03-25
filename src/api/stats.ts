@@ -21,6 +21,8 @@ export interface StatsRow {
   refusalValue: number | null;
   rewriteCount: number | null;
   rewriteValue: number | null;
+  turnoverBefore: number;
+  turnoverAfter: number;
   userId?: string;
   role?: string;
   presDate?: string;
@@ -39,4 +41,7 @@ export const statsApi = {
     api
       .get('/stats/presentations', { params })
       .then((r) => r.data as StatsRow[]),
+
+  getContractStats: (params: { from: string; to: string }) =>
+    api.get('/stats/contracts', { params }).then((r) => r.data),
 };

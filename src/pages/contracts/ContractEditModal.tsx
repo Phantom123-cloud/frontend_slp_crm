@@ -65,6 +65,9 @@ export default function ContractEditModal({ contractId, open, onClose, onSuccess
   // График платежей
   const [paymentSchedule, setPaymentSchedule] = useState<{ date: dayjs.Dayjs; amount: number }[]>([]);
 
+  // Условия банков: { [bankId]: { conditionId, conditionName, conditionRate } }
+  const [bankConditions, setBankConditions] = useState<Record<string, { conditionId: string; conditionName: string; conditionRate: number }>>({});
+
   const paymentType = Form.useWatch("paymentType", form);
   const totalAmount = Form.useWatch("totalAmount", form) || 0;
   const advanceCash = Form.useWatch("advanceCash", form) || 0;
@@ -158,6 +161,19 @@ export default function ContractEditModal({ contractId, open, onClose, onSuccess
         });
       }
 
+      // Загружаем сохранённые условия банков
+      const savedConditions: Record<string, { conditionId: string; conditionName: string; conditionRate: number }> = {};
+      contract.banks?.forEach((b: any) => {
+        if (b.conditionId && b.conditionName != null && b.conditionRate != null) {
+          savedConditions[b.bankId] = {
+            conditionId: b.conditionId,
+            conditionName: b.conditionName,
+            conditionRate: Number(b.conditionRate),
+          };
+        }
+      });
+      setBankConditions(savedConditions);
+
       form.setFieldsValue({
         clientName: contract.clientName,
         contractDate: dayjs(contract.contractDate),
@@ -202,6 +218,22 @@ export default function ContractEditModal({ contractId, open, onClose, onSuccess
         message.error("Добавьте хотя бы один номер телефона");
         return;
       }
+      // Авансы не должны превышать сумму договора
+      const totalAmt = Number(values.totalAmount) || 0;
+      if (totalAdvances > totalAmt) {
+        message.error(`Сумма авансов (${totalAdvances.toLocaleString()}) превышает сумму договора (${totalAmt.toLocaleString()}).`);
+        return;
+      }
+      // Авансы должны покрывать сумму, если нет рассрочки с графиком
+      const hasSchedule = hasInstallment && paymentSchedule.length > 0;
+      if (!hasSchedule && totalAdvances < totalAmt) {
+        message.error(
+          `Сумма авансов (${totalAdvances.toLocaleString()}) меньше суммы договора (${totalAmt.toLocaleString()}). ` +
+          `Заполните график рассрочки или увеличьте авансы.`
+        );
+        return;
+      }
+
       setSaving(true);
       const bankIds = paymentType === "CREDIT"
         ? (selectedBankId ? [selectedBankId] : [])
@@ -226,6 +258,7 @@ export default function ContractEditModal({ contractId, open, onClose, onSuccess
         actualAddress: values.actualAddress,
         bankIds,
         bankAdvances: bankAdvancesObj,
+        bankConditions: Object.keys(bankConditions).length > 0 ? bankConditions : undefined,
         phones: validPhones,
         paymentSchedule: hasInstallment
           ? paymentSchedule.map((s) => ({ date: s.date.format("YYYY-MM-DD"), amount: s.amount }))
@@ -420,6 +453,34 @@ export default function ContractEditModal({ contractId, open, onClose, onSuccess
                       <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
                     </Form.Item>
                   </Col>
+                  {bank?.conditions?.length > 0 && (
+                    <Col span={8}>
+                      <Form.Item
+                        label={`Условие ${bank.name}`}
+                        required
+                        validateStatus={!bankConditions[selectedBankId] ? 'error' : ''}
+                        help={!bankConditions[selectedBankId] ? 'Выберите условие' : ''}
+                      >
+                        <Select
+                          placeholder="Выберите условие"
+                          value={bankConditions[selectedBankId]?.conditionId}
+                          onChange={(val) => {
+                            const cond = bank.conditions.find((c: any) => c.id === val);
+                            if (cond) {
+                              setBankConditions(prev => ({
+                                ...prev,
+                                [selectedBankId]: { conditionId: cond.id, conditionName: cond.name, conditionRate: Number(cond.rate) }
+                              }));
+                            }
+                          }}
+                          options={bank.conditions.map((c: any) => ({
+                            value: c.id,
+                            label: `${c.name} — ${Number(c.rate)}%`
+                          }))}
+                        />
+                      </Form.Item>
+                    </Col>
+                  )}
                 </Row>
               );
             })()}
@@ -429,11 +490,41 @@ export default function ContractEditModal({ contractId, open, onClose, onSuccess
                 {selectedBankIds.map((bankId) => {
                   const bank = tripBanks.find((b) => b.id === bankId);
                   return (
-                    <Col span={8} key={bankId}>
-                      <Form.Item name={["bankAdvances", bankId]} label={`Аванс банк ${bank?.name || ""}`}>
-                        <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
-                      </Form.Item>
-                    </Col>
+                    <>
+                      <Col span={8} key={bankId}>
+                        <Form.Item name={["bankAdvances", bankId]} label={`Аванс банк ${bank?.name || ""}`}>
+                          <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
+                        </Form.Item>
+                      </Col>
+                      {bank?.conditions?.length > 0 && (
+                        <Col span={8} key={`${bankId}-cond`}>
+                          <Form.Item
+                            label={`Условие ${bank.name}`}
+                            required
+                            validateStatus={!bankConditions[bankId] ? 'error' : ''}
+                            help={!bankConditions[bankId] ? 'Выберите условие' : ''}
+                          >
+                            <Select
+                              placeholder="Выберите условие"
+                              value={bankConditions[bankId]?.conditionId}
+                              onChange={(val) => {
+                                const cond = bank.conditions.find((c: any) => c.id === val);
+                                if (cond) {
+                                  setBankConditions(prev => ({
+                                    ...prev,
+                                    [bankId]: { conditionId: cond.id, conditionName: cond.name, conditionRate: Number(cond.rate) }
+                                  }));
+                                }
+                              }}
+                              options={bank.conditions.map((c: any) => ({
+                                value: c.id,
+                                label: `${c.name} — ${Number(c.rate)}%`
+                              }))}
+                            />
+                          </Form.Item>
+                        </Col>
+                      )}
+                    </>
                   );
                 })}
               </Row>

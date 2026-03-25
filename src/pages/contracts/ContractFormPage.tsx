@@ -16,12 +16,18 @@ import {
   Table,
   Row,
   Col,
+  Upload,
 } from "antd";
 import {
   PlusOutlined,
   DeleteOutlined,
   ArrowLeftOutlined,
   FileTextOutlined,
+  InboxOutlined,
+  FilePdfOutlined,
+  FileImageOutlined,
+  CloseOutlined,
+  PaperClipOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { contractsApi } from "../../api/contracts";
@@ -85,6 +91,30 @@ export default function ContractFormPage() {
     { countryCode: "+998", number: "" },
   ]);
 
+  // Файлы для загрузки после создания
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingPreviews, setPendingPreviews] = useState<Record<string, string>>({});
+
+  const addPendingFile = (file: File) => {
+    if (file.size > 2 * 1024 * 1024) { message.error(`${file.name}: превышает 2 МБ`); return false; }
+    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"];
+    if (!allowed.includes(file.type)) { message.error(`${file.name}: недопустимый тип`); return false; }
+    if (pendingFiles.length >= 15) { message.error("Максимум 15 файлов"); return false; }
+    setPendingFiles((prev) => [...prev, file]);
+    if (file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(file);
+      setPendingPreviews((prev) => ({ ...prev, [file.name + file.size]: url }));
+    }
+    return false;
+  };
+
+  const removePendingFile = (index: number) => {
+    const file = pendingFiles[index];
+    const key = file.name + file.size;
+    if (pendingPreviews[key]) { URL.revokeObjectURL(pendingPreviews[key]); setPendingPreviews((p) => { const n = { ...p }; delete n[key]; return n; }); }
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // График платежей (для COMPANY)
   const [paymentSchedule, setPaymentSchedule] = useState<{ date: dayjs.Dayjs; amount: number }[]>([]);
 
@@ -100,6 +130,8 @@ export default function ContractFormPage() {
   const selectedBankIds: string[] = Form.useWatch("bankIds", form) || [];
   // Авансы по банкам: { [bankId]: number }
   const bankAdvancesObj: Record<string, number> = Form.useWatch("bankAdvances", form) || {};
+  // Выбранные условия банков: { [bankId]: { conditionId, conditionName, conditionRate } }
+  const [bankConditions, setBankConditions] = useState<Record<string, { conditionId: string; conditionName: string; conditionRate: number }>>({});
 
   // Суммарный аванс по всем банкам
   const totalBankAdvance = (() => {
@@ -198,6 +230,39 @@ export default function ContractFormPage() {
       return;
     }
 
+    // Авансы не должны превышать сумму договора
+    const total = Number(values.totalAmount) || 0;
+    if (totalAdvances > total) {
+      message.error(
+        `Сумма авансов (${totalAdvances.toLocaleString()}) превышает сумму договора (${total.toLocaleString()}).`
+      );
+      return;
+    }
+
+    // Авансы должны покрывать полную сумму, если нет реального графика рассрочки
+    const hasSchedule = hasInstallment && paymentSchedule.length > 0;
+    if (!hasSchedule) {
+      if (totalAdvances < total) {
+        message.error(
+          `Сумма авансов (${totalAdvances.toLocaleString()}) меньше суммы договора (${total.toLocaleString()}). ` +
+          `Заполните график рассрочки или увеличьте авансы.`
+        );
+        return;
+      }
+    }
+
+    // Проверяем, что для банков с условиями выбрано условие
+    const activeBankIds = paymentType === "CREDIT"
+      ? (selectedBankId ? [selectedBankId] : [])
+      : (selectedBankIds || []);
+    for (const bankId of activeBankIds) {
+      const bank = tripBanks.find((b) => b.id === bankId);
+      if (bank?.conditions?.length > 0 && !bankConditions[bankId]) {
+        message.error(`Выберите условие для банка ${bank.name}`);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const payload: any = {
@@ -214,14 +279,14 @@ export default function ContractFormPage() {
         advanceCash: Number(values.advanceCash) || undefined,
         advanceTerminal: Number(values.advanceTerminal) || undefined,
         advanceBank: totalBankAdvance || undefined,
+        bankAdvances: totalBankAdvance > 0 ? bankAdvancesObj : undefined,
         installmentMonths: hasInstallment ? Number(values.installmentMonths) || undefined : undefined,
         firstPaymentDate: hasInstallment && values.firstPaymentDate
           ? values.firstPaymentDate.format("YYYY-MM-DD") : undefined,
         registrationAddress: values.registrationAddress,
         actualAddress: values.actualAddress,
-        bankIds: paymentType === "CREDIT"
-          ? (selectedBankId ? [selectedBankId] : [])
-          : (selectedBankIds || []),
+        bankIds: activeBankIds,
+        bankConditions: Object.keys(bankConditions).length > 0 ? bankConditions : undefined,
         phones: validPhones,
         paymentSchedule: hasInstallment
           ? paymentSchedule.map((s) => ({ date: s.date.format("YYYY-MM-DD"), amount: s.amount }))
@@ -229,8 +294,14 @@ export default function ContractFormPage() {
       };
 
       const res = await contractsApi.create(payload);
+      const contractId = res.data.id;
+      // Загружаем прикреплённые файлы
+      for (const file of pendingFiles) {
+        try { await contractsApi.uploadFile(contractId, file); } catch {}
+      }
+      Object.values(pendingPreviews).forEach((url) => URL.revokeObjectURL(url));
       message.success(`Договор ${res.data.contractNumber} создан`);
-      navigate(`/trips/${tripId}`);
+      navigate(`/contracts/${contractId}`);
     } catch (e: any) {
       message.error(e.response?.data?.message || "Ошибка сохранения");
     } finally {
@@ -456,6 +527,37 @@ export default function ContractFormPage() {
                     <InputNumber style={{ width: "100%" }} min={0} placeholder="0" formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")} />
                   </Form.Item>
                 </Col>
+                {(() => {
+                  if (!bank?.conditions?.length) return null;
+                  return (
+                    <Col span={8}>
+                      <Form.Item
+                        label={`Условие ${bank.name}`}
+                        required
+                        validateStatus={!bankConditions[selectedBankId] ? 'error' : ''}
+                        help={!bankConditions[selectedBankId] ? 'Выберите условие' : ''}
+                      >
+                        <Select
+                          placeholder="Выберите условие"
+                          value={bankConditions[selectedBankId]?.conditionId}
+                          onChange={(val) => {
+                            const cond = bank.conditions.find((c: any) => c.id === val);
+                            if (cond) {
+                              setBankConditions(prev => ({
+                                ...prev,
+                                [selectedBankId]: { conditionId: cond.id, conditionName: cond.name, conditionRate: Number(cond.rate) }
+                              }));
+                            }
+                          }}
+                          options={bank.conditions.map((c: any) => ({
+                            value: c.id,
+                            label: `${c.name} — ${Number(c.rate)}%`
+                          }))}
+                        />
+                      </Form.Item>
+                    </Col>
+                  );
+                })()}
               </Row>
             );
           })()}
@@ -466,11 +568,41 @@ export default function ContractFormPage() {
               {selectedBankIds.map((bankId) => {
                 const bank = tripBanks.find((b) => b.id === bankId);
                 return (
-                  <Col span={8} key={bankId}>
-                    <Form.Item name={["bankAdvances", bankId]} label={`Аванс банк ${bank?.name || ""}`}>
-                      <InputNumber style={{ width: "100%" }} min={0} placeholder="0" formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")} />
-                    </Form.Item>
-                  </Col>
+                  <>
+                    <Col span={8} key={bankId}>
+                      <Form.Item name={["bankAdvances", bankId]} label={`Аванс банк ${bank?.name || ""}`}>
+                        <InputNumber style={{ width: "100%" }} min={0} placeholder="0" formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")} />
+                      </Form.Item>
+                    </Col>
+                    {bank?.conditions?.length > 0 && (
+                      <Col span={8} key={`${bankId}-cond`}>
+                        <Form.Item
+                          label={`Условие ${bank.name}`}
+                          required
+                          validateStatus={!bankConditions[bankId] ? 'error' : ''}
+                          help={!bankConditions[bankId] ? 'Выберите условие' : ''}
+                        >
+                          <Select
+                            placeholder="Выберите условие"
+                            value={bankConditions[bankId]?.conditionId}
+                            onChange={(val) => {
+                              const cond = bank.conditions.find((c: any) => c.id === val);
+                              if (cond) {
+                                setBankConditions(prev => ({
+                                  ...prev,
+                                  [bankId]: { conditionId: cond.id, conditionName: cond.name, conditionRate: Number(cond.rate) }
+                                }));
+                              }
+                            }}
+                            options={bank.conditions.map((c: any) => ({
+                              value: c.id,
+                              label: `${c.name} — ${Number(c.rate)}%`
+                            }))}
+                          />
+                        </Form.Item>
+                      </Col>
+                    )}
+                  </>
                 );
               })}
             </Row>
@@ -596,10 +728,49 @@ export default function ContractFormPage() {
           )}
         </Card>
 
+        {/* Вложения (необязательно) */}
+        <Card
+          size="small"
+          style={{ marginBottom: 16 }}
+          title={<Space><PaperClipOutlined />Вложения ({pendingFiles.length}/15) — необязательно</Space>}
+        >
+          <Upload.Dragger
+            multiple
+            accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+            showUploadList={false}
+            beforeUpload={addPendingFile}
+            disabled={pendingFiles.length >= 15}
+            style={{ marginBottom: pendingFiles.length > 0 ? 12 : 0 }}
+          >
+            <p style={{ margin: "4px 0" }}><InboxOutlined style={{ fontSize: 28, color: "#555" }} /></p>
+            <p style={{ fontSize: 12, color: "#888", margin: 0 }}>JPG, PNG, GIF, WebP, PDF · до 2 МБ</p>
+          </Upload.Dragger>
+          {pendingFiles.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {pendingFiles.map((file, index) => {
+                const key = file.name + file.size;
+                const preview = pendingPreviews[key];
+                return (
+                  <div key={index} style={{ position: "relative", width: 72, flexShrink: 0 }}>
+                    <div style={{ width: 72, height: 72, borderRadius: 6, overflow: "hidden", border: "1px solid #333", background: "#111", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {preview
+                        ? <img src={preview} style={{ width: 72, height: 72, objectFit: "cover", display: "block" }} />
+                        : <FilePdfOutlined style={{ fontSize: 28, color: "#ff4d4f" }} />}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#888", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 72 }}>{file.name}</div>
+                    <Button type="text" size="small" danger icon={<CloseOutlined style={{ fontSize: 10 }} />} onClick={() => removePendingFile(index)}
+                      style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, minWidth: 16, padding: 0, background: "rgba(0,0,0,0.6)", borderRadius: 3 }} />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <Button onClick={() => navigate(`/trips/${tripId}`)}>Отмена</Button>
           <Button type="primary" htmlType="submit" loading={saving} icon={<FileTextOutlined />}>
-            Создать договор
+            Создать договор{pendingFiles.length > 0 ? ` + ${pendingFiles.length} файл(ов)` : ""}
           </Button>
         </div>
       </Form>

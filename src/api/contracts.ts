@@ -31,6 +31,7 @@ export interface CreateContractData {
   actualAddress?: string;
   bankIds?: string[];
   bankAdvances?: Record<string, number>;
+  bankConditions?: Record<string, { conditionId?: string; conditionName: string; conditionRate: number }>;
   phones?: ContractPhone[];
   paymentSchedule?: PaymentScheduleItem[];
 }
@@ -62,4 +63,17 @@ export const contractsApi = {
   unpayScheduleItem: (scheduleItemId: string) =>
     api.patch(`/contracts/schedule/${scheduleItemId}/unpay`),
   delete: (id: string) => api.delete(`/contracts/${id}`),
+  getHistory: (id: string) =>
+    api.get('/audit', { params: { entity: 'contract', entityId: id, limit: 100 } }),
+  uploadFile: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/contracts/${id}/files`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  deleteFile: (id: string, fileId: string) =>
+    api.delete(`/contracts/${id}/files/${fileId}`),
+  downloadFile: (id: string, fileId: string) =>
+    api.get(`/contracts/${id}/files/${fileId}/download`, { responseType: 'blob' }),
 };

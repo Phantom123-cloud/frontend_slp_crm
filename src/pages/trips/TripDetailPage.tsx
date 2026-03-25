@@ -857,16 +857,55 @@ export default function TripDetailPage() {
                     rowKey="id"
                     size="small"
                     pagination={{ pageSize: 20, showSizeChanger: false }}
-                    onRow={(record) => ({
-                      style: { cursor: "pointer" },
-                      onClick: () => navigate(`/contracts/${record.id}`),
-                    })}
+                    expandable={{
+                      expandRowByClick: false,
+                      expandedRowRender: (r: any) => {
+                        const totalAdv = (Number(r.advanceCash) || 0) + (Number(r.advanceTerminal) || 0) + (Number(r.advanceBank) || 0);
+                        return (
+                          <Descriptions size="small" bordered column={3} style={{ margin: "8px 0" }}>
+                            <Descriptions.Item label="ФИО клиента" span={2}>{r.clientName}</Descriptions.Item>
+                            <Descriptions.Item label="Дата">{dayjs(r.contractDate).format("DD.MM.YYYY")}</Descriptions.Item>
+                            <Descriptions.Item label="Адрес регистрации" span={3}>{r.registrationAddress || "—"}</Descriptions.Item>
+                            <Descriptions.Item label="Адрес проживания" span={3}>{r.actualAddress || "—"}</Descriptions.Item>
+                            {r.phones?.length > 0 && (
+                              <Descriptions.Item label="Телефоны" span={3}>
+                                {r.phones.map((p: any, i: number) => `${p.countryCode} ${p.number}`).join(", ")}
+                              </Descriptions.Item>
+                            )}
+                            <Descriptions.Item label="Компания">{r.company?.name || "—"}</Descriptions.Item>
+                            <Descriptions.Item label="Тип оплаты">{{ CASH: "Наличными", CREDIT: "Кредит", COMPANY: "Компания", MIXED: "Смешанный", TERMINAL: "Терминал", RESERVATION: "Резервация" }[r.paymentType as string] || r.paymentType}</Descriptions.Item>
+                            <Descriptions.Item label="Тип продажи">{{ RAFFLE: "Розыгрыш", HOURLY: "Часовка" }[r.saleType as string] || "—"}</Descriptions.Item>
+                            <Descriptions.Item label="Общая сумма">{Number(r.totalAmount).toLocaleString()}</Descriptions.Item>
+                            <Descriptions.Item label="Аванс наличные">{Number(r.advanceCash || 0).toLocaleString()}</Descriptions.Item>
+                            <Descriptions.Item label="Аванс терминал">{Number(r.advanceTerminal || 0).toLocaleString()}</Descriptions.Item>
+                            <Descriptions.Item label="Аванс банк">{Number(r.advanceBank || 0).toLocaleString()}</Descriptions.Item>
+                            <Descriptions.Item label="Итого авансов">{totalAdv.toLocaleString()}</Descriptions.Item>
+                            {r.installmentMonths && <Descriptions.Item label="Рассрочка (мес)">{r.installmentMonths}</Descriptions.Item>}
+                            {r.banks?.length > 0 && (
+                              <Descriptions.Item label="Банки" span={3}>
+                                {r.banks.map((b: any) => b.bank?.name).join(", ")}
+                              </Descriptions.Item>
+                            )}
+                            <Descriptions.Item label="Ведущий">{r.speaker ? `${r.speaker.lastName} ${r.speaker.firstName}` : "—"}</Descriptions.Item>
+                            <Descriptions.Item label="Оформил" span={2}>{r.signedBy ? `${r.signedBy.lastName} ${r.signedBy.firstName}` : "—"}</Descriptions.Item>
+                          </Descriptions>
+                        );
+                      },
+                    }}
                     columns={[
                       {
                         title: "№ договора",
                         dataIndex: "contractNumber",
                         key: "contractNumber",
-                        width: 150,
+                        width: 160,
+                        render: (_: any, r: any) => (
+                          <a
+                            onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${r.id}`); }}
+                            style={{ fontWeight: 600 }}
+                          >
+                            {r.contractNumber}
+                          </a>
+                        ),
                       },
                       {
                         title: "Клиент",
@@ -907,12 +946,12 @@ export default function TripDetailPage() {
                           r.signedBy ? `${r.signedBy.lastName} ${r.signedBy.firstName}` : "—",
                       },
                       {
-                        title: "Статус",
+                        title: "Проверен?",
                         key: "status",
-                        width: 150,
+                        width: 90,
                         render: (_: any, r: any) => (
                           <Tag color={{ UNVERIFIED: "warning", VERIFIED: "success", CANCELLED: "error" }[r.status as string]}>
-                            {{ UNVERIFIED: "Не верифицирован", VERIFIED: "Верифицирован", CANCELLED: "Отменён" }[r.status as string]}
+                            {{ UNVERIFIED: "Нет", VERIFIED: "Да", CANCELLED: "Отменён" }[r.status as string]}
                           </Tag>
                         ),
                       },

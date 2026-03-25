@@ -48,6 +48,14 @@ export const directoriesApi = {
     api.patch(`/banks/${id}`, data),
   deleteBank: (id: string) => api.delete(`/banks/${id}`),
 
+  // Bank Conditions
+  getBankConditions: (bankId: string) => api.get(`/banks/${bankId}/conditions`),
+  createBankCondition: (bankId: string, data: { name: string; rate: number; sortOrder?: number }) =>
+    api.post(`/banks/${bankId}/conditions`, data),
+  updateBankCondition: (id: string, data: { name?: string; rate?: number; isActive?: boolean }) =>
+    api.patch(`/banks/conditions/${id}`, data),
+  deleteBankCondition: (id: string) => api.delete(`/banks/conditions/${id}`),
+
   // Companies
   getCompanies: () => api.get("/companies"),
   createCompany: (data: { name: string; description?: string }) =>

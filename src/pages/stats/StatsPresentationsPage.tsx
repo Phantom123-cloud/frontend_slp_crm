@@ -201,6 +201,28 @@ function buildColumns(tab: string, groupBy: string) {
       width: 140,
       align: "center" as const,
       render: num,
+    },
+    {
+      title: "Оборот до возврата",
+      dataIndex: "turnoverBefore",
+      key: "turnoverBefore",
+      width: 150,
+      align: "right" as const,
+      render: (v: number) => v != null ? v.toLocaleString() : "—",
+    },
+    {
+      title: "Оборот после возврата",
+      dataIndex: "turnoverAfter",
+      key: "turnoverAfter",
+      width: 160,
+      align: "right" as const,
+      render: (v: number, r: StatsRow) => {
+        const after = v != null ? v : null;
+        const before = r.turnoverBefore;
+        if (after == null) return "—";
+        const color = after < before ? "#fa8c16" : undefined;
+        return <span style={{ color }}>{after.toLocaleString()}</span>;
+      },
     }
   );
 
@@ -247,6 +269,8 @@ function toExportRows(rows: StatsRow[], tab: string, groupBy: string) {
     base["Знач. отказа"] = r.refusalValue ?? "";
     base["Кол. перепис."] = r.rewriteCount ?? "";
     base["Ценность перепис."] = r.rewriteValue ?? "";
+    base["Оборот до возврата"] = r.turnoverBefore ?? 0;
+    base["Оборот после возврата"] = r.turnoverAfter ?? 0;
     return base;
   });
 }
@@ -318,7 +342,7 @@ export default function StatsPresentationsPage() {
     columns,
     rowKey: "key",
     size: "small" as const,
-    scroll: { x: 1600 },
+    scroll: { x: 1900 },
     pagination: {
       pageSize: 50,
       pageSizeOptions: ["50", "100", "500"],

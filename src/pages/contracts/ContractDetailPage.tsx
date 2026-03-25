@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Button,
@@ -19,6 +19,11 @@ import {
   DatePicker,
   Space,
   Alert,
+  Timeline,
+  Tooltip,
+  Upload,
+  Image,
+  Grid,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -30,6 +35,14 @@ import {
   RollbackOutlined,
   EditOutlined,
   DeleteOutlined,
+  HistoryOutlined,
+  UserOutlined,
+  PaperClipOutlined,
+  UploadOutlined,
+  FilePdfOutlined,
+  FileImageOutlined,
+  InboxOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { contractsApi } from "../../api/contracts";
@@ -91,6 +104,118 @@ const SALE_TYPE_LABELS: Record<string, string> = {
 const FMT = (v: any) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 const PARSE = (v: string | undefined) => Number(v?.replace(/\s/g, "") ?? 0);
 
+// Метки действий аудита
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  "contract.created": "Договор создан",
+  "contract.updated": "Договор обновлён",
+  "contract.refund": "Оформлен возврат",
+  "contract.financialsUpdated": "Финансы обновлены",
+  "contract.statusChanged": "Статус изменён",
+  "contract.scheduleItemPaid": "Платёж подтверждён",
+  "contract.scheduleItemUnpaid": "Платёж отменён",
+  "contract.fileUploaded": "Файл загружен",
+  "contract.fileDeleted": "Файл удалён",
+  "contract.deleted": "Договор удалён",
+};
+
+const AUDIT_ACTION_COLORS: Record<string, string> = {
+  "contract.created": "green",
+  "contract.updated": "blue",
+  "contract.refund": "red",
+  "contract.financialsUpdated": "orange",
+  "contract.statusChanged": "purple",
+  "contract.scheduleItemPaid": "green",
+  "contract.scheduleItemUnpaid": "red",
+  "contract.fileUploaded": "blue",
+  "contract.fileDeleted": "red",
+};
+
+function formatAuditDetails(action: string, details: any): React.ReactNode | null {
+  if (!details) return null;
+
+  if (action === "contract.statusChanged") {
+    // Поддержка старого формата { status } и нового { from, to }
+    if (details.from && details.to) {
+      return (
+        <span>
+          <Tag style={{ fontSize: 11 }}>{STATUS_LABELS[details.from] || details.from}</Tag>
+          →
+          <Tag color="blue" style={{ fontSize: 11, marginLeft: 4 }}>{STATUS_LABELS[details.to] || details.to}</Tag>
+        </span>
+      );
+    }
+    return <Tag style={{ fontSize: 11 }}>{STATUS_LABELS[details.status] || details.status}</Tag>;
+  }
+
+  if (action === "contract.financialsUpdated" && details.before && details.after) {
+    const b = details.before;
+    const a = details.after;
+    const lines: React.ReactNode[] = [];
+
+    if (Number(b.amountAfterRefund) !== Number(a.amountAfterRefund)) {
+      lines.push(
+        <span key="amount">
+          Сумма: <Text delete style={{ color: "#888", fontSize: 11 }}>{Number(b.amountAfterRefund).toLocaleString()}</Text>
+          {" → "}
+          <Text strong style={{ fontSize: 11 }}>{Number(a.amountAfterRefund).toLocaleString()}</Text>
+        </span>
+      );
+    }
+    if (Number(b.advanceCash) !== Number(a.advanceCash)) {
+      lines.push(
+        <span key="cash">
+          Нал: <Text delete style={{ color: "#888", fontSize: 11 }}>{Number(b.advanceCash).toLocaleString()}</Text>
+          {" → "}
+          <Text strong style={{ fontSize: 11 }}>{Number(a.advanceCash).toLocaleString()}</Text>
+        </span>
+      );
+    }
+    if (Number(b.advanceTerminal) !== Number(a.advanceTerminal)) {
+      lines.push(
+        <span key="term">
+          Терм: <Text delete style={{ color: "#888", fontSize: 11 }}>{Number(b.advanceTerminal).toLocaleString()}</Text>
+          {" → "}
+          <Text strong style={{ fontSize: 11 }}>{Number(a.advanceTerminal).toLocaleString()}</Text>
+        </span>
+      );
+    }
+    if (Number(b.advanceBank) !== Number(a.advanceBank)) {
+      lines.push(
+        <span key="bank">
+          Банк: <Text delete style={{ color: "#888", fontSize: 11 }}>{Number(b.advanceBank).toLocaleString()}</Text>
+          {" → "}
+          <Text strong style={{ fontSize: 11 }}>{Number(a.advanceBank).toLocaleString()}</Text>
+        </span>
+      );
+    }
+    if (b.paymentStatus !== a.paymentStatus) {
+      lines.push(
+        <span key="status">
+          <Tag style={{ fontSize: 11 }}>{PAYMENT_STATUS_LABELS[b.paymentStatus] || b.paymentStatus}</Tag>
+          →
+          <Tag color={PAYMENT_STATUS_COLORS[a.paymentStatus]} style={{ fontSize: 11, marginLeft: 4 }}>
+            {PAYMENT_STATUS_LABELS[a.paymentStatus] || a.paymentStatus}
+          </Tag>
+        </span>
+      );
+    }
+    if (lines.length === 0) return null;
+    return <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>{lines}</div>;
+  }
+
+  if (action === "contract.scheduleItemPaid" || action === "contract.scheduleItemUnpaid") {
+    const date = details.date ? dayjs(details.date).format("DD.MM.YYYY") : "";
+    const amount = details.amount ? Number(details.amount).toLocaleString() : "";
+    return <Tag style={{ fontSize: 11 }}>{[date, amount].filter(Boolean).join(" — ")}</Tag>;
+  }
+
+  if (action === "contract.refund") {
+    return <Tag color="red" style={{ fontSize: 11 }}>{PAYMENT_STATUS_LABELS[details.paymentStatus] || ""}</Tag>;
+  }
+
+  return null;
+}
+
 // Компонент одного поля: лейбл сверху серый, значение снизу
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -114,6 +239,8 @@ function FinancialsFormContent({
   originalTotalAmount,
   onCanSaveChange,
   initialPaymentType,
+  bankConditions = {},
+  setBankConditions,
 }: {
   form: any;
   tripBanks: any[];
@@ -122,6 +249,8 @@ function FinancialsFormContent({
   originalTotalAmount: number;
   onCanSaveChange: (v: boolean) => void;
   initialPaymentType: string;
+  bankConditions?: Record<string, { conditionId: string; conditionName: string; conditionRate: number }>;
+  setBankConditions?: (v: Record<string, { conditionId: string; conditionName: string; conditionRate: number }>) => void;
 }) {
   // Fallback на initialPaymentType пока Form.useWatch не синхронизировался (первый рендер)
   const paymentTypeWatched = Form.useWatch("paymentType", form);
@@ -281,6 +410,25 @@ function FinancialsFormContent({
                 <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
               </Form.Item>
             </Col>
+            {bank?.conditions?.length > 0 && setBankConditions && (
+              <Col span={8}>
+                <Form.Item
+                  label={`Условие ${bank.name}`}
+                  validateStatus={!bankConditions[selectedBankId] ? 'error' : ''}
+                  help={!bankConditions[selectedBankId] ? 'Выберите условие' : ''}
+                >
+                  <Select
+                    placeholder="Выберите условие"
+                    value={bankConditions[selectedBankId]?.conditionId}
+                    onChange={(val) => {
+                      const cond = bank.conditions.find((c: any) => c.id === val);
+                      if (cond) setBankConditions({ ...bankConditions, [selectedBankId]: { conditionId: cond.id, conditionName: cond.name, conditionRate: Number(cond.rate) } });
+                    }}
+                    options={bank.conditions.map((c: any) => ({ value: c.id, label: `${c.name} — ${Number(c.rate)}%` }))}
+                  />
+                </Form.Item>
+              </Col>
+            )}
           </Row>
         );
       })()}
@@ -291,11 +439,32 @@ function FinancialsFormContent({
           {selectedBankIds.map((bankId) => {
             const bank = tripBanks.find((b) => b.id === bankId);
             return (
-              <Col span={8} key={bankId}>
-                <Form.Item name={["bankAdvances", bankId]} label={`Аванс банк ${bank?.name || ""}`}>
-                  <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
-                </Form.Item>
-              </Col>
+              <>
+                <Col span={8} key={bankId}>
+                  <Form.Item name={["bankAdvances", bankId]} label={`Аванс банк ${bank?.name || ""}`}>
+                    <InputNumber style={{ width: "100%" }} min={0} formatter={FMT} parser={PARSE} placeholder="0" />
+                  </Form.Item>
+                </Col>
+                {bank?.conditions?.length > 0 && setBankConditions && (
+                  <Col span={8} key={`${bankId}-cond`}>
+                    <Form.Item
+                      label={`Условие ${bank.name}`}
+                      validateStatus={!bankConditions[bankId] ? 'error' : ''}
+                      help={!bankConditions[bankId] ? 'Выберите условие' : ''}
+                    >
+                      <Select
+                        placeholder="Выберите условие"
+                        value={bankConditions[bankId]?.conditionId}
+                        onChange={(val) => {
+                          const cond = bank.conditions.find((c: any) => c.id === val);
+                          if (cond) setBankConditions({ ...bankConditions, [bankId]: { conditionId: cond.id, conditionName: cond.name, conditionRate: Number(cond.rate) } });
+                        }}
+                        options={bank.conditions.map((c: any) => ({ value: c.id, label: `${c.name} — ${Number(c.rate)}%` }))}
+                      />
+                    </Form.Item>
+                  </Col>
+                )}
+              </>
             );
           })}
         </Row>
@@ -436,8 +605,12 @@ function FinancialsFormContent({
 export default function ContractDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.sm;
   const canVerify = usePermission("contracts.verify");
   const canEdit = usePermission("contracts.edit");
+  const canDelete = usePermission("contracts.delete");
+  const [deleting, setDeleting] = useState(false);
 
   const [contract, setContract] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -445,6 +618,10 @@ export default function ContractDetailPage() {
 
   // Банки выезда (для модалки финансов)
   const [tripBanks, setTripBanks] = useState<any[]>([]);
+
+  // История действий по договору
+  const [history, setHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Модалка возврата
   const [refundOpen, setRefundOpen] = useState(false);
@@ -462,6 +639,7 @@ export default function ContractDetailPage() {
     try {
       const { data } = await contractsApi.payScheduleItem(scheduleItemId);
       setContract(data);
+      loadHistory();
       message.success("Платёж подтверждён");
     } catch (e: any) {
       message.error(e.response?.data?.message || "Ошибка подтверждения платежа");
@@ -475,6 +653,7 @@ export default function ContractDetailPage() {
     try {
       const { data } = await contractsApi.unpayScheduleItem(scheduleItemId);
       setContract(data);
+      loadHistory();
       message.success("Платёж отменён");
     } catch (e: any) {
       message.error(e.response?.data?.message || "Ошибка отмены платежа");
@@ -489,6 +668,119 @@ export default function ContractDetailPage() {
   const [finCanSave, setFinCanSave] = useState(false);
   const [finForm] = Form.useForm();
   const [finPaymentSchedule, setFinPaymentSchedule] = useState<{ date: dayjs.Dayjs; amount: number }[]>([]);
+  const [finBankConditions, setFinBankConditions] = useState<Record<string, { conditionId: string; conditionName: string; conditionRate: number }>>({});
+
+  // Файлы: blob-превью для изображений
+  const [fileBlobUrls, setFileBlobUrls] = useState<Record<string, string>>({});
+  const loadedFileIdsRef = useRef<Set<string>>(new Set());
+  const fileBlobUrlsRef = useRef<Record<string, string>>({});
+
+  // Удаление / загрузка файлов
+  const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
+
+  // Модалка загрузки файлов
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingPreviews, setPendingPreviews] = useState<Record<string, string>>({});
+  const [bulkUploading, setBulkUploading] = useState(false);
+
+  const addPendingFile = (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      message.error(`${file.name}: превышает 2 МБ`);
+      return false;
+    }
+    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      message.error(`${file.name}: недопустимый тип`);
+      return false;
+    }
+    setPendingFiles((prev) => [...prev, file]);
+    if (file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(file);
+      setPendingPreviews((prev) => ({ ...prev, [file.name + file.size]: url }));
+    }
+    return false; // для antd Upload — не отправлять автоматически
+  };
+
+  const removePendingFile = (index: number) => {
+    const file = pendingFiles[index];
+    const key = file.name + file.size;
+    if (pendingPreviews[key]) {
+      URL.revokeObjectURL(pendingPreviews[key]);
+      setPendingPreviews((prev) => { const n = { ...prev }; delete n[key]; return n; });
+    }
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleBulkUpload = async () => {
+    if (!pendingFiles.length) return;
+    const remaining = 15 - (contract.files?.length ?? 0);
+    const toUpload = pendingFiles.slice(0, remaining);
+    setBulkUploading(true);
+    let ok = 0;
+    for (const file of toUpload) {
+      try {
+        await contractsApi.uploadFile(id!, file);
+        ok++;
+      } catch (e: any) {
+        message.error(`${file.name}: ${e.response?.data?.message || "ошибка"}`);
+      }
+    }
+    // Очищаем превью pending-файлов
+    Object.values(pendingPreviews).forEach((url) => URL.revokeObjectURL(url));
+    setPendingFiles([]);
+    setPendingPreviews({});
+    setBulkUploading(false);
+    setUploadModalOpen(false);
+    if (ok > 0) {
+      message.success(`Загружено: ${ok} файл(ов)`);
+      load();
+      loadHistory();
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    setDeletingFileId(fileId);
+    try {
+      await contractsApi.deleteFile(id!, fileId);
+      // Очищаем blob URL если есть
+      if (fileBlobUrls[fileId]) {
+        URL.revokeObjectURL(fileBlobUrls[fileId]);
+        setFileBlobUrls((prev) => { const n = { ...prev }; delete n[fileId]; return n; });
+        loadedFileIdsRef.current.delete(fileId);
+      }
+      message.success("Файл удалён");
+      load();
+      loadHistory();
+    } catch (e: any) {
+      message.error(e.response?.data?.message || "Ошибка удаления файла");
+    } finally {
+      setDeletingFileId(null);
+    }
+  };
+
+  const handleDownloadFile = async (fileId: string, fileName: string, mimeType?: string) => {
+    try {
+      const response = await contractsApi.downloadFile(id!, fileId);
+      const blob = new Blob([response.data], { type: mimeType || "application/octet-stream" });
+      const url = window.URL.createObjectURL(blob);
+      if (mimeType === "application/pdf") {
+        // PDF открываем во вкладке браузера
+        window.open(url, "_blank");
+        setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+      } else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch {
+      message.error("Ошибка скачивания файла");
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -502,7 +794,47 @@ export default function ContractDetailPage() {
     }
   };
 
-  useEffect(() => { load(); }, [id]);
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const { data } = await contractsApi.getHistory(id!);
+      setHistory(data.data || []);
+    } catch {
+      // история не критична
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => { loadHistory(); }, [id]);
+
+  useEffect(() => { load(); loadHistory(); }, [id]);
+
+  // Подгружаем blob-URL для изображений договора (для превью)
+  useEffect(() => {
+    if (!contract?.files?.length || !id) return;
+    const imageFiles = contract.files.filter((f: any) => f.mimeType?.startsWith("image/"));
+    for (const file of imageFiles) {
+      if (loadedFileIdsRef.current.has(file.id)) continue;
+      loadedFileIdsRef.current.add(file.id);
+      contractsApi.downloadFile(id, file.id)
+        .then((res) => {
+          const url = URL.createObjectURL(new Blob([res.data], { type: file.mimeType }));
+          setFileBlobUrls((prev) => ({ ...prev, [file.id]: url }));
+        })
+        .catch(() => { loadedFileIdsRef.current.delete(file.id); });
+    }
+  }, [contract?.files]);
+
+  // Освобождаем blob URL при размонтировании
+  useEffect(() => {
+    return () => {
+      Object.values(fileBlobUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  // Синхронизируем ref для cleanup
+  useEffect(() => { fileBlobUrlsRef.current = fileBlobUrls; }, [fileBlobUrls]);
 
   const handleVerify = async () => {
     setVerifying(true);
@@ -514,6 +846,18 @@ export default function ContractDetailPage() {
       message.error(e.response?.data?.message || "Ошибка верификации");
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await contractsApi.delete(id!);
+      message.success("Договор удалён");
+      navigate(`/trips/${contract.tripId}`);
+    } catch (e: any) {
+      message.error(e.response?.data?.message || "Ошибка удаления");
+      setDeleting(false);
     }
   };
 
@@ -571,6 +915,7 @@ export default function ContractDetailPage() {
       message.success("Возврат оформлен");
       setRefundOpen(false);
       load();
+      loadHistory();
     } catch (e: any) {
       message.error(e.response?.data?.message || "Ошибка");
     } finally {
@@ -598,6 +943,15 @@ export default function ContractDetailPage() {
         }
       });
     }
+
+    // Загружаем сохранённые условия банков
+    const savedFinConditions: Record<string, { conditionId: string; conditionName: string; conditionRate: number }> = {};
+    contract.banks?.forEach((b: any) => {
+      if (b.conditionId && b.conditionName != null && b.conditionRate != null) {
+        savedFinConditions[b.bankId] = { conditionId: b.conditionId, conditionName: b.conditionName, conditionRate: Number(b.conditionRate) };
+      }
+    });
+    setFinBankConditions(savedFinConditions);
 
     setFinCanSave(false);
     finForm.setFieldsValue({
@@ -661,6 +1015,7 @@ export default function ContractDetailPage() {
         advanceBank: values.advanceBank,
         bankIds,
         bankAdvances: values.bankAdvances,
+        bankConditions: Object.keys(finBankConditions).length > 0 ? finBankConditions : undefined,
         installmentMonths: hasInstallment ? values.installmentMonths : undefined,
         firstPaymentDate: hasInstallment && values.firstPaymentDate
           ? dayjs(values.firstPaymentDate).format("YYYY-MM-DD")
@@ -673,6 +1028,7 @@ export default function ContractDetailPage() {
       message.success("Финансы обновлены");
       setFinOpen(false);
       load();
+      loadHistory();
     } catch (e: any) {
       if (e?.errorFields) return;
       message.error(e.response?.data?.message || "Ошибка");
@@ -692,10 +1048,35 @@ export default function ContractDetailPage() {
     ? contract.banks.reduce((sum: number, b: any) => sum + (b.advance != null ? Number(b.advance) : 0), 0) || (Number(contract.advanceBank) || 0)
     : (Number(contract.advanceBank) || 0);
 
+  // Сумма уже оплаченных платежей по графику рассрочки
+  const paidScheduleTotal = contract.paymentSchedule?.reduce(
+    (sum: number, s: any) => s.isPaid ? sum + Number(s.amount) : sum, 0
+  ) ?? 0;
+
   const totalAdvances =
     (Number(contract.advanceCash) || 0) +
     (Number(contract.advanceTerminal) || 0) +
-    bankTotal;
+    bankTotal +
+    paidScheduleTotal;
+
+  // Реальные деньги по банкам с учётом условий (conditionRate = комиссия банка в %)
+  const bankRealTotal = contract.banks?.length > 0
+    ? contract.banks.reduce((sum: number, b: any) => {
+        if (b.advance == null) return sum;
+        const rate = b.conditionRate != null ? Number(b.conditionRate) : 0;
+        return sum + Number(b.advance) * (1 - rate / 100);
+      }, 0)
+    : bankTotal;
+
+  // Итого реальных денег = наличные + терминал + банки с учётом комиссии + оплаченные платежи
+  const totalRealMoney =
+    (Number(contract.advanceCash) || 0) +
+    (Number(contract.advanceTerminal) || 0) +
+    bankRealTotal +
+    paidScheduleTotal;
+
+  // Есть ли хотя бы один банк с условием
+  const hasBankConditions = contract.banks?.some((b: any) => b.conditionRate != null);
 
   const amountAfterRefund =
     contract.amountAfterRefund != null
@@ -719,8 +1100,8 @@ export default function ContractDetailPage() {
 
   const hasRefund = contract.paymentStatus === "REFUND" || contract.paymentStatus === "PARTIAL_REFUND";
 
-  // Должник: авансы не покрывают исходную сумму договора
-  const isDebtor = totalAdvances < Number(contract.totalAmount);
+  // Должник: есть непогашенный остаток рассрочки (активна рассрочка)
+  const isDebtor = installmentBalance > 0;
 
   // Спасенный контракт: частичный возврат = да, полный возврат = нет, иначе — нет значения
   const savedContract: "yes" | "no" | null =
@@ -747,35 +1128,61 @@ export default function ContractDetailPage() {
         </Tag>
         <div style={{ flex: 1 }} />
 
-        {/* Не верифицирован: кнопка редактирования договора */}
+        {/* Не верифицирован: кнопка редактирования и удаления */}
         {canEdit && contract.status === "UNVERIFIED" && (
           <Button icon={<EditOutlined />} onClick={() => setEditOpen(true)}>
             Редактировать договор
           </Button>
         )}
-        {canVerify && contract.status === "UNVERIFIED" && (
-          <Popconfirm title="Верифицировать договор?" onConfirm={handleVerify} okText="Да" cancelText="Нет">
-            <Button type="primary" icon={<CheckCircleOutlined />} loading={verifying}>
-              Верифицировать
+        {canDelete && contract.status === "UNVERIFIED" && (
+          <Popconfirm
+            title="Удалить договор?"
+            description={`Договор ${contract.contractNumber} будет удалён без возможности восстановления.`}
+            onConfirm={handleDelete}
+            okText="Удалить"
+            cancelText="Отмена"
+            okButtonProps={{ danger: true }}
+          >
+            <Button danger icon={<DeleteOutlined />} loading={deleting}>
+              Удалить
             </Button>
           </Popconfirm>
         )}
+        {canVerify && contract.status === "UNVERIFIED" && (
+          contract.files?.length > 0
+            ? <Popconfirm title="Верифицировать договор?" onConfirm={handleVerify} okText="Да" cancelText="Нет">
+                <Button type="primary" icon={<CheckCircleOutlined />} loading={verifying}>
+                  Верифицировать
+                </Button>
+              </Popconfirm>
+            : <Tooltip title="Нельзя верифицировать без вложений — загрузите хотя бы 1 файл">
+                <Button type="primary" icon={<CheckCircleOutlined />} disabled>
+                  Верифицировать
+                </Button>
+              </Tooltip>
+        )}
         {canVerify && contract.status === "VERIFIED" && (
-          <Popconfirm title="Отменить верификацию?" onConfirm={handleUnverify} okText="Да" cancelText="Нет">
-            <Button danger icon={<CloseCircleOutlined />} loading={verifying}>
-              Отмена верификации
-            </Button>
-          </Popconfirm>
+          contract.paymentStatus !== "OPEN"
+            ? <Tooltip title="Нельзя отменить верификацию: по договору уже проводились финансовые операции">
+                <Button danger icon={<CloseCircleOutlined />} disabled>
+                  Отмена верификации
+                </Button>
+              </Tooltip>
+            : <Popconfirm title="Отменить верификацию?" onConfirm={handleUnverify} okText="Да" cancelText="Нет">
+                <Button danger icon={<CloseCircleOutlined />} loading={verifying}>
+                  Отмена верификации
+                </Button>
+              </Popconfirm>
         )}
       </div>
 
       {/* Данные клиента */}
       <Card size="small" style={{ marginBottom: 12 }}>
         <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>КЛИЕНТ</Divider>
-        <Row gutter={[24, 0]}>
-          <Col span={12}><Field label="ФИО" value={contract.clientName} /></Col>
-          <Col span={6}><Field label="Дата договора" value={dayjs(contract.contractDate).format("DD.MM.YYYY")} /></Col>
-          <Col span={6}>
+        <Row gutter={[16, 0]}>
+          <Col xs={24} sm={12}><Field label="ФИО" value={contract.clientName} /></Col>
+          <Col xs={12} sm={6}><Field label="Дата договора" value={dayjs(contract.contractDate).format("DD.MM.YYYY")} /></Col>
+          <Col xs={12} sm={6}>
             <Field
               label="Телефоны"
               value={contract.phones?.length > 0
@@ -787,29 +1194,29 @@ export default function ContractDetailPage() {
                 : null}
             />
           </Col>
-          <Col span={12}><Field label="Адрес регистрации" value={contract.registrationAddress} /></Col>
-          <Col span={12}><Field label="Адрес проживания" value={contract.actualAddress} /></Col>
+          <Col xs={24} sm={12}><Field label="Адрес регистрации" value={contract.registrationAddress} /></Col>
+          <Col xs={24} sm={12}><Field label="Адрес проживания" value={contract.actualAddress} /></Col>
         </Row>
       </Card>
 
       {/* Выезд и презентация */}
       <Card size="small" style={{ marginBottom: 12 }}>
         <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>ВЫЕЗД И ПРЕЗЕНТАЦИЯ</Divider>
-        <Row gutter={[24, 0]}>
-          <Col span={6}><Field label="Выезд" value={contract.trip?.name} /></Col>
-          <Col span={6}><Field label="Презентация" value={contract.presentation?.name} /></Col>
-          <Col span={6}><Field label="Ведущий" value={contract.speaker ? `${contract.speaker.lastName} ${contract.speaker.firstName}` : null} /></Col>
-          <Col span={6}><Field label="Оформил" value={contract.signedBy ? `${contract.signedBy.lastName} ${contract.signedBy.firstName}` : null} /></Col>
+        <Row gutter={[16, 0]}>
+          <Col xs={12} sm={6}><Field label="Выезд" value={contract.trip?.name} /></Col>
+          <Col xs={12} sm={6}><Field label="Презентация" value={contract.presentation?.name} /></Col>
+          <Col xs={12} sm={6}><Field label="Ведущий" value={contract.speaker ? `${contract.speaker.lastName} ${contract.speaker.firstName}` : null} /></Col>
+          <Col xs={12} sm={6}><Field label="Оформил" value={contract.signedBy ? `${contract.signedBy.lastName} ${contract.signedBy.firstName}` : null} /></Col>
         </Row>
       </Card>
 
       {/* Условия */}
       <Card size="small" style={{ marginBottom: 12 }}>
         <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>УСЛОВИЯ ДОГОВОРА</Divider>
-        <Row gutter={[24, 0]}>
-          <Col span={8}><Field label="Компания" value={contract.company?.name} /></Col>
-          <Col span={8}><Field label="Тип оплаты" value={PAYMENT_TYPE_LABELS[contract.paymentType] || contract.paymentType} /></Col>
-          <Col span={8}><Field label="Тип продажи" value={contract.saleType ? SALE_TYPE_LABELS[contract.saleType] : null} /></Col>
+        <Row gutter={[16, 0]}>
+          <Col xs={24} sm={8}><Field label="Компания" value={contract.company?.name} /></Col>
+          <Col xs={12} sm={8}><Field label="Тип оплаты" value={PAYMENT_TYPE_LABELS[contract.paymentType] || contract.paymentType} /></Col>
+          <Col xs={12} sm={8}><Field label="Тип продажи" value={contract.saleType ? SALE_TYPE_LABELS[contract.saleType] : null} /></Col>
           {contract.banks?.length > 0 && (
             <Col span={24}>
               <Field
@@ -833,14 +1240,14 @@ export default function ContractDetailPage() {
       {/* Финансы */}
       <Card size="small" style={{ marginBottom: 12 }}>
         <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>ФИНАНСЫ</Divider>
-        <Row gutter={[24, 0]}>
-          <Col span={6}>
+        <Row gutter={[16, 0]}>
+          <Col xs={12} sm={6}>
             <Field
               label="Общая сумма (до возврата)"
               value={<Text strong style={{ fontSize: 16 }}>{Number(contract.totalAmount).toLocaleString()}</Text>}
             />
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Field
               label="Общая сумма (после возврата)"
               value={
@@ -856,22 +1263,40 @@ export default function ContractDetailPage() {
               }
             />
           </Col>
-          <Col span={6}><Field label="Аванс наличные" value={Number(contract.advanceCash || 0).toLocaleString()} /></Col>
-          <Col span={6}><Field label="Аванс терминал" value={Number(contract.advanceTerminal || 0).toLocaleString()} /></Col>
+          <Col xs={12} sm={6}><Field label="Аванс наличные" value={Number(contract.advanceCash || 0).toLocaleString()} /></Col>
+          <Col xs={12} sm={6}><Field label="Аванс терминал" value={Number(contract.advanceTerminal || 0).toLocaleString()} /></Col>
           {contract.banks?.some((b: any) => b.advance != null) ? (
-            contract.banks.filter((b: any) => b.advance != null).map((b: any) => (
-              <Col span={6} key={b.bankId}>
-                <Field label={`Аванс ${b.bank?.name}`} value={Number(b.advance).toLocaleString()} />
-              </Col>
-            ))
+            contract.banks.filter((b: any) => b.advance != null).map((b: any) => {
+              const advance = Number(b.advance);
+              const rate = b.conditionRate != null ? Number(b.conditionRate) : null;
+              const realMoney = rate != null ? advance * (1 - rate / 100) : null;
+              const condLabel = b.conditionName && rate != null ? ` (${b.conditionName} — ${rate}%)` : '';
+              return (
+                <Col xs={12} sm={6} key={b.bankId}>
+                  <Field
+                    label={`Аванс ${b.bank?.name}${condLabel}`}
+                    value={
+                      realMoney != null
+                        ? `${advance.toLocaleString()} / ${Math.round(realMoney).toLocaleString()}`
+                        : advance.toLocaleString()
+                    }
+                  />
+                </Col>
+              );
+            })
           ) : (
-            <Col span={6}><Field label="Аванс банк" value={Number(contract.advanceBank || 0).toLocaleString()} /></Col>
+            <Col xs={12} sm={6}><Field label="Аванс банк" value={Number(contract.advanceBank || 0).toLocaleString()} /></Col>
           )}
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Field label="Итого авансов" value={<Text strong>{totalAdvances.toLocaleString()}</Text>} />
           </Col>
+          {hasBankConditions && (
+            <Col xs={12} sm={6}>
+              <Field label="Итого авансов (реал. деньги)" value={<Text strong>{Math.round(totalRealMoney).toLocaleString()}</Text>} />
+            </Col>
+          )}
           {(contract.paymentType === "COMPANY" || contract.paymentType === "MIXED") && (
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Field
                 label="Остаток (рассрочка)"
                 value={<Text strong style={{ color: installmentBalance < 0 ? "#ff4d4f" : undefined }}>{installmentBalance.toLocaleString()}</Text>}
@@ -879,13 +1304,13 @@ export default function ContractDetailPage() {
             </Col>
           )}
           {contract.installmentMonths && (
-            <Col span={6}><Field label="Кол-во месяцев" value={contract.installmentMonths} /></Col>
+            <Col xs={12} sm={6}><Field label="Кол-во месяцев" value={contract.installmentMonths} /></Col>
           )}
           {contract.firstPaymentDate && (
-            <Col span={6}><Field label="Первый платёж" value={dayjs(contract.firstPaymentDate).format("DD.MM.YYYY")} /></Col>
+            <Col xs={12} sm={6}><Field label="Первый платёж" value={dayjs(contract.firstPaymentDate).format("DD.MM.YYYY")} /></Col>
           )}
           {/* Должник */}
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Field
               label="Должник"
               value={
@@ -896,18 +1321,18 @@ export default function ContractDetailPage() {
             />
           </Col>
           {/* Спасенный контракт */}
-          {savedContract !== null && (
-            <Col span={6}>
-              <Field
-                label="Спасенный контракт"
-                value={
-                  <Tag color={savedContract === "yes" ? "success" : "default"} style={{ marginTop: 2 }}>
-                    {savedContract === "yes" ? "Да" : "Нет"}
-                  </Tag>
-                }
-              />
-            </Col>
-          )}
+          <Col xs={12} sm={6}>
+            <Field
+              label="Спасенный контракт"
+              value={
+                savedContract === null
+                  ? <span style={{ color: "#555" }}>—</span>
+                  : <Tag color={savedContract === "yes" ? "success" : "error"} style={{ marginTop: 2 }}>
+                      {savedContract === "yes" ? "Да" : "Нет"}
+                    </Tag>
+              }
+            />
+          </Col>
         </Row>
 
         {/* Кнопки возврата — только для верифицированных договоров */}
@@ -959,10 +1384,12 @@ export default function ContractDetailPage() {
               {
                 title: "Статус",
                 key: "isPaid",
-                render: (_: any, r: any) => (
+                render: (_: any, r: any) => {
+                  const isOverdue = !r.isPaid && dayjs(r.date).isBefore(dayjs(), "day");
+                  return (
                   <Space size={4}>
-                    <Tag color={r.isPaid ? "success" : "default"}>
-                      {r.isPaid ? "Оплачен" : "Ожидает"}
+                    <Tag color={r.isPaid ? "success" : isOverdue ? "error" : "default"}>
+                      {r.isPaid ? "Оплачен" : isOverdue ? "Просрочен" : "Ожидает"}
                     </Tag>
                     {/* Крестик отмены — только у последнего оплаченного, только для верифицированных */}
                     {canEdit && r.isPaid && lastPaidPayment?.id === r.id && contract.status === "VERIFIED" && (
@@ -984,7 +1411,8 @@ export default function ContractDetailPage() {
                       </Popconfirm>
                     )}
                   </Space>
-                ),
+                  );
+                },
               },
             ]}
             summary={() => {
@@ -1000,6 +1428,168 @@ export default function ContractDetailPage() {
           />
         </Card>
       )}
+
+      {/* Вложения */}
+      <Card size="small" style={{ marginTop: 12 }}>
+        <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>
+          <Space><PaperClipOutlined />ВЛОЖЕНИЯ ({contract.files?.length ?? 0}/15)</Space>
+        </Divider>
+
+        {/* Сетка загруженных файлов */}
+        {contract.files?.length > 0 && (
+          <Image.PreviewGroup>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+              {contract.files.map((file: any) => {
+                const isImage = file.mimeType?.startsWith("image/");
+                const blobUrl = fileBlobUrls[file.id];
+                return (
+                  <div key={file.id} style={{ position: "relative", width: 88, flexShrink: 0 }}>
+                    <div
+                      style={{
+                        width: 88,
+                        height: 88,
+                        borderRadius: 6,
+                        overflow: "hidden",
+                        border: "1px solid #333",
+                        background: "#111",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: isImage ? "zoom-in" : "pointer",
+                      }}
+                      onClick={!isImage ? () => handleDownloadFile(file.id, file.fileName, file.mimeType) : undefined}
+                    >
+                      {isImage ? (
+                        <Image
+                          width={88}
+                          height={88}
+                          src={blobUrl}
+                          style={{ objectFit: "cover", display: "block" }}
+                          placeholder={
+                            <div style={{ width: 88, height: 88, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <FileImageOutlined style={{ fontSize: 28, color: "#444" }} />
+                            </div>
+                          }
+                          preview={blobUrl ? undefined : false}
+                        />
+                      ) : (
+                        <div style={{ textAlign: "center" }}>
+                          <FilePdfOutlined style={{ fontSize: 32, color: "#ff4d4f" }} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Название файла */}
+                    <div style={{ fontSize: 10, color: "#888", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 88 }}>
+                      {file.fileName}
+                    </div>
+
+                    {/* Кнопка удаления */}
+                    {canEdit && (
+                      <Popconfirm
+                        title="Удалить файл?"
+                        onConfirm={() => handleDeleteFile(file.id)}
+                        okText="Да"
+                        cancelText="Нет"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          icon={<CloseOutlined style={{ fontSize: 10 }} />}
+                          loading={deletingFileId === file.id}
+                          style={{
+                            position: "absolute",
+                            top: 3,
+                            right: 3,
+                            width: 18,
+                            height: 18,
+                            minWidth: 18,
+                            padding: 0,
+                            lineHeight: "16px",
+                            background: "rgba(0,0,0,0.65)",
+                            borderRadius: 3,
+                          }}
+                        />
+                      </Popconfirm>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Image.PreviewGroup>
+        )}
+
+        {/* Кнопка открытия модалки загрузки */}
+        {canEdit && (contract.files?.length ?? 0) < 15 && (
+          <Button
+            icon={<UploadOutlined />}
+            size="small"
+            onClick={() => { setPendingFiles([]); setPendingPreviews({}); setUploadModalOpen(true); }}
+          >
+            Загрузить файлы
+          </Button>
+        )}
+
+        {(contract.files?.length ?? 0) === 0 && contract.status === "UNVERIFIED" && (
+          <Alert
+            type="warning"
+            showIcon
+            message="Для верификации необходимо загрузить хотя бы 1 файл"
+            style={{ marginTop: 8 }}
+          />
+        )}
+      </Card>
+
+      {/* История действий по договору */}
+      <Card size="small" style={{ marginTop: 12 }}>
+        <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>
+          <Space><HistoryOutlined />ИСТОРИЯ</Space>
+        </Divider>
+        {historyLoading ? (
+          <div style={{ textAlign: "center", padding: 24 }}><Spin /></div>
+        ) : history.length === 0 ? (
+          <div style={{ color: "#555", fontSize: 13, padding: "8px 0" }}>История пуста</div>
+        ) : (
+          <Timeline
+            style={{ marginTop: 8 }}
+            items={history.map((log) => {
+              const details = formatAuditDetails(log.action, log.details);
+              const color = AUDIT_ACTION_COLORS[log.action] || "gray";
+              const userName = log.user
+                ? `${log.user.lastName} ${log.user.firstName}`
+                : "Система";
+              const roleName = log.user?.role?.name;
+              return {
+                color,
+                children: (
+                  <div style={{ paddingBottom: 4 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <Text strong style={{ fontSize: 13 }}>
+                        {AUDIT_ACTION_LABELS[log.action] || log.action}
+                      </Text>
+                    </div>
+                    {details && <div style={{ marginTop: 4 }}>{details}</div>}
+                    <div style={{ fontSize: 12, color: "#888", marginTop: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                      <UserOutlined />
+                      <span>{userName}</span>
+                      {roleName && (
+                        <Tag style={{ fontSize: 11, lineHeight: "16px", padding: "0 5px" }}>
+                          {roleName}
+                        </Tag>
+                      )}
+                      <span style={{ marginLeft: 4 }}>
+                        {dayjs(log.createdAt).format("DD.MM.YYYY HH:mm")}
+                      </span>
+                    </div>
+                  </div>
+                ),
+              };
+            })}
+          />
+        )}
+      </Card>
 
       {/* Модалка "Оформить возврат" */}
       <Modal
@@ -1091,8 +1681,93 @@ export default function ContractDetailPage() {
             originalTotalAmount={Number(contract?.totalAmount || 0)}
             onCanSaveChange={setFinCanSave}
             initialPaymentType={contract?.paymentType ?? "CASH"}
+            bankConditions={finBankConditions}
+            setBankConditions={setFinBankConditions}
           />
         </Form>
+      </Modal>
+
+      {/* Модалка загрузки файлов */}
+      <Modal
+        title="Загрузить файлы"
+        open={uploadModalOpen}
+        onCancel={() => { if (!bulkUploading) { setUploadModalOpen(false); setPendingFiles([]); setPendingPreviews({}); } }}
+        onOk={handleBulkUpload}
+        okText={pendingFiles.length > 0 ? `Загрузить (${pendingFiles.length})` : "Загрузить"}
+        cancelText="Отмена"
+        confirmLoading={bulkUploading}
+        okButtonProps={{ disabled: pendingFiles.length === 0 }}
+        destroyOnHidden
+        width={560}
+      >
+        <Upload.Dragger
+          multiple
+          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+          showUploadList={false}
+          beforeUpload={addPendingFile}
+          disabled={bulkUploading || (contract.files?.length ?? 0) + pendingFiles.length >= 15}
+          style={{ marginBottom: pendingFiles.length > 0 ? 12 : 0 }}
+        >
+          <p style={{ margin: "8px 0 4px" }}><InboxOutlined style={{ fontSize: 32, color: "#555" }} /></p>
+          <p style={{ fontSize: 13, margin: "0 0 4px" }}>Перетащите файлы сюда или нажмите для выбора</p>
+          <p style={{ fontSize: 11, color: "#666", margin: 0 }}>
+            JPG, PNG, GIF, WebP, PDF · до 2 МБ · осталось мест: {Math.max(0, 15 - (contract.files?.length ?? 0) - pendingFiles.length)}
+          </p>
+        </Upload.Dragger>
+
+        {pendingFiles.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {pendingFiles.map((file, index) => {
+              const key = file.name + file.size;
+              const preview = pendingPreviews[key];
+              return (
+                <div key={index} style={{ position: "relative", width: 88, flexShrink: 0 }}>
+                  <div
+                    style={{
+                      width: 88,
+                      height: 88,
+                      borderRadius: 6,
+                      overflow: "hidden",
+                      border: "1px solid #333",
+                      background: "#111",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {preview ? (
+                      <img src={preview} style={{ width: 88, height: 88, objectFit: "cover", display: "block" }} />
+                    ) : (
+                      <FilePdfOutlined style={{ fontSize: 32, color: "#ff4d4f" }} />
+                    )}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 88 }}>
+                    {file.name}
+                  </div>
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<CloseOutlined style={{ fontSize: 10 }} />}
+                    onClick={() => removePendingFile(index)}
+                    style={{
+                      position: "absolute",
+                      top: 3,
+                      right: 3,
+                      width: 18,
+                      height: 18,
+                      minWidth: 18,
+                      padding: 0,
+                      lineHeight: "16px",
+                      background: "rgba(0,0,0,0.65)",
+                      borderRadius: 3,
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Modal>
 
       {/* Модалка редактирования договора (только до верификации) */}
