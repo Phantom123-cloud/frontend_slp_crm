@@ -28,7 +28,6 @@ const TX_TYPES = [
   { value: "INCOMING", labelKey: "warehouses.transType_INCOMING" },
   { value: "SALE", labelKey: "warehouses.transType_SALE" },
   { value: "GIFT", labelKey: "warehouses.transType_GIFT" },
-  { value: "CONTRACT", labelKey: "warehouses.transType_CONTRACT" },
   { value: "WRITE_OFF", labelKey: "warehouses.transType_WRITE_OFF" },
   { value: "TRANSFER", labelKey: "warehouses.transType_TRANSFER_OUT" },
 ];
