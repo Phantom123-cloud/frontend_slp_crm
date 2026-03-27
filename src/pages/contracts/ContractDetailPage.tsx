@@ -46,6 +46,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { contractsApi } from "../../api/contracts";
+import { warehousesApi } from "../../api/warehouses";
 import { tripsApi } from "../../api/trips";
 import { usePermission } from "../../hooks/usePermission";
 import ContractEditModal from "./ContractEditModal";
@@ -678,6 +679,14 @@ export default function ContractDetailPage() {
   // Удаление / загрузка файлов
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
 
+  // Блок товаров договора
+  const [warehouseStock, setWarehouseStock] = useState<any[]>([]);
+  const [itemProductId, setItemProductId] = useState<string | undefined>();
+  const [itemQty, setItemQty] = useState<number>(1);
+  const [itemType, setItemType] = useState<'SALE' | 'GIFT'>('SALE');
+  const [itemAdding, setItemAdding] = useState(false);
+  const [itemRemoving, setItemRemoving] = useState<string | null>(null);
+
   // Модалка загрузки файлов
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -787,6 +796,16 @@ export default function ContractDetailPage() {
     try {
       const { data } = await contractsApi.getById(id!);
       setContract(data);
+      // Загружаем остатки склада выезда для выбора товара
+      const warehouseId = data?.trip?.warehouse?.id;
+      if (warehouseId) {
+        try {
+          const { data: wh } = await warehousesApi.getById(warehouseId);
+          setWarehouseStock(wh.stock ?? []);
+        } catch {
+          // склад не критичен
+        }
+      }
     } catch (e: any) {
       message.error(e.response?.data?.message || "Ошибка загрузки договора");
     } finally {
@@ -835,6 +854,35 @@ export default function ContractDetailPage() {
 
   // Синхронизируем ref для cleanup
   useEffect(() => { fileBlobUrlsRef.current = fileBlobUrls; }, [fileBlobUrls]);
+
+  const handleAddItem = async () => {
+    if (!itemProductId || !itemQty) return;
+    setItemAdding(true);
+    try {
+      const { data } = await contractsApi.addItem(id!, { productId: itemProductId, quantity: itemQty, type: itemType });
+      setContract(data);
+      setItemProductId(undefined);
+      setItemQty(1);
+      message.success("Товар добавлен");
+    } catch (e: any) {
+      message.error(e.response?.data?.message || "Ошибка добавления товара");
+    } finally {
+      setItemAdding(false);
+    }
+  };
+
+  const handleRemoveItem = async (itemId: string) => {
+    setItemRemoving(itemId);
+    try {
+      const { data } = await contractsApi.removeItem(id!, itemId);
+      setContract(data);
+      message.success("Товар удалён");
+    } catch (e: any) {
+      message.error(e.response?.data?.message || "Ошибка удаления товара");
+    } finally {
+      setItemRemoving(null);
+    }
+  };
 
   const handleVerify = async () => {
     setVerifying(true);
@@ -1235,6 +1283,102 @@ export default function ContractDetailPage() {
             </Col>
           )}
         </Row>
+      </Card>
+
+      {/* Товар */}
+      <Card size="small" style={{ marginBottom: 12 }}>
+        <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>ТОВАР</Divider>
+        {/* Список товаров договора */}
+        {contract.contractItems?.length > 0 && (
+          <Table
+            size="small"
+            pagination={false}
+            dataSource={contract.contractItems}
+            rowKey="id"
+            style={{ marginBottom: 12 }}
+            columns={[
+              {
+                title: "Товар",
+                dataIndex: ["product", "name"],
+                render: (_: any, r: any) => `${r.product?.name ?? "—"} (${r.product?.unit ?? ""})`,
+              },
+              {
+                title: "Кол-во",
+                dataIndex: "quantity",
+                width: 90,
+                render: (v: any) => Number(v),
+              },
+              {
+                title: "Тип",
+                dataIndex: "type",
+                width: 150,
+                render: (v: string) => v === "SALE" ? "Продажа" : "Подарок к договору",
+              },
+              ...(canEdit ? [{
+                title: "",
+                key: "action",
+                width: 40,
+                render: (_: any, r: any) => (
+                  <Popconfirm
+                    title="Удалить товар из договора?"
+                    onConfirm={() => handleRemoveItem(r.id)}
+                    okText="Да"
+                    cancelText="Нет"
+                  >
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      loading={itemRemoving === r.id}
+                    />
+                  </Popconfirm>
+                ),
+              }] : []),
+            ]}
+          />
+        )}
+        {/* Форма добавления товара */}
+        {canEdit && (
+          <Space wrap>
+            <Select
+              placeholder="Товар"
+              style={{ minWidth: 220 }}
+              value={itemProductId}
+              onChange={setItemProductId}
+              showSearch
+              optionFilterProp="label"
+              options={warehouseStock.map((s: any) => ({
+                value: s.productId,
+                label: `${s.product?.name ?? s.productId} (${s.product?.unit ?? ""}) — ${Number(s.quantity)}`,
+              }))}
+            />
+            <InputNumber
+              min={0.001}
+              step={1}
+              value={itemQty}
+              onChange={(v) => setItemQty(v ?? 1)}
+              style={{ width: 90 }}
+            />
+            <Select
+              value={itemType}
+              onChange={setItemType}
+              style={{ width: 170 }}
+              options={[
+                { value: "SALE", label: "Продажа" },
+                { value: "GIFT", label: "Подарок к договору" },
+              ]}
+            />
+            <Button
+              type="primary"
+              onClick={handleAddItem}
+              loading={itemAdding}
+              disabled={!itemProductId}
+            >
+              Добавить
+            </Button>
+          </Space>
+        )}
       </Card>
 
       {/* Финансы */}

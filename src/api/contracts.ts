@@ -78,4 +78,8 @@ export const contractsApi = {
     api.delete(`/contracts/${id}/files/${fileId}`),
   downloadFile: (id: string, fileId: string) =>
     api.get(`/contracts/${id}/files/${fileId}/download`, { responseType: 'blob' }),
+  addItem: (id: string, data: { productId: string; quantity: number; type: 'SALE' | 'GIFT' }) =>
+    api.post(`/contracts/${id}/items`, data),
+  removeItem: (id: string, itemId: string) =>
+    api.delete(`/contracts/${id}/items/${itemId}`),
 };
