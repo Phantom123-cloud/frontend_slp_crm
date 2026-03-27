@@ -31,6 +31,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { contractsApi } from "../../api/contracts";
+import { warehousesApi } from "../../api/warehouses";
 import { tripsApi } from "../../api/trips";
 import { useAuthStore } from "../../store/auth";
 
@@ -90,6 +91,10 @@ export default function ContractFormPage() {
   const [phones, setPhones] = useState<{ countryCode: string; number: string }[]>([
     { countryCode: "+998", number: "" },
   ]);
+
+  // Товары договора
+  const [warehouseStock, setWarehouseStock] = useState<any[]>([]);
+  const [contractItems, setContractItems] = useState<{ productId: string; quantity: number; type: 'SALE' | 'GIFT' }[]>([]);
 
   // Файлы для загрузки после создания
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -213,6 +218,15 @@ export default function ContractFormPage() {
       setTripBanks(banksRes.data);
       setTripCompanies(companiesRes.data);
 
+      // Загружаем остатки склада выезда
+      const warehouseId = tripData?.warehouse?.id;
+      if (warehouseId) {
+        try {
+          const { data: wh } = await warehousesApi.getById(warehouseId);
+          setWarehouseStock(wh.stock ?? []);
+        } catch {}
+      }
+
       // Находим нужную презентацию
       const pres = tripData.presentations?.find((p: any) => p.id === presentationId);
       if (pres) {
@@ -321,6 +335,7 @@ export default function ContractFormPage() {
         paymentSchedule: hasInstallment
           ? paymentSchedule.map((s) => ({ date: s.date.format("YYYY-MM-DD"), amount: s.amount }))
           : [],
+        items: contractItems.length > 0 ? contractItems : undefined,
       };
 
       const res = await contractsApi.create(payload);
@@ -773,6 +788,101 @@ export default function ContractFormPage() {
                 </>
               )}
             </>
+          )}
+        </Card>
+
+        {/* Товар */}
+        <Card title="Товар" size="small" style={{ marginBottom: 16 }}>
+          {contractItems.length > 0 && (
+            <Table
+              size="small"
+              pagination={false}
+              dataSource={contractItems}
+              rowKey={(_, i) => String(i)}
+              style={{ marginBottom: 12 }}
+              columns={[
+                {
+                  title: "Товар",
+                  dataIndex: "productId",
+                  render: (v: string) => {
+                    const s = warehouseStock.find((s: any) => s.productId === v);
+                    return s ? `${s.product?.name} (${s.product?.unit})` : v;
+                  },
+                },
+                {
+                  title: "Кол-во",
+                  dataIndex: "quantity",
+                  width: 90,
+                  render: (v: number, _: any, idx: number) => (
+                    <InputNumber
+                      size="small"
+                      min={0.001}
+                      value={v}
+                      onChange={(val) => {
+                        const updated = [...contractItems];
+                        updated[idx].quantity = val ?? 1;
+                        setContractItems(updated);
+                      }}
+                      style={{ width: 80 }}
+                    />
+                  ),
+                },
+                {
+                  title: "Тип",
+                  dataIndex: "type",
+                  width: 180,
+                  render: (v: string, _: any, idx: number) => (
+                    <Select
+                      size="small"
+                      value={v}
+                      onChange={(val) => {
+                        const updated = [...contractItems];
+                        updated[idx].type = val;
+                        setContractItems(updated);
+                      }}
+                      style={{ width: 170 }}
+                      options={[
+                        { value: "SALE", label: "Продажа" },
+                        { value: "GIFT", label: "Подарок к договору" },
+                      ]}
+                    />
+                  ),
+                },
+                {
+                  title: "",
+                  key: "del",
+                  width: 40,
+                  render: (_: any, __: any, idx: number) => (
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      onClick={() => setContractItems((prev) => prev.filter((_, i) => i !== idx))}
+                    />
+                  ),
+                },
+              ]}
+            />
+          )}
+          <Space wrap>
+            <Select
+              placeholder="Добавить товар"
+              style={{ minWidth: 220 }}
+              showSearch
+              optionFilterProp="label"
+              options={warehouseStock.map((s: any) => ({
+                value: s.productId,
+                label: `${s.product?.name ?? s.productId} (${s.product?.unit ?? ""}) — ${Number(s.quantity)}`,
+              }))}
+              value={undefined}
+              onChange={(productId: string) => {
+                setContractItems((prev) => [...prev, { productId, quantity: 1, type: "SALE" }]);
+              }}
+            />
+          </Space>
+          {warehouseStock.length === 0 && (
+            <div style={{ color: "#888", fontSize: 12, marginTop: 8 }}>Склад выезда пуст или недоступен</div>
           )}
         </Card>
 

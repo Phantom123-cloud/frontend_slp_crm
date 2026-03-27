@@ -681,11 +681,23 @@ export default function ContractDetailPage() {
 
   // Блок товаров договора
   const [warehouseStock, setWarehouseStock] = useState<any[]>([]);
+  const [warehouseIsActive, setWarehouseIsActive] = useState(true);
   const [itemProductId, setItemProductId] = useState<string | undefined>();
   const [itemQty, setItemQty] = useState<number>(1);
   const [itemType, setItemType] = useState<'SALE' | 'GIFT'>('SALE');
   const [itemAdding, setItemAdding] = useState(false);
   const [itemRemoving, setItemRemoving] = useState<string | null>(null);
+
+  // Редактирование кол-ва товара
+  const [editItemId, setEditItemId] = useState<string | null>(null);
+  const [editItemQty, setEditItemQty] = useState<number>(1);
+  const [editItemUpdating, setEditItemUpdating] = useState(false);
+
+  // Модалка возврата на другой склад (если склад неактивен)
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
+  const [returnWarehouseId, setReturnWarehouseId] = useState<string | undefined>();
+  const [allWarehouses, setAllWarehouses] = useState<any[]>([]);
+  const [pendingUpdatePayload, setPendingUpdatePayload] = useState<{ itemId: string; qty: number } | null>(null);
 
   // Модалка загрузки файлов
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -802,6 +814,7 @@ export default function ContractDetailPage() {
         try {
           const { data: wh } = await warehousesApi.getById(warehouseId);
           setWarehouseStock(wh.stock ?? []);
+          setWarehouseIsActive(wh.isActive !== false);
         } catch {
           // склад не критичен
         }
@@ -854,6 +867,48 @@ export default function ContractDetailPage() {
 
   // Синхронизируем ref для cleanup
   useEffect(() => { fileBlobUrlsRef.current = fileBlobUrls; }, [fileBlobUrls]);
+
+  const loadAllWarehouses = async () => {
+    if (allWarehouses.length > 0) return;
+    try {
+      const { data } = await warehousesApi.list();
+      // Показываем только CENTRAL и PERSONAL
+      setAllWarehouses((data.data ?? data ?? []).filter((w: any) => w.type !== 'TRIP' && w.isActive));
+    } catch {}
+  };
+
+  const handleStartEditItem = (item: any) => {
+    setEditItemId(item.id);
+    setEditItemQty(Number(item.quantity));
+  };
+
+  const handleUpdateItem = async (itemId: string, qty: number, retWarehouseId?: string) => {
+    setEditItemUpdating(true);
+    try {
+      const { data } = await contractsApi.updateItem(id!, itemId, {
+        quantity: qty,
+        returnWarehouseId: retWarehouseId,
+      });
+      setContract(data);
+      setEditItemId(null);
+      setReturnModalOpen(false);
+      setPendingUpdatePayload(null);
+      setReturnWarehouseId(undefined);
+      message.success("Количество обновлено");
+    } catch (e: any) {
+      const msg = e.response?.data?.message || "";
+      if (msg.includes('warehouseInactiveNeedReturn') || msg.includes('Inactive')) {
+        // Склад неактивен — открываем модалку выбора склада
+        setPendingUpdatePayload({ itemId, qty });
+        await loadAllWarehouses();
+        setReturnModalOpen(true);
+      } else {
+        message.error(msg || "Ошибка обновления");
+      }
+    } finally {
+      setEditItemUpdating(false);
+    }
+  };
 
   const handleAddItem = async () => {
     if (!itemProductId || !itemQty) return;
@@ -1299,22 +1354,54 @@ export default function ContractDetailPage() {
             columns={[
               {
                 title: "Товар",
-                dataIndex: ["product", "name"],
                 render: (_: any, r: any) => `${r.product?.name ?? "—"} (${r.product?.unit ?? ""})`,
               },
               {
                 title: "Кол-во",
                 dataIndex: "quantity",
-                width: 90,
-                render: (v: any) => Number(v),
+                width: 160,
+                render: (v: any, r: any) =>
+                  canEdit && contract.status !== "VERIFIED" && contract.status !== "CANCELLED" ? (
+                    editItemId === r.id ? (
+                      <Space size={4}>
+                        <InputNumber
+                          size="small"
+                          min={0.001}
+                          value={editItemQty}
+                          onChange={(val) => setEditItemQty(val ?? Number(v))}
+                          style={{ width: 70 }}
+                          autoFocus
+                        />
+                        <Button
+                          size="small"
+                          type="primary"
+                          loading={editItemUpdating}
+                          onClick={() => handleUpdateItem(r.id, editItemQty)}
+                        >
+                          ОК
+                        </Button>
+                        <Button size="small" onClick={() => setEditItemId(null)}>✕</Button>
+                      </Space>
+                    ) : (
+                      <Space size={4}>
+                        <span>{Number(v)}</span>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={() => handleStartEditItem(r)}
+                        />
+                      </Space>
+                    )
+                  ) : Number(v),
               },
               {
                 title: "Тип",
                 dataIndex: "type",
-                width: 150,
+                width: 160,
                 render: (v: string) => v === "SALE" ? "Продажа" : "Подарок к договору",
               },
-              ...(canEdit ? [{
+              ...(canEdit && contract.status !== "VERIFIED" && contract.status !== "CANCELLED" ? [{
                 title: "",
                 key: "action",
                 width: 40,
@@ -1338,8 +1425,8 @@ export default function ContractDetailPage() {
             ]}
           />
         )}
-        {/* Форма добавления товара */}
-        {canEdit && (
+        {/* Форма добавления товара — только до верификации */}
+        {canEdit && contract.status !== "VERIFIED" && contract.status !== "CANCELLED" && (
           <Space wrap>
             <Select
               placeholder="Товар"
@@ -1380,6 +1467,37 @@ export default function ContractDetailPage() {
           </Space>
         )}
       </Card>
+
+      {/* Модалка выбора склада при неактивном складе выезда */}
+      <Modal
+        open={returnModalOpen}
+        title="Выберите склад для возврата товара"
+        onCancel={() => { setReturnModalOpen(false); setPendingUpdatePayload(null); setReturnWarehouseId(undefined); }}
+        onOk={() => {
+          if (pendingUpdatePayload && returnWarehouseId) {
+            handleUpdateItem(pendingUpdatePayload.itemId, pendingUpdatePayload.qty, returnWarehouseId);
+          }
+        }}
+        okButtonProps={{ disabled: !returnWarehouseId, loading: editItemUpdating }}
+        okText="Подтвердить"
+        cancelText="Отмена"
+      >
+        <div style={{ marginBottom: 8, color: "#888", fontSize: 13 }}>
+          Склад выезда неактивен. Укажите, на какой склад вернуть разницу:
+        </div>
+        <Select
+          style={{ width: "100%" }}
+          placeholder="Выберите склад"
+          value={returnWarehouseId}
+          onChange={setReturnWarehouseId}
+          showSearch
+          optionFilterProp="label"
+          options={allWarehouses.map((w: any) => ({
+            value: w.id,
+            label: `${w.name} (${w.type === 'CENTRAL' ? 'Центральный' : 'Личный'})`,
+          }))}
+        />
+      </Modal>
 
       {/* Финансы */}
       <Card size="small" style={{ marginBottom: 12 }}>
