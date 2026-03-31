@@ -883,6 +883,17 @@ export default function ContractDetailPage() {
   };
 
   const handleUpdateItem = async (itemId: string, qty: number, retWarehouseId?: string) => {
+    // Если количество уменьшается и выезд закрыт — сразу показываем модалку выбора склада
+    const item = contract?.contractItems?.find((ci: any) => ci.id === itemId);
+    const oldQty = item ? Number(item.quantity) : 0;
+    const tripClosed = contract?.trip?.status === 'CLOSED';
+    if (!retWarehouseId && qty < oldQty && tripClosed) {
+      setPendingUpdatePayload({ itemId, qty });
+      await loadAllWarehouses();
+      setReturnModalOpen(true);
+      return;
+    }
+
     setEditItemUpdating(true);
     try {
       const { data } = await contractsApi.updateItem(id!, itemId, {
@@ -897,8 +908,8 @@ export default function ContractDetailPage() {
       message.success("Количество обновлено");
     } catch (e: any) {
       const msg = e.response?.data?.message || "";
-      if (msg.includes('warehouseInactiveNeedReturn') || msg.includes('Inactive')) {
-        // Склад неактивен — открываем модалку выбора склада
+      if (msg.includes('warehouseInactiveNeedReturn')) {
+        // Склад неактивен (дополнительная проверка с сервера)
         setPendingUpdatePayload({ itemId, qty });
         await loadAllWarehouses();
         setReturnModalOpen(true);
@@ -1482,8 +1493,9 @@ export default function ContractDetailPage() {
         okText="Подтвердить"
         cancelText="Отмена"
       >
-        <div style={{ marginBottom: 8, color: "#888", fontSize: 13 }}>
-          Склад выезда неактивен. Укажите, на какой склад вернуть разницу:
+        <div style={{ marginBottom: 12, fontSize: 13 }}>
+          Выезд <b>{contract?.trip?.name}</b> закрыт — перемещение товара на склад выезда невозможно.
+          Укажите личный или центральный склад для возврата разницы:
         </div>
         <Select
           style={{ width: "100%" }}
