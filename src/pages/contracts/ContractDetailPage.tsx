@@ -693,11 +693,15 @@ export default function ContractDetailPage() {
   const [editItemQty, setEditItemQty] = useState<number>(1);
   const [editItemUpdating, setEditItemUpdating] = useState(false);
 
-  // Модалка возврата на другой склад (если склад неактивен)
+  // Модалка возврата на другой склад (если выезд закрыт, уменьшение к-ва)
   const [returnModalOpen, setReturnModalOpen] = useState(false);
   const [returnWarehouseId, setReturnWarehouseId] = useState<string | undefined>();
   const [allWarehouses, setAllWarehouses] = useState<any[]>([]);
   const [pendingUpdatePayload, setPendingUpdatePayload] = useState<{ itemId: string; qty: number } | null>(null);
+
+  // Модалка выбора источника при добавлении товара (если выезд закрыт)
+  const [sourceModalOpen, setSourceModalOpen] = useState(false);
+  const [sourceWarehouseId, setSourceWarehouseId] = useState<string | undefined>();
 
   // Модалка загрузки файлов
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -921,17 +925,38 @@ export default function ContractDetailPage() {
     }
   };
 
-  const handleAddItem = async () => {
+  const handleAddItem = async (srcWarehouseId?: string) => {
     if (!itemProductId || !itemQty) return;
+
+    // Если выезд закрыт — сначала спросить источник склада
+    if (!srcWarehouseId && contract?.trip?.status === 'CLOSED') {
+      await loadAllWarehouses();
+      setSourceModalOpen(true);
+      return;
+    }
+
     setItemAdding(true);
     try {
-      const { data } = await contractsApi.addItem(id!, { productId: itemProductId, quantity: itemQty, type: itemType });
+      const { data } = await contractsApi.addItem(id!, {
+        productId: itemProductId,
+        quantity: itemQty,
+        type: itemType,
+        sourceWarehouseId: srcWarehouseId,
+      });
       setContract(data);
       setItemProductId(undefined);
       setItemQty(1);
+      setSourceModalOpen(false);
+      setSourceWarehouseId(undefined);
       message.success("Товар добавлен");
     } catch (e: any) {
-      message.error(e.response?.data?.message || "Ошибка добавления товара");
+      const msg = e.response?.data?.message || "";
+      if (msg.includes('warehouseInactiveNeedSource')) {
+        await loadAllWarehouses();
+        setSourceModalOpen(true);
+      } else {
+        message.error(msg || "Ошибка добавления товара");
+      }
     } finally {
       setItemAdding(false);
     }
@@ -1502,6 +1527,34 @@ export default function ContractDetailPage() {
           placeholder="Выберите склад"
           value={returnWarehouseId}
           onChange={setReturnWarehouseId}
+          showSearch
+          optionFilterProp="label"
+          options={allWarehouses.map((w: any) => ({
+            value: w.id,
+            label: `${w.name} (${w.type === 'CENTRAL' ? 'Центральный' : 'Личный'})`,
+          }))}
+        />
+      </Modal>
+
+      {/* Модалка выбора склада-источника при добавлении товара (выезд закрыт) */}
+      <Modal
+        open={sourceModalOpen}
+        title="Выберите склад-источник товара"
+        onCancel={() => { setSourceModalOpen(false); setSourceWarehouseId(undefined); }}
+        onOk={() => { if (sourceWarehouseId) handleAddItem(sourceWarehouseId); }}
+        okButtonProps={{ disabled: !sourceWarehouseId, loading: itemAdding }}
+        okText="Подтвердить"
+        cancelText="Отмена"
+      >
+        <div style={{ marginBottom: 12, fontSize: 13 }}>
+          Выезд <b>{contract?.trip?.name}</b> закрыт — списание товара со склада выезда невозможно.
+          Укажите личный или центральный склад, с которого взять товар:
+        </div>
+        <Select
+          style={{ width: "100%" }}
+          placeholder="Выберите склад"
+          value={sourceWarehouseId}
+          onChange={setSourceWarehouseId}
           showSearch
           optionFilterProp="label"
           options={allWarehouses.map((w: any) => ({
