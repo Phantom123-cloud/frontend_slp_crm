@@ -703,6 +703,11 @@ export default function ContractDetailPage() {
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
   const [sourceWarehouseId, setSourceWarehouseId] = useState<string | undefined>();
 
+  // Модалка выбора источника при увеличении к-ва товара (если выезд закрыт)
+  const [sourceUpdateModalOpen, setSourceUpdateModalOpen] = useState(false);
+  const [sourceUpdateWarehouseId, setSourceUpdateWarehouseId] = useState<string | undefined>();
+  const [pendingSourceUpdatePayload, setPendingSourceUpdatePayload] = useState<{ itemId: string; qty: number } | null>(null);
+
   // Модалка загрузки файлов
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -886,15 +891,29 @@ export default function ContractDetailPage() {
     setEditItemQty(Number(item.quantity));
   };
 
-  const handleUpdateItem = async (itemId: string, qty: number, retWarehouseId?: string) => {
-    // Если количество уменьшается и выезд закрыт — сразу показываем модалку выбора склада
+  const handleUpdateItem = async (
+    itemId: string,
+    qty: number,
+    retWarehouseId?: string,
+    srcWarehouseId?: string,
+  ) => {
     const item = contract?.contractItems?.find((ci: any) => ci.id === itemId);
     const oldQty = item ? Number(item.quantity) : 0;
     const tripClosed = contract?.trip?.status === 'CLOSED';
+
+    // Уменьшение + закрытый выезд → модалка возврата
     if (!retWarehouseId && qty < oldQty && tripClosed) {
       setPendingUpdatePayload({ itemId, qty });
       await loadAllWarehouses();
       setReturnModalOpen(true);
+      return;
+    }
+
+    // Увеличение + закрытый выезд → модалка источника
+    if (!srcWarehouseId && qty > oldQty && tripClosed) {
+      setPendingSourceUpdatePayload({ itemId, qty });
+      await loadAllWarehouses();
+      setSourceUpdateModalOpen(true);
       return;
     }
 
@@ -903,20 +922,27 @@ export default function ContractDetailPage() {
       const { data } = await contractsApi.updateItem(id!, itemId, {
         quantity: qty,
         returnWarehouseId: retWarehouseId,
+        sourceWarehouseId: srcWarehouseId,
       });
       setContract(data);
       setEditItemId(null);
       setReturnModalOpen(false);
+      setSourceUpdateModalOpen(false);
       setPendingUpdatePayload(null);
+      setPendingSourceUpdatePayload(null);
       setReturnWarehouseId(undefined);
+      setSourceUpdateWarehouseId(undefined);
       message.success("Количество обновлено");
     } catch (e: any) {
       const msg = e.response?.data?.message || "";
       if (msg.includes('warehouseInactiveNeedReturn')) {
-        // Склад неактивен (дополнительная проверка с сервера)
         setPendingUpdatePayload({ itemId, qty });
         await loadAllWarehouses();
         setReturnModalOpen(true);
+      } else if (msg.includes('warehouseInactiveNeedSource')) {
+        setPendingSourceUpdatePayload({ itemId, qty });
+        await loadAllWarehouses();
+        setSourceUpdateModalOpen(true);
       } else {
         message.error(msg || "Ошибка обновления");
       }
@@ -1555,6 +1581,38 @@ export default function ContractDetailPage() {
           placeholder="Выберите склад"
           value={sourceWarehouseId}
           onChange={setSourceWarehouseId}
+          showSearch
+          optionFilterProp="label"
+          options={allWarehouses.map((w: any) => ({
+            value: w.id,
+            label: `${w.name} (${w.type === 'CENTRAL' ? 'Центральный' : 'Личный'})`,
+          }))}
+        />
+      </Modal>
+
+      {/* Модалка выбора источника при УВЕЛИЧЕНИИ к-ва товара (выезд закрыт) */}
+      <Modal
+        open={sourceUpdateModalOpen}
+        title="Выберите склад-источник товара"
+        onCancel={() => { setSourceUpdateModalOpen(false); setPendingSourceUpdatePayload(null); setSourceUpdateWarehouseId(undefined); }}
+        onOk={() => {
+          if (pendingSourceUpdatePayload && sourceUpdateWarehouseId) {
+            handleUpdateItem(pendingSourceUpdatePayload.itemId, pendingSourceUpdatePayload.qty, undefined, sourceUpdateWarehouseId);
+          }
+        }}
+        okButtonProps={{ disabled: !sourceUpdateWarehouseId, loading: editItemUpdating }}
+        okText="Подтвердить"
+        cancelText="Отмена"
+      >
+        <div style={{ marginBottom: 12, fontSize: 13 }}>
+          Выезд <b>{contract?.trip?.name}</b> закрыт — списание товара со склада выезда невозможно.
+          Укажите личный или центральный склад, с которого взять товар:
+        </div>
+        <Select
+          style={{ width: "100%" }}
+          placeholder="Выберите склад"
+          value={sourceUpdateWarehouseId}
+          onChange={setSourceUpdateWarehouseId}
           showSearch
           optionFilterProp="label"
           options={allWarehouses.map((w: any) => ({
