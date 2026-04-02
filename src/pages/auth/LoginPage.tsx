@@ -23,6 +23,7 @@ const { useBreakpoint } = Grid;
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [sessionError, setSessionError] = useState("");
+  const [pendingValues, setPendingValues] = useState<{ email: string; password: string; rememberMe: boolean } | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { setAuth } = useAuthStore();
@@ -30,23 +31,20 @@ export default function LoginPage() {
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
 
-  const onFinish = async (values: {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-  }) => {
+  const doLogin = async (values: { email: string; password: string; rememberMe: boolean; forceLogin?: boolean }) => {
     setLoading(true);
     setSessionError("");
     try {
       const { data } = await authApi.login(values);
       setAuth(data.accessToken, data.refreshToken, data.user, data.permissions);
+      setPendingValues(null);
       message.success(t("common.success"));
       navigate("/");
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 403) {
-        setSessionError(
-          t(err.response.data?.message || "auth.sessionLimitError"),
-        );
+        // Лимит сессий — предлагаем принудительный вход
+        setSessionError(t(err.response.data?.message || "auth.sessionLimitError"));
+        setPendingValues(values);
       } else if (axios.isAxiosError(err) && err.response?.data?.message) {
         message.error(t(err.response.data.message));
       } else {
@@ -55,6 +53,15 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onFinish = async (values: { email: string; password: string; rememberMe: boolean }) => {
+    await doLogin(values);
+  };
+
+  const handleForceLogin = async () => {
+    if (!pendingValues) return;
+    await doLogin({ ...pendingValues, forceLogin: true });
   };
 
   return (
@@ -86,9 +93,16 @@ export default function LoginPage() {
             message={sessionError}
             type="warning"
             showIcon
-            closable
             style={{ marginBottom: 16 }}
-            onClose={() => setSessionError("")}
+            action={
+              pendingValues && (
+                <Button size="small" danger loading={loading} onClick={handleForceLogin}>
+                  Завершить старые сессии и войти
+                </Button>
+              )
+            }
+            closable
+            onClose={() => { setSessionError(""); setPendingValues(null); }}
           />
         )}
         <Form onFinish={onFinish} initialValues={{ rememberMe: false }}>

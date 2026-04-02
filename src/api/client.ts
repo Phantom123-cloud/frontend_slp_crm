@@ -41,9 +41,15 @@ api.interceptors.response.use(
         useAuthStore.getState().setTokens(data.accessToken, data.refreshToken);
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(originalRequest);
-      } catch {
-        useAuthStore.getState().logout();
-        return Promise.reject(error);
+      } catch (refreshError: any) {
+        // Разлогиниваем только при явном 401/403 от сервера.
+        // Сетевая ошибка (сервер недоступен) — НЕ разлогиниваем,
+        // чтобы при перезапуске сервера сессия в браузере сохранялась.
+        const status = refreshError?.response?.status;
+        if (status === 401 || status === 403) {
+          useAuthStore.getState().logout();
+        }
+        return Promise.reject(refreshError);
       }
     }
 

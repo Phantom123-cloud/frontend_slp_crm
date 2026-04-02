@@ -4,6 +4,7 @@ export interface LoginRequest {
   email: string;
   password: string;
   rememberMe?: boolean;
+  forceLogin?: boolean; // принудительно завершить старые сессии и войти
 }
 
 export interface LoginResponse {
