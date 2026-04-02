@@ -42,9 +42,12 @@ export default function LoginPage() {
       navigate("/");
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 403) {
-        // Лимит сессий — предлагаем принудительный вход
-        setSessionError(t(err.response.data?.message || "auth.sessionLimitError"));
-        setPendingValues(values);
+        // Лимит сессий — показываем сообщение
+        const responseData = err.response.data;
+        const canForceLogin = responseData?.canForceLogin === true;
+        setSessionError(t(responseData?.message || "auth.sessionLimitError"));
+        // Кнопку принудительного входа показываем только если у пользователя есть право
+        setPendingValues(canForceLogin ? values : null);
       } else if (axios.isAxiosError(err) && err.response?.data?.message) {
         message.error(t(err.response.data.message));
       } else {
