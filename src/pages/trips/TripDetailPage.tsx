@@ -115,7 +115,9 @@ export default function TripDetailPage() {
 
   const canManageBanks = usePermission("trips.banks");
   const canManageCompanies = usePermission("trips.companies");
-  const canCreateContract = usePermission("contracts.create");
+  const canCreateContractAny = usePermission("contracts.create-any"); // кнопка в правом верхнем углу (для любого)
+  const canCreateContractOwn = usePermission("contracts.create-own"); // кнопка "Внести договор" в презентации (за себя)
+  const canCreateContract = canCreateContractAny || canCreateContractOwn;
   const canViewContracts = useAnyPermission(["contracts.view-all", "contracts.view-person"]);
 
   const canViewAllWallets = useAnyPermission(["wallets.view-all", "wallets.manage"]);
@@ -436,19 +438,27 @@ export default function TripDetailPage() {
               onClick={() => setSummaryPresId(r.id)}
             />
           </Tooltip>
-          {(canCreateContract || (myTripCrewRole && myTripCrewRole !== 'TRADER')) && canModifyPresentations && canCreateContract && (
+          {/* Внести договор в презентации:
+              - create-any: может внести для любого (открывает модалку выбора сотрудника)
+              - create-own: только за себя, только если юзер в составе презентации */}
+          {canModifyPresentations && (canCreateContractAny || (canCreateContractOwn && r.crew?.some((c: any) => c.user?.id === myId))) && (
             <Tooltip title="Внести договор">
               <Button
                 type="text"
                 icon={<FileTextOutlined />}
                 size="small"
                 onClick={() => {
-                  const isInCrew = r.crew?.some((c: any) => c.user?.id === myId);
-                  if (isInCrew) {
+                  if (canCreateContractOwn && !canCreateContractAny) {
+                    // Только своя роль — сразу на форму от своего имени
                     navigate(`/contracts/new?tripId=${id}&presentationId=${r.id}&userId=${myId}`);
-                  } else {
-                    setContractPreselectedPresId(r.id);
-                    setContractModalOpen(true);
+                  } else if (canCreateContractAny) {
+                    const isInCrew = r.crew?.some((c: any) => c.user?.id === myId);
+                    if (isInCrew && !canCreateContractAny) {
+                      navigate(`/contracts/new?tripId=${id}&presentationId=${r.id}&userId=${myId}`);
+                    } else {
+                      setContractPreselectedPresId(r.id);
+                      setContractModalOpen(true);
+                    }
                   }
                 }}
               />
@@ -538,7 +548,8 @@ export default function TripDetailPage() {
           </Tag>
         </Space>
         <Space wrap>
-          {canCreateContract && !isClosed && (
+          {/* Кнопка "Внести договор" в шапке выезда — только для create-any (для любого сотрудника) */}
+          {canCreateContractAny && !isClosed && (
             <Button
               type="primary"
               icon={<FileTextOutlined />}

@@ -609,8 +609,10 @@ export default function ContractDetailPage() {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.sm;
   const canVerify = usePermission("contracts.verify");
-  const canEdit = usePermission("contracts.edit");
   const canDelete = usePermission("contracts.delete");
+  const canViewFiles = usePermission("contracts.view-files");
+  // contracts.verify включает редактирование — используем его вместо старого contracts.edit
+  const canEdit = canVerify;
   const [deleting, setDeleting] = useState(false);
 
   const [contract, setContract] = useState<any>(null);
@@ -1814,7 +1816,8 @@ export default function ContractDetailPage() {
         </Card>
       )}
 
-      {/* Вложения */}
+      {/* Вложения — только при наличии права просмотра файлов или верификации */}
+      {(canViewFiles || canEdit) && (
       <Card size="small" style={{ marginTop: 12 }}>
         <Divider titlePlacement="left" plain style={{ marginTop: 0, fontSize: 12, color: "#888" }}>
           <Space><PaperClipOutlined />ВЛОЖЕНИЯ ({contract.files?.length ?? 0}/15)</Space>
@@ -1926,6 +1929,7 @@ export default function ContractDetailPage() {
           />
         )}
       </Card>
+      )}
 
       {/* История действий по договору */}
       <Card size="small" style={{ marginTop: 12 }}>

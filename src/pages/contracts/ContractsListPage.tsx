@@ -190,6 +190,9 @@ export default function ContractsListPage() {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const canDelete = usePermission("contracts.delete");
+  const canOpen = usePermission("contracts.open");
+  const canViewFiles = usePermission("contracts.view-files");
+  const canVerify = usePermission("contracts.verify");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [contracts, setContracts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -221,13 +224,15 @@ export default function ContractsListPage() {
       width: 160,
       fixed: "left" as const,
       ...colSearch((r: any) => r.contractNumber ?? ""),
-      render: (_: any, r: any) => (
+      render: (_: any, r: any) => canOpen ? (
         <a
           onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${r.id}`); }}
           style={{ fontWeight: 600 }}
         >
           {r.contractNumber}
         </a>
+      ) : (
+        <span style={{ fontWeight: 600 }}>{r.contractNumber}</span>
       ),
     },
     {
@@ -546,7 +551,7 @@ export default function ContractsListPage() {
             const hasFilter = Object.values(filters).some((f) => f && f.length > 0);
             if (hasFilter) setPage(1);
           }}
-          expandable={{
+          expandable={canOpen ? {
             expandRowByClick: false,
             expandedRowRender: (r: any) => {
               const totalAdv = (Number(r.advanceCash) || 0) + (Number(r.advanceTerminal) || 0) + (Number(r.advanceBank) || 0);
@@ -587,7 +592,7 @@ export default function ContractsListPage() {
                 </Descriptions>
               );
             },
-          }}
+          } : undefined}
         />
       </Spin>
     </div>

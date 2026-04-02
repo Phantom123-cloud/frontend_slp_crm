@@ -403,7 +403,7 @@ export default function App() {
               <Route
                 path="contracts/new"
                 element={
-                  <PermissionRoute permission="contracts.create">
+                  <PermissionRoute permission={["contracts.create-any", "contracts.create-own"]}>
                     <ContractFormPage />
                   </PermissionRoute>
                 }
@@ -411,7 +411,7 @@ export default function App() {
               <Route
                 path="contracts/:id"
                 element={
-                  <PermissionRoute permission={["contracts.view-all", "contracts.view-person"]}>
+                  <PermissionRoute permission={["contracts.view-all", "contracts.view-person", "contracts.open"]}>
                     <ContractDetailPage />
                   </PermissionRoute>
                 }
