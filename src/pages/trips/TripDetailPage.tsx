@@ -439,14 +439,16 @@ export default function TripDetailPage() {
               />
             </Tooltip>
           )}
-          <Tooltip title={t("trips.summaryTitle")}>
-            <Button
-              type="text"
-              icon={<BarChartOutlined />}
-              size="small"
-              onClick={() => setSummaryPresId(r.id)}
-            />
-          </Tooltip>
+          {(canAdmin || isGaInTrip) && (
+            <Tooltip title={t("trips.summaryTitle")}>
+              <Button
+                type="text"
+                icon={<BarChartOutlined />}
+                size="small"
+                onClick={() => setSummaryPresId(r.id)}
+              />
+            </Tooltip>
+          )}
           {/* Внести договор в презентации:
               - create-any: может внести для любого (открывает модалку выбора сотрудника)
               - create-own: только за себя, только если юзер в составе презентации */}
