@@ -317,19 +317,22 @@ export default function RolesPage() {
           {t("roles.addPermission")}
         </Button>
       )}
-      {(Object.entries(permissionsByGroup) as [string, any[]][]).map(
-        ([groupName, perms]) => (
-          <Card
-            key={groupName}
-            size="small"
-            title={
-              <Typography.Text strong style={{ textTransform: "uppercase", letterSpacing: 1 }}>
-                {groupName}
-              </Typography.Text>
-            }
-            style={{ marginBottom: 12 }}
-          >
-            {perms.map((p: any, idx: number) => (
+      <Collapse
+        size="small"
+        items={(Object.entries(permissionsByGroup) as [string, any[]][]).map(
+          ([groupName, perms]) => ({
+            key: groupName,
+            label: (
+              <span>
+                <Typography.Text strong style={{ textTransform: "uppercase", letterSpacing: 1 }}>
+                  {groupName}
+                </Typography.Text>
+                <Typography.Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
+                  ({perms.length})
+                </Typography.Text>
+              </span>
+            ),
+            children: perms.map((p: any, idx: number) => (
               <div
                 key={p.id}
                 style={{
@@ -352,10 +355,10 @@ export default function RolesPage() {
                   </Typography.Text>
                 )}
               </div>
-            ))}
-          </Card>
-        ),
-      )}
+            )),
+          }),
+        )}
+      />
       {Object.keys(permissionsByGroup).length === 0 && (
         <Typography.Text type="secondary">{t("common.noData")}</Typography.Text>
       )}
