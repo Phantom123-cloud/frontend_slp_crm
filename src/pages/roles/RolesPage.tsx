@@ -323,19 +323,36 @@ export default function RolesPage() {
             key={groupName}
             size="small"
             title={
-              <Typography.Text strong style={{ textTransform: "uppercase" }}>
+              <Typography.Text strong style={{ textTransform: "uppercase", letterSpacing: 1 }}>
                 {groupName}
               </Typography.Text>
             }
             style={{ marginBottom: 12 }}
           >
-            <Space wrap>
-              {perms.map((p: any) => (
-                <Tag key={p.id} color="blue">
-                  {p.slug} {p.description ? `— ${p.description}` : ""}
+            {perms.map((p: any, idx: number) => (
+              <div
+                key={p.id}
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 12,
+                  padding: "6px 0",
+                  borderBottom: idx < perms.length - 1 ? "1px solid rgba(255,255,255,0.06)" : undefined,
+                }}
+              >
+                <Tag
+                  color="blue"
+                  style={{ margin: 0, flexShrink: 0, fontFamily: "monospace", fontSize: 12 }}
+                >
+                  {p.slug}
                 </Tag>
-              ))}
-            </Space>
+                {p.description && (
+                  <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                    {p.description}
+                  </Typography.Text>
+                )}
+              </div>
+            ))}
           </Card>
         ),
       )}
