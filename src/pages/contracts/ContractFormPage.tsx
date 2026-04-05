@@ -34,6 +34,7 @@ import { contractsApi } from "../../api/contracts";
 import { warehousesApi } from "../../api/warehouses";
 import { tripsApi } from "../../api/trips";
 import { useAuthStore } from "../../store/auth";
+import { usePermission } from "../../hooks/usePermission";
 
 const { Title, Text } = Typography;
 
@@ -72,6 +73,9 @@ export default function ContractFormPage() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const currentUser = useAuthStore((s) => s.user);
+  const canCreateAny = usePermission("contracts.create-any");
+  // Режим "только за себя" — поля Ведущий и Подписано заблокированы
+  const isCreateOwnOnly = !canCreateAny;
 
   const tripId = searchParams.get("tripId") || "";
   const presentationId = searchParams.get("presentationId") || "";
@@ -420,6 +424,7 @@ export default function ContractFormPage() {
                       label: `${c.user.lastName} ${c.user.firstName}`,
                     }))}
                   allowClear
+                  disabled={isCreateOwnOnly}
                 />
               </Form.Item>
             </Col>
@@ -433,6 +438,7 @@ export default function ContractFormPage() {
                   }))}
                   showSearch
                   optionFilterProp="label"
+                  disabled={isCreateOwnOnly}
                 />
               </Form.Item>
             </Col>
