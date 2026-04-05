@@ -279,10 +279,12 @@ export default function TripDetailPage() {
     (c: any) => c.userId === myId,
   )?.role;
   const isGaInTrip = myTripCrewRole === "GA" || myTripCrewRole === "MV_GA";
+  const isInTripCrew = !!myTripCrewRole;
 
-  // Презентации в поездке: view-all/trips.admin — всегда; view-person — только ГА/МВ_ГА
+  // Презентации в поездке: view-all/trips.admin — всегда; view-person — только ГА/МВ_ГА;
+  // create-own — видит только свои презентации (где он в составе)
   const canViewTripPresentations =
-    canViewPresAll || canAdmin || (canViewPresPerson && isGaInTrip);
+    canViewPresAll || canAdmin || (canViewPresPerson && isGaInTrip) || (canCreateContractOwn && isInTripCrew);
   // Создать презентацию в поездке: trips.admin — всегда; create — только ГА/МВ_ГА
   const canCreateTripPresentation = canAdmin || (canCreatePresentation && isGaInTrip);
 
@@ -296,7 +298,14 @@ export default function TripDetailPage() {
   const canTransactTripWallet =
     canManageWallets || (canTransactWallets && isGaInTrip);
 
+  // Если юзер видит презентации только за счёт create-own — показываем только свои
+  const canViewAllPresentations = canViewPresAll || canAdmin || (canViewPresPerson && isGaInTrip);
   const filteredPresentations = (trip.presentations || []).filter((p: any) => {
+    // Ограничиваем по членству, если у юзера нет полного доступа
+    if (!canViewAllPresentations) {
+      const isCrewMember = p.crew?.some((c: any) => c.user?.id === myId || c.userId === myId);
+      if (!isCrewMember) return false;
+    }
     const eff = getEffectivePresStatus(p);
     if (presStatusFilter === "active") return eff === "ACTIVE";
     if (presStatusFilter === "planned") return eff === "PLANNED";
