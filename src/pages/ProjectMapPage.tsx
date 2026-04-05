@@ -36,6 +36,9 @@ import {
   LockOutlined,
   BookOutlined,
   ContactsOutlined,
+  FileTextOutlined,
+  CheckCircleOutlined,
+  FolderOpenOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/auth";
@@ -225,7 +228,7 @@ const MODULES: ModuleConfig[] = [
     descKey: "projectMap.sessionDesc",
     icon: <FieldTimeOutlined style={{ fontSize: 28 }} />,
     color: "#fa8c16",
-    permissions: ["session.manage"],
+    permissions: ["session.manage", "session.force-login"],
     actions: [
       {
         permission: "session.manage",
@@ -233,6 +236,13 @@ const MODULES: ModuleConfig[] = [
         detailKey: "projectMap.sessionManageDetail",
         locationKey: "projectMap.sessionManageLocation",
         icon: <SettingOutlined />,
+      },
+      {
+        permission: "session.force-login",
+        labelKey: "projectMap.sessionForceLogin",
+        detailKey: "projectMap.sessionForceLoginDetail",
+        locationKey: "projectMap.sessionForceLoginLocation",
+        icon: <LogoutOutlined />,
       },
     ],
   },
@@ -574,6 +584,84 @@ const MODULES: ModuleConfig[] = [
       },
     ],
     link: "/guest-lists",
+  },
+  {
+    titleKey: "projectMap.contractsTitle",
+    descKey: "projectMap.contractsDesc",
+    icon: <FileTextOutlined style={{ fontSize: 28 }} />,
+    color: "#52c41a",
+    permissions: [
+      "contracts.view-all",
+      "contracts.view-person",
+      "contracts.open",
+      "contracts.view-files",
+      "contracts.create-any",
+      "contracts.create-own",
+      "contracts.delete",
+      "contracts.verify",
+    ],
+    actions: [
+      {
+        permission: "contracts.view-all",
+        labelKey: "projectMap.contractsViewAll",
+        detailKey: "projectMap.contractsViewAllDetail",
+        locationKey: "projectMap.contractsViewAllLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "contracts.view-person",
+        labelKey: "projectMap.contractsViewPerson",
+        detailKey: "projectMap.contractsViewPersonDetail",
+        locationKey: "projectMap.contractsViewPersonLocation",
+        icon: <EyeOutlined />,
+      },
+      {
+        permission: "contracts.open",
+        labelKey: "projectMap.contractsOpen",
+        detailKey: "projectMap.contractsOpenDetail",
+        locationKey: "projectMap.contractsOpenLocation",
+        icon: <FolderOpenOutlined />,
+      },
+      {
+        permission: "contracts.view-files",
+        labelKey: "projectMap.contractsViewFiles",
+        detailKey: "projectMap.contractsViewFilesDetail",
+        locationKey: "projectMap.contractsViewFilesLocation",
+        icon: <DownloadOutlined />,
+      },
+      {
+        permission: "contracts.create-any",
+        labelKey: "projectMap.contractsCreateAny",
+        detailKey: "projectMap.contractsCreateAnyDetail",
+        locationKey: "projectMap.contractsCreateAnyLocation",
+        icon: <PlusOutlined />,
+        buttonType: "primary",
+      },
+      {
+        permission: "contracts.create-own",
+        labelKey: "projectMap.contractsCreateOwn",
+        detailKey: "projectMap.contractsCreateOwnDetail",
+        locationKey: "projectMap.contractsCreateOwnLocation",
+        icon: <PlusOutlined />,
+        buttonType: "primary",
+      },
+      {
+        permission: "contracts.verify",
+        labelKey: "projectMap.contractsVerify",
+        detailKey: "projectMap.contractsVerifyDetail",
+        locationKey: "projectMap.contractsVerifyLocation",
+        icon: <CheckCircleOutlined />,
+      },
+      {
+        permission: "contracts.delete",
+        labelKey: "projectMap.contractsDelete",
+        detailKey: "projectMap.contractsDeleteDetail",
+        locationKey: "projectMap.contractsDeleteLocation",
+        icon: <DeleteOutlined />,
+        danger: true,
+      },
+    ],
+    link: "/contracts",
   },
 ];
 
