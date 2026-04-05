@@ -100,6 +100,8 @@ export default function ContractFormPage() {
   const [warehouseStock, setWarehouseStock] = useState<any[]>([]);
   const [contractItems, setContractItems] = useState<{ productId: string; quantity: number; type: 'SALE' | 'GIFT' }[]>([]);
   const [itemsError, setItemsError] = useState(false);
+  // Ключ для ремаунта Select — позволяет выбирать один товар несколько раз (продажа + подарок)
+  const [productSelectKey, setProductSelectKey] = useState(0);
 
   // Файлы для загрузки после создания
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -889,6 +891,7 @@ export default function ContractFormPage() {
           )}
           <Space wrap>
             <Select
+              key={productSelectKey}
               placeholder="Добавить товар"
               style={{ minWidth: 220 }}
               showSearch
@@ -901,6 +904,8 @@ export default function ContractFormPage() {
               onChange={(productId: string) => {
                 setContractItems((prev) => [...prev, { productId, quantity: 1, type: "SALE" }]);
                 setItemsError(false);
+                // Ремаунт чтобы можно было выбрать тот же товар повторно (напр. продажа + подарок)
+                setProductSelectKey((k) => k + 1);
               }}
             />
           </Space>
