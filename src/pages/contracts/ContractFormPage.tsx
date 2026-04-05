@@ -278,6 +278,12 @@ export default function ContractFormPage() {
       return;
     }
 
+    // Проверяем наличие товара
+    if (contractItems.length === 0) {
+      message.error("Добавьте хотя бы один товар в договор");
+      return;
+    }
+
     // Авансы не должны превышать сумму договора
     const total = Number(values.totalAmount) || 0;
     if (totalAdvances > total) {
