@@ -905,7 +905,7 @@ export default function ContractFormPage() {
             />
           </Space>
           {itemsError && (
-            <div style={{ color: "#ff4d4f", fontSize: 12, marginTop: 4 }}>Добавьте хотя бы один товар</div>
+            <div style={{ color: "#ff4d4f", marginTop: 4 }}>Добавьте хотя бы один товар</div>
           )}
           {warehouseStock.length === 0 && (
             <div style={{ color: "#888", fontSize: 12, marginTop: 8 }}>Склад выезда пуст или недоступен</div>
