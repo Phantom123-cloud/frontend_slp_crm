@@ -99,6 +99,7 @@ export default function ContractFormPage() {
   // Товары договора
   const [warehouseStock, setWarehouseStock] = useState<any[]>([]);
   const [contractItems, setContractItems] = useState<{ productId: string; quantity: number; type: 'SALE' | 'GIFT' }[]>([]);
+  const [itemsError, setItemsError] = useState(false);
 
   // Файлы для загрузки после создания
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -280,9 +281,10 @@ export default function ContractFormPage() {
 
     // Проверяем наличие товара
     if (contractItems.length === 0) {
-      message.error("Добавьте хотя бы один товар в договор");
+      setItemsError(true);
       return;
     }
+    setItemsError(false);
 
     // Авансы не должны превышать сумму договора
     const total = Number(values.totalAmount) || 0;
@@ -890,9 +892,13 @@ export default function ContractFormPage() {
               value={undefined}
               onChange={(productId: string) => {
                 setContractItems((prev) => [...prev, { productId, quantity: 1, type: "SALE" }]);
+                setItemsError(false);
               }}
             />
           </Space>
+          {itemsError && (
+            <div style={{ color: "#ff4d4f", fontSize: 12, marginTop: 4 }}>Добавьте хотя бы один товар</div>
+          )}
           {warehouseStock.length === 0 && (
             <div style={{ color: "#888", fontSize: 12, marginTop: 8 }}>Склад выезда пуст или недоступен</div>
           )}
