@@ -404,7 +404,15 @@ export default function ContractFormPage() {
         )}
       </div>
 
-      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        onFinishFailed={() => {
+          // Показываем ошибку товара даже если другие поля тоже не прошли валидацию
+          if (contractItems.length === 0) setItemsError(true);
+        }}
+      >
 
         {/* Служебные поля (автозаполнение) */}
         <Card title="Выезд и презентация" size="small" style={{ marginBottom: 16 }}>
